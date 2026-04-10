@@ -1,0 +1,7 @@
+# https://taplo.tamasfe.dev/ — TOML formatting (optional local: taplo fmt).
+exclude = ["**/target/**"]
+
+[formatting]
+align_entries = false
+array_trailing_comma = true
+column_width = 100

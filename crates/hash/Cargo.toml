@@ -1,0 +1,16 @@
+[package]
+name = "scanner-hash"
+version = "0.2.1"
+edition = "2021"
+license = "MIT"
+description = "Hashing utilities used by scanner-core."
+repository = "https://github.com/organizyio/scanner"
+
+[lib]
+name = "hash"
+
+[dependencies]
+md-5 = "0.10"
+sha2 = "0.10"
+thiserror = "2"
+xxhash-rust = { version = "0.8", features = ["xxh64"] }

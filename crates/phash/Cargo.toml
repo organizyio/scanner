@@ -1,0 +1,14 @@
+[package]
+name = "scanner-phash"
+version = "0.2.1"
+edition = "2021"
+license = "MIT"
+description = "Perceptual hashing utilities used by scanner-core."
+repository = "https://github.com/organizyio/scanner"
+
+[lib]
+name = "phash"
+
+[dependencies]
+img_hash = "3"
+thiserror = "2"

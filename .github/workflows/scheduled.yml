@@ -1,0 +1,30 @@
+# Thorough-tier maintenance (Rust Project Primer): dependency drift, unused deps.
+name: Scanner maintenance
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-machete@0.6.2,cargo-outdated@0.17.0
+      - name: cargo machete (unused dependencies)
+        run: cargo machete
+        continue-on-error: true
+      - name: cargo outdated (informational)
+        run: cargo outdated --workspace --color always
+        continue-on-error: true

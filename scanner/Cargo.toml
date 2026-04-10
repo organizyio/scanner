@@ -1,0 +1,18 @@
+[package]
+name = "scanner-core"
+version = "0.2.1"
+edition = "2021"
+rust-version = "1.88"
+description = "Public facade for the Archivist filesystem scanner (scan API and FileRecord types)."
+license = "MIT"
+repository = "https://github.com/organizyio/scanner"
+readme = "../README.md"
+
+[lib]
+name = "scanner"
+
+[dependencies]
+engine = { package = "scanner-engine", version = "0.2.1", path = "../crates/engine" }
+hash = { package = "scanner-hash", version = "0.2.1", path = "../crates/hash" }
+output = { package = "scanner-output", version = "0.2.1", path = "../crates/output" }
+walker = { package = "scanner-walker", version = "0.2.1", path = "../crates/walker" }

@@ -1,0 +1,12 @@
+# https://github.com/crate-ci/typos — identifiers not in default dictionary.
+[default.extend-identifiers]
+scanfs = "scanfs"
+xxhash = "xxhash"
+phash = "phash"
+docx = "docx"
+ffprobe = "ffprobe"
+exif = "exif"
+walkdir = "walkdir"
+kamadak = "kamadak"
+lopdf = "lopdf"
+roxmltree = "roxmltree"

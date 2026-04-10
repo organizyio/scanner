@@ -1,0 +1,20 @@
+[package]
+name = "scanfs"
+version = "0.2.1"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[dependencies]
+clap = { workspace = true }
+ctrlc = "3"
+hostname = "0.4"
+scanner = { package = "scanner-core", path = "../scanner" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = "2"
+chrono = { workspace = true }
+tempfile = "3"

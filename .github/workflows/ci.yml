@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: doc
+        run: cargo doc --workspace --no-deps --locked
+      - name: build scanfs
+        run: cargo build --locked --bin scanfs
+      - name: test
+        run: cargo test --workspace --locked
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: typos-cli@1.29.4,taplo-cli@0.9.3,cargo-deny@0.18.9
+      - name: typos
+        run: typos
+      - name: taplo
+        run: taplo fmt --check
+      - name: cargo deny
+        run: cargo deny check
+
+  validate:
+    name: Rust validation (MSRV, minimal-versions, benches)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Locked metadata
+        run: cargo fetch --locked
+      - name: MSRV (1.88)
+        run: |
+          rustup toolchain install 1.88 --profile minimal --no-self-update
+          cargo +1.88 check -p scanner-core --locked
+      - name: Minimal dependency versions
+        run: |
+          rustup toolchain install nightly --profile minimal --no-self-update
+          cargo +nightly -Zminimal-versions check --workspace --all-targets
+      - name: Build benches (compile only)
+        run: cargo build --workspace --benches --locked

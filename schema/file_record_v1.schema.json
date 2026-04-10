@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scan-engine.local/schema/file_record_v1.schema.json",
+  "title": "scan-engine FileRecord v1",
+  "description": "NDJSON line schema for scanner output contract v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "identity"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "size": { "type": "integer", "minimum": 0 },
+        "modified_at": { "type": "string", "format": "date-time" },
+        "accessed_at": { "type": "string", "format": "date-time" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "inode": { "type": "integer", "minimum": 0 },
+        "device_id": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "xxhash64": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "md5": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["off", "full", "partial"]
+        }
+      }
+    },
+    "format": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "mime": { "type": "string", "minLength": 1 },
+        "extension_match": { "type": "boolean" },
+        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "phash": { "type": "integer", "minimum": 0 },
+        "exif": {
+          "type": "object",
+          "properties": {
+            "camera": { "type": "string" },
+            "lens": { "type": "string" },
+            "gps_lat": { "type": "number", "minimum": -90.0, "maximum": 90.0 },
+            "gps_lon": { "type": "number", "minimum": -180.0, "maximum": 180.0 }
+          },
+          "additionalProperties": true
+        },
+        "audio": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "artist": { "type": "string" },
+            "title": { "type": "string" },
+            "album": { "type": "string" }
+          }
+        },
+        "video": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "codec_name": { "type": "string" },
+            "width": { "type": "integer", "minimum": 0 },
+            "height": { "type": "integer", "minimum": 0 },
+            "duration_secs": { "type": "number", "minimum": 0.0 }
+          }
+        },
+        "pdf": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "page_count": { "type": "integer", "minimum": 0 },
+            "author": { "type": "string" },
+            "title": { "type": "string" }
+          }
+        },
+        "docx": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "creator": { "type": "string" },
+            "last_modified_by": { "type": "string" },
+            "revision": { "type": "string" }
+          }
+        }
+      }
+    },
+    "error": { "type": "string" }
+  }
+}

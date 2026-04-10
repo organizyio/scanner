@@ -1,0 +1,22 @@
+# Rust / Cargo
+/target/
+**/*.rs.bk
+*.pdb
+
+# Profiling / local tooling
+*.profraw
+*.profdata
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local secrets / env (never commit)
+.env
+.env.*

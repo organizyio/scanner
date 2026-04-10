@@ -1,0 +1,32 @@
+[package]
+name = "scanner-engine"
+version = "0.2.1"
+edition = "2021"
+license = "MIT"
+description = "Core scanning engine powering scanner-core."
+repository = "https://github.com/organizyio/scanner"
+
+[lib]
+name = "engine"
+
+[dependencies]
+format = { package = "scanner-format", version = "0.2.1", path = "../format" }
+hash = { package = "scanner-hash", version = "0.2.1", path = "../hash" }
+metadata = { package = "scanner-metadata", version = "0.2.1", path = "../metadata" }
+output = { package = "scanner-output", version = "0.2.1", path = "../output" }
+phash = { package = "scanner-phash", version = "0.2.1", path = "../phash" }
+thiserror = "2"
+walker = { package = "scanner-walker", version = "0.2.1", path = "../walker" }
+
+[[bench]]
+name = "walk_bench"
+harness = false
+
+[[bench]]
+name = "hash_bench"
+harness = false
+
+[dev-dependencies]
+criterion = "0.5"
+serde_json = "1"
+tempfile = "3"

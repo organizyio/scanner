@@ -1,0 +1,19 @@
+[package]
+name = "scanner-walker"
+version = "0.2.1"
+edition = "2021"
+license = "MIT"
+description = "Filesystem walking and filtering used by scanner-core."
+repository = "https://github.com/organizyio/scanner"
+
+[lib]
+name = "walker"
+
+[dependencies]
+ignore = "0.4"
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+walkdir = "2"
+
+[dev-dependencies]
+tempfile = "3"

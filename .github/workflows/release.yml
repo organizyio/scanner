@@ -1,0 +1,358 @@
+# Release scanfs binaries and optionally publish scanner crate.
+#
+# Three ways this workflow is triggered:
+#
+#   1. workflow_dispatch — Actions → Release → Run workflow. Set version (e.g. 0.2.3,
+#      no "v"). Same prepare path as (2), then preflight → build → GitHub Release in
+#      this run (no extra workflow, no PAT).
+#
+#   2. workflow_run — After CI succeeds on a push to main: patch-bump from the last
+#      tag, conventional-commit CHANGELOG, update README release marker, commit as
+#      github-actions[bot], push tag,
+#      then continues with preflight → build → GitHub Release here. Skipped if HEAD
+#      is already tagged.
+#
+#   3. push (tags v*) — You pushed a tag manually; only preflight → build → release
+#      runs (no version bump).
+#
+# Optional crates publish: enable repository variable PUBLISH_TO_CRATES_IO=true and
+# configure environment `crates-io` with secret CARGO_REGISTRY_TOKEN.
+#
+# Tag pushes from GITHUB_TOKEN do not start a new workflow run, so prepare and release
+# must live in the same workflow (like GoReleaser inlined after prepare in forge).
+#
+# Branch protection: bot push in prepare may fail unless github-actions[bot] can push
+# to the default branch (see README).
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 0.2.3 — without the "v" prefix)'
+        required: true
+        type: string
+
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  prepare:
+    name: Prepare release
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.version.outputs.skip }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git describe --exact-match --tags HEAD 2>/dev/null | grep -qE '^v[0-9]'; then
+            echo "HEAD is already tagged — nothing to release." >&2
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -n "$LAST_TAG" ]; then
+            VER="${LAST_TAG#v}"
+            MAJOR=$(echo "$VER" | cut -d. -f1)
+            MINOR=$(echo "$VER" | cut -d. -f2)
+            PATCH=$(echo "$VER" | cut -d. -f3)
+            echo "version=${MAJOR}.${MINOR}.$((PATCH + 1))" >> "$GITHUB_OUTPUT"
+          else
+            CUR=$(grep -m1 '^version = ' scanner/Cargo.toml | sed 's/^version = "\([^"]*\)".*/\1/')
+            MAJOR=$(echo "$CUR" | cut -d. -f1)
+            MINOR=$(echo "$CUR" | cut -d. -f2)
+            PATCH=$(echo "$CUR" | cut -d. -f3)
+            echo "version=${MAJOR}.${MINOR}.$((PATCH + 1))" >> "$GITHUB_OUTPUT"
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Bump workspace package versions
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in scanner/Cargo.toml scanfs/Cargo.toml crates/*/Cargo.toml; do
+            sed -i "0,/^version = /s/^version = \".*\"/version = \"${VERSION}\"/" "$f"
+          done
+
+      - name: Sync Cargo.lock
+        if: steps.version.outputs.skip != 'true'
+        run: cargo generate-lockfile
+
+      - name: Update CHANGELOG.md
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          DATE=$(date +%Y-%m-%d)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -n "$LAST_TAG" ]; then
+            RANGE="${LAST_TAG}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          ADDED=$(git log "$RANGE" --pretty=format:"%s" --no-merges \
+            | grep -E '^feat(\(.+\))?[!:]?' | sed 's/^/- /' || true)
+          FIXED=$(git log "$RANGE" --pretty=format:"%s" --no-merges \
+            | grep -E '^fix(\(.+\))?[!:]?' | sed 's/^/- /' || true)
+          CHANGED=$(git log "$RANGE" --pretty=format:"%s" --no-merges \
+            | grep -E '^(refactor|perf|chore)(\(.+\))?[!:]?' | sed 's/^/- /' || true)
+          BREAKING=$(git log "$RANGE" --pretty=format:"%s" --no-merges \
+            | grep -E '!:' | sed 's/^/- /' || true)
+
+          SECTION="## [${VERSION}] - ${DATE}"$'\n'
+
+          if [ -n "$BREAKING" ]; then
+            SECTION+=$'\n### Breaking Changes\n'"$BREAKING"$'\n'
+          fi
+          if [ -n "$ADDED" ]; then
+            SECTION+=$'\n### Added\n'"$ADDED"$'\n'
+          fi
+          if [ -n "$FIXED" ]; then
+            SECTION+=$'\n### Fixed\n'"$FIXED"$'\n'
+          fi
+          if [ -n "$CHANGED" ]; then
+            SECTION+=$'\n### Changed\n'"$CHANGED"$'\n'
+          fi
+          if [ -z "$BREAKING$ADDED$FIXED$CHANGED" ]; then
+            SECTION+=$'\n### Changed\n- Maintenance and minor improvements.\n'
+          fi
+
+          SECTION_FILE=$(mktemp)
+          printf '%s\n' "$SECTION" > "$SECTION_FILE"
+          awk -v sf="$SECTION_FILE" '
+            /^## \[[0-9]/ && !inserted {
+              while ((getline line < sf) > 0) print line
+              inserted = 1
+              close(sf)
+            }
+            { print }
+          ' CHANGELOG.md > CHANGELOG.md.new
+          mv CHANGELOG.md.new CHANGELOG.md
+          rm -f "$SECTION_FILE"
+
+      - name: Update README release marker
+        if: steps.version.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          sed -i -E "s/(<!-- release-version:start -->)v[0-9]+\.[0-9]+\.[0-9]+(<!-- release-version:end -->)/\1v${VERSION}\2/" README.md
+
+      - name: Verify (locked tests)
+        if: steps.version.outputs.skip != 'true'
+        run: cargo test --workspace --locked
+
+      - name: Commit, tag, and push
+        if: steps.version.outputs.skip != 'true'
+        env:
+          PUSH_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scanner/Cargo.toml scanfs/Cargo.toml crates/*/Cargo.toml Cargo.lock CHANGELOG.md README.md
+          git diff --cached --quiet || git commit -m "release v${VERSION}"
+          git tag "v${VERSION}"
+          git push origin "HEAD:refs/heads/${PUSH_BRANCH}" "v${VERSION}"
+
+  preflight:
+    name: Preflight
+    needs: [prepare]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.prepare.result != 'failure' && (
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+        (needs.prepare.result == 'success' && needs.prepare.outputs.skip != 'true')
+      )
+    runs-on: ubuntu-latest
+    outputs:
+      checkout_ref: ${{ steps.meta.outputs.checkout_ref }}
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+    steps:
+      - name: Set checkout ref and release tag
+        id: meta
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "checkout_ref=${{ github.ref }}" >> "$GITHUB_OUTPUT"
+            echo "tag_name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout_ref=refs/tags/v${{ needs.prepare.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "tag_name=v${{ needs.prepare.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.meta.outputs.checkout_ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Locked metadata and tests
+        run: |
+          cargo fetch --locked
+          cargo test --workspace --locked
+      - name: MSRV (1.88)
+        run: |
+          rustup toolchain install 1.88 --profile minimal --no-self-update
+          cargo +1.88 check -p scanner-core --locked
+      - name: Minimal dependency versions
+        run: |
+          rustup toolchain install nightly --profile minimal --no-self-update
+          cargo +nightly -Zminimal-versions check --workspace --all-targets
+      - name: Semver vs crates.io (optional)
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-semver-checks@0.47.0
+      - name: cargo-semver-checks
+        run: cargo semver-checks check-release -p scanner-core
+        continue-on-error: true
+
+  build:
+    needs: [preflight]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            name: x86_64-pc-windows-msvc
+          - os: macos-latest
+            name: aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.preflight.outputs.checkout_ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release binary
+        run: cargo build --locked --release -p scanfs
+      - name: Stage artifact (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/release/scanfs "dist/scanfs-${{ matrix.name }}"
+      - name: Stage artifact (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target\release\scanfs.exe "dist\scanfs-${{ matrix.name }}.exe"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: scanfs-${{ matrix.name }}
+          path: dist/
+
+  release:
+    needs: [build, preflight]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.preflight.outputs.checkout_ref }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - name: Collect release files
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f \( -name 'scanfs-*' -o -name 'scanfs-*.exe' \) -exec cp {} release-assets/ \;
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.preflight.outputs.tag_name }}
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-crate:
+    name: Publish crates to crates.io
+    needs: [release, preflight]
+    if: vars.PUBLISH_TO_CRATES_IO == 'true'
+    runs-on: ubuntu-latest
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.preflight.outputs.checkout_ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Publish workspace crates (ordered)
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # crates.io indexing can lag a bit between publishes; retry a few times.
+          publish_one() {
+            pkg="$1"
+            for i in 1 2 3 4 5; do
+              if cargo publish -p "$pkg" --locked --allow-dirty; then
+                return 0
+              fi
+              echo "publish $pkg failed (attempt $i); retrying..." >&2
+              sleep 15
+            done
+            return 1
+          }
+
+          publish_one scanner-format
+          publish_one scanner-hash
+          publish_one scanner-output
+          publish_one scanner-walker
+          publish_one scanner-phash
+          publish_one scanner-metadata
+          publish_one scanner-engine
+          publish_one scanner-core
