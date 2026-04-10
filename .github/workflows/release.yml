@@ -335,15 +335,42 @@ jobs:
         run: |
           set -euo pipefail
 
-          # crates.io indexing can lag a bit between publishes; retry a few times.
+          # crates.io indexing can lag and new-crate publish is rate-limited.
+          # Retry with adaptive waits; make reruns idempotent.
           publish_one() {
             pkg="$1"
             for i in 1 2 3 4 5; do
-              if cargo publish -p "$pkg" --locked --allow-dirty; then
+              out="$(cargo publish -p "$pkg" --locked --allow-dirty 2>&1)" && {
+                echo "$out"
+                return 0
+              }
+
+              echo "$out" >&2
+
+              # Rerun-safe: if this exact version is already on crates.io, continue.
+              if echo "$out" | grep -qiE "already uploaded|already exists"; then
+                echo "$pkg already published; continuing."
                 return 0
               fi
-              echo "publish $pkg failed (attempt $i); retrying..." >&2
-              sleep 15
+
+              # Respect crates.io retry timestamp when present.
+              if echo "$out" | grep -q "Too Many Requests"; then
+                retry_at="$(echo "$out" | sed -n 's/.*after \(.* GMT\).*/\1/p' | tail -1)"
+                if [ -n "${retry_at:-}" ]; then
+                  now_epoch="$(date -u +%s)"
+                  retry_epoch="$(date -u -d "$retry_at" +%s || echo "$now_epoch")"
+                  wait_s="$(( retry_epoch - now_epoch + 5 ))"
+                  if [ "$wait_s" -lt 20 ]; then
+                    wait_s=20
+                  fi
+                  echo "publish $pkg rate-limited; waiting ${wait_s}s until ${retry_at}..."
+                  sleep "$wait_s"
+                  continue
+                fi
+              fi
+
+              echo "publish $pkg failed (attempt $i); retrying in 30s..." >&2
+              sleep 30
             done
             return 1
           }
