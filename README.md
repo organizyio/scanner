@@ -7,7 +7,7 @@
 
 Rust workspace for filesystem scanning: a public **`scanner`** library crate and the **`scanfs`** CLI.
 
-Latest release: <!-- release-version:start -->v0.2.1<!-- release-version:end -->
+Latest release: <!-- release-version:start -->v0.2.2<!-- release-version:end -->
 
 ## Layout
 

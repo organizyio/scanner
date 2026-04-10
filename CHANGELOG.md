@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release preflight (locked tests, MSRV 1.88, minimal-versions check, optional `cargo-semver-checks` for `scanner`).
 - `CHANGELOG.md`, `publish-scanner.yml`, and crates.io-oriented metadata on the `scanner` crate (`publish = false` until workspace deps are publishable).
 
+## [0.2.2] - 2026-04-10
+
+### Changed
+- Maintenance and minor improvements.
+
 ## [0.2.1] - 2026-04-10
 
 ### Changed

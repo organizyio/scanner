@@ -1203,7 +1203,7 @@ dependencies = [
 
 [[package]]
 name = "scanfs"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -1219,7 +1219,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-core"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "scanner-engine",
  "scanner-hash",
@@ -1229,7 +1229,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-engine"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "criterion",
  "scanner-format",
@@ -1245,7 +1245,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-format"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "file-format",
  "thiserror",
@@ -1253,7 +1253,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-hash"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "md-5",
  "sha2",
@@ -1263,7 +1263,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-metadata"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "kamadak-exif",
  "lofty",
@@ -1278,7 +1278,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-output"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "chrono",
  "serde",
@@ -1287,7 +1287,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-phash"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "img_hash",
  "thiserror",
@@ -1295,7 +1295,7 @@ dependencies = [
 
 [[package]]
 name = "scanner-walker"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "ignore",
  "serde",
