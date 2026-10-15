@@ -66,5 +66,5 @@ jobs:
                   assert hashlib.sha256(p.read_bytes()).hexdigest() == expected
               tag = component+'/v'+os.environ['COMPONENT_VERSION']
               # gh release create fails for an existing release; never upload/clobber.
-              subprocess.run(['gh','release','create',tag,'--target',subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'--title',tag,'--notes','Repository compatibility distribution; product release acceptance remains separate.',*[str(p) for p in files]],check=True)
+              subprocess.run(['gh','release','create',tag,'--latest=false','--target',subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'--title',tag,'--notes','Repository compatibility distribution; product release acceptance remains separate.',*[str(p) for p in files]],check=True)
           PY
