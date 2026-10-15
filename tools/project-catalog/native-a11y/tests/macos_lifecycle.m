@@ -6,9 +6,13 @@
 #import <dispatch/dispatch.h>
 #include <stdatomic.h>
 #include <stdio.h>
+static double syntheticBackingScale = 1.;
 @interface ScannerLifecycleWindow : NSWindow
 @end
 @implementation ScannerLifecycleWindow
+- (CGFloat)backingScaleFactor {
+  return syntheticBackingScale;
+}
 @end
 static atomic_int created, freed, inside, reenter;
 static MacHandle *current;
@@ -22,7 +26,7 @@ int32_t scanner_a11y_update(void *bridge, const char *json, double scale,
                             int focused) {
   assert([NSThread isMainThread]);
   assert(bridge);
-  assert(scale >= 1.);
+  assert(scale == syntheticBackingScale);
   atomic_fetch_add(&inside, 1);
   if (atomic_exchange(&reenter, 0)) {
     int before = atomic_load(&freed);
@@ -67,6 +71,12 @@ int main(void) {
     NSWindow *w = window();
     current = scanner_platform_attach((uintptr_t)w);
     assert(current);
+    // Test-only native backing factors: verifies C forwards both 1x and 2x.
+    // This is not evidence of operation on an actual Retina screen.
+    assert(scanner_platform_update(current, "scale-check", (uintptr_t)w) == 0);
+    syntheticBackingScale = 2.;
+    assert(scanner_platform_update(current, "scale-check", (uintptr_t)w) == 0);
+    syntheticBackingScale = 1.;
     atomic_store(&reenter, 1);
     scanner_platform_retain(current);
     assert(scanner_platform_update(current, "{}", (uintptr_t)w) == 0);

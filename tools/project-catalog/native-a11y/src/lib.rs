@@ -281,6 +281,19 @@ impl Snapshot {
     }
 }
 
+fn native_snapshot(mut snapshot: Snapshot, scale: f64, focused: bool) -> Option<Snapshot> {
+    if !scale.is_finite() || scale <= 0. {
+        return None;
+    }
+    for node in &mut snapshot.nodes {
+        node.bounds.x *= scale;
+        node.bounds.y *= scale;
+        node.bounds.width *= scale;
+        node.bounds.height *= scale;
+    }
+    snapshot.window_focused = focused;
+    snapshot.validate().then_some(snapshot)
+}
 struct Bridge {
     shared: Arc<Shared>,
     platform: Mutex<Platform>,
@@ -343,24 +356,14 @@ pub unsafe extern "C" fn scanner_a11y_update(
     }
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let bridge = unsafe { &*bridge.cast::<Bridge>() };
-        let Ok(mut snapshot) =
+        let Ok(snapshot) =
             serde_json::from_slice::<Snapshot>(unsafe { CStr::from_ptr(json) }.to_bytes())
         else {
             return -1;
         };
-        if !backing_scale.is_finite() || backing_scale <= 0. {
+        let Some(snapshot) = native_snapshot(snapshot, backing_scale, native_focused != 0) else {
             return -1;
-        }
-        for node in &mut snapshot.nodes {
-            node.bounds.x *= backing_scale;
-            node.bounds.y *= backing_scale;
-            node.bounds.width *= backing_scale;
-            node.bounds.height *= backing_scale;
-        }
-        snapshot.window_focused = native_focused != 0;
-        if !snapshot.validate() {
-            return -1;
-        }
+        };
         let focused = snapshot.window_focused;
         *bridge.shared.snapshot.lock().unwrap() = snapshot.clone();
         let mut platform = bridge.platform.lock().unwrap();
@@ -701,6 +704,19 @@ mod tests {
             lengths.iter().map(|n| *n as usize).sum::<usize>(),
             text.len()
         );
+    }
+    #[test]
+    fn native_backing_transform_preserves_ax_logical_bounds_at_one_and_two_x() {
+        let mut snapshot = Snapshot::default();
+        snapshot.nodes[0].bounds.width = 100.;
+        snapshot.nodes[0].bounds.x = 12.;
+        for factor in [1., 2.] {
+            let transformed = native_snapshot(snapshot.clone(), factor, true).unwrap();
+            assert_eq!(transformed.nodes[0].bounds.width / factor, 100.);
+            assert_eq!(transformed.nodes[0].bounds.x / factor, 12.);
+            assert!(transformed.window_focused);
+        }
+        assert!(native_snapshot(snapshot, 0., false).is_none());
     }
     #[test]
     fn full_tree_has_stable_focus_and_children() {
