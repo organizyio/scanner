@@ -12,7 +12,7 @@
       "start_progress_checkpoint": "passed",
       "pause_resume": "passed: native state screenshots",
       "cancel": "passed: native Cancel reached canceled state at 1620 MiB",
-      "settings_root_keyboard_edit": "passed on earlier GUI-equivalent candidate",
+      "settings_root_keyboard_edit": "passed on 08cc1bc7f69c783c4233ecca4b444c6537fae100; GUI/controller production files are unchanged at reviewed main",
       "restart_resume": "pending",
       "cli_unicode": "passed",
       "cli_actual_denial": "passed",
