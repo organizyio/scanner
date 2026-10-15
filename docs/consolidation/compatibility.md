@@ -33,7 +33,7 @@ settings locations, profiles or checkpoints:
 
 ## Remaining limitations
 
-- Preferred Scanner and the earlier engine still enqueue records without a bound during synchronous traversal and consume them afterwards at this phase-2 baseline. The separately scoped preferred execution work does not change compatibility-engine behavior.
+- Preferred Scanner now uses a bounded 256-record queue with caller-thread callbacks and cooperative cancellation. All workers join before return. Active extraction, OS calls and callbacks are not preemptible. The earlier compatibility engine still enqueues without a bound during synchronous traversal; its execution behavior is unchanged. See the [execution specification and measurements](../follow-up/README.md).
 - Symlink, exclusion and partial-result behavior is not replaced with managed Organizy traversal.
 - Resume is lexical and inclusive of the checkpoint path. It is not a filesystem snapshot or transactional restart. Deep scan retains collected results in memory.
 - Native GUI operation, keyboard/accessibility support and real Windows ACL denial require separate evidence. Compilation alone does not qualify those claims.
