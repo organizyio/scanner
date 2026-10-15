@@ -167,7 +167,7 @@
         "go test -mod=readonly -race ./internal/gui",
         "go build -mod=readonly ./cmd/scan-gui"
       ],
-      "current_sha256": "ed43a35786c4ec46c47a2d70bcf0e2f366f618d73cea5f973a7b6ee2eabad792"
+      "current_sha256": "7a9a26ea3da0fab39c310e57b5cb5d7d6fd4a58f1664d9ca0230155c775c4e3b"
     },
     "tools/project-catalog/internal/gui/window.go": {
       "phase": 4,

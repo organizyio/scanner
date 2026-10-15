@@ -5,6 +5,7 @@ package gui
 import (
 	"context"
 	"scan-projects/internal/controller"
+	"sync/atomic"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
@@ -12,7 +13,14 @@ import (
 )
 
 func SetupTray(a fyne.App, w fyne.Window, ctrl *controller.Controller) {
-	setupTray(context.Background(), a, w, ctrl, newQuitAction(context.Background(), ctrl.Cancel, ctrl.IsRunning, fyne.Do, a.Quit), func() bool { return true })
+	var quitting atomic.Bool
+	finishQuit := newQuitAction(context.Background(), ctrl.Cancel, ctrl.IsRunning, fyne.Do, a.Quit)
+	quit := func() {
+		if quitting.CompareAndSwap(false, true) {
+			dispatchWhileAlive(context.Background(), fyne.Do, finishQuit)
+		}
+	}
+	setupTray(context.Background(), a, w, ctrl, quit, func() bool { return !quitting.Load() })
 }
 
 func setupTray(ctx context.Context, a fyne.App, w fyne.Window, ctrl *controller.Controller, quit func(), canStart func() bool) {
