@@ -15,7 +15,20 @@ use phash::phash_u64;
 use std::fs::Metadata;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use walker::{walk_roots_fn, FilterOptions, WalkMode};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
+use std::time::Duration;
+use walker::{walk_roots_cancellable_fn, FilterOptions, WalkMode};
+
+const RECORD_QUEUE_CAPACITY: usize = 256;
+const CANCEL_POLL_INTERVAL: Duration = Duration::from_millis(100);
+
+struct CancelOnDrop(Arc<AtomicBool>);
+impl Drop for CancelOnDrop {
+    fn drop(&mut self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+}
 
 /// Thin handle around [`ScanOptions`] for callers that prefer an object API.
 #[derive(Debug, Clone)]
@@ -90,6 +103,13 @@ pub fn scan<W: Write>(opts: &ScanOptions, writer: &mut W) -> Result<(), ScanErro
     Ok(())
 }
 
+/// Stream records through a bounded queue, invoking callbacks on the calling thread.
+///
+/// Cancellation is polled while awaiting records and before delivery. Returned
+/// counts include only records successfully accepted by `on_record`. Progress
+/// reports the pending record before delivery, so its final count can exceed the
+/// returned count when progress requests cancellation. Active extraction and
+/// filesystem calls are not preempted; all traversal workers join before return.
 pub fn scan_with_callbacks<ShouldStop, OnProgress, OnRecord>(
     opts: &ScanOptions,
     should_stop: &mut ShouldStop,
@@ -101,32 +121,92 @@ where
     OnProgress: FnMut(ScanProgress),
     OnRecord: FnMut(FileRecord) -> Result<(), ScanError>,
 {
-    let (tx, rx) = std::sync::mpsc::channel();
-    walk_roots_fn(&opts.roots, &opts.filter, opts.walk_mode, {
-        let tx = tx.clone();
-        let opts = opts.clone();
-        move |path| {
-            let rec = build_record(&path, &opts);
-            let _ = tx.send(rec);
-        }
-    })?;
-    drop(tx);
-    let mut files_scanned: u64 = 0;
-    let mut bytes_scanned: u64 = 0;
-    for rec in rx {
-        if should_stop() {
-            break;
-        }
-        files_scanned += 1;
-        bytes_scanned += rec.identity.size;
-        on_progress(ScanProgress {
-            files_scanned,
-            bytes_scanned,
-            current_path: rec.identity.path.clone(),
-        });
-        on_record(rec)?;
+    consume_records(
+        |tx, cancelled| {
+            walk_roots_cancellable_fn(
+                &opts.roots,
+                &opts.filter,
+                opts.walk_mode,
+                cancelled.clone(),
+                {
+                    let opts = opts.clone();
+                    move |path| {
+                        if let Some(rec) = build_record(&path, &opts, &cancelled) {
+                            if tx.send(rec).is_err() {
+                                cancelled.store(true, Ordering::Relaxed);
+                            }
+                        }
+                    }
+                },
+            )?;
+            Ok(())
+        },
+        should_stop,
+        on_progress,
+        on_record,
+    )
+}
+
+fn consume_records<Producer, ShouldStop, OnProgress, OnRecord>(
+    producer: Producer,
+    should_stop: &mut ShouldStop,
+    on_progress: &mut OnProgress,
+    on_record: &mut OnRecord,
+) -> Result<(u64, u64), ScanError>
+where
+    Producer: FnOnce(mpsc::SyncSender<FileRecord>, Arc<AtomicBool>) -> Result<(), ScanError> + Send,
+    ShouldStop: FnMut() -> bool,
+    OnProgress: FnMut(ScanProgress),
+    OnRecord: FnMut(FileRecord) -> Result<(), ScanError>,
+{
+    if should_stop() {
+        return Ok((0, 0));
     }
-    Ok((files_scanned, bytes_scanned))
+    std::thread::scope(|scope| {
+        // Keep receiver and guard inside the scope closure: both are dropped before
+        // scoped threads are joined, including when a caller callback panics.
+        let (tx, rx) = mpsc::sync_channel(RECORD_QUEUE_CAPACITY);
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let stop_guard = CancelOnDrop(cancelled.clone());
+        let worker = scope.spawn(move || producer(tx, cancelled));
+        let mut files_scanned = 0;
+        let mut bytes_scanned = 0;
+        let result = loop {
+            if should_stop() {
+                break Ok((files_scanned, bytes_scanned));
+            }
+            let rec = match rx.recv_timeout(CANCEL_POLL_INTERVAL) {
+                Ok(rec) => rec,
+                Err(mpsc::RecvTimeoutError::Timeout) => continue,
+                Err(mpsc::RecvTimeoutError::Disconnected) => {
+                    break Ok((files_scanned, bytes_scanned))
+                }
+            };
+            if should_stop() {
+                break Ok((files_scanned, bytes_scanned));
+            }
+            let size = rec.identity.size;
+            on_progress(ScanProgress {
+                files_scanned: files_scanned + 1,
+                bytes_scanned: bytes_scanned + size,
+                current_path: rec.identity.path.clone(),
+            });
+            if should_stop() {
+                break Ok((files_scanned, bytes_scanned));
+            }
+            if let Err(error) = on_record(rec) {
+                break Err(error);
+            }
+            files_scanned += 1;
+            bytes_scanned += size;
+        };
+        drop(stop_guard);
+        drop(rx);
+        let producer_result = worker
+            .join()
+            .unwrap_or_else(|panic| std::panic::resume_unwind(panic));
+        result.and_then(|counts| producer_result.map(|()| counts))
+    })
 }
 
 fn apply_fs_timestamps(r: &mut FileRecord, meta: &Metadata) {
@@ -142,7 +222,15 @@ fn apply_fs_timestamps(r: &mut FileRecord, meta: &Metadata) {
     apply_file_identity(r, meta);
 }
 
-fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
+fn build_record(path: &Path, opts: &ScanOptions, cancelled: &AtomicBool) -> Option<FileRecord> {
+    let check_cancelled = || {
+        if cancelled.load(Ordering::Relaxed) {
+            None
+        } else {
+            Some(())
+        }
+    };
+    check_cancelled()?;
     let mut r = FileRecord {
         schema_version: 1,
         identity: IdentityInfo {
@@ -160,12 +248,13 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
         Ok(m) => m,
         Err(e) => {
             r.error = Some(e.to_string());
-            return r;
+            return Some(r);
         }
     };
     r.identity.size = meta.len();
     apply_fs_timestamps(&mut r, &meta);
 
+    check_cancelled()?;
     if opts.sniff_format {
         match sniff_file(path) {
             Ok(s) => {
@@ -180,6 +269,7 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
         }
     }
 
+    check_cancelled()?;
     match &opts.xxhash {
         XxhashMode::Off => {
             if let Some(h) = r.hashes.as_mut() {
@@ -204,6 +294,7 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
         },
     }
 
+    check_cancelled()?;
     if opts.sha256 {
         match hash_file_sha256_hex(path) {
             Ok(h) => {
@@ -213,6 +304,7 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
             Err(e) => r.error = Some(format!("sha256: {e}")),
         }
     }
+    check_cancelled()?;
     if opts.md5 {
         match hash_file_md5_hex(path) {
             Ok(h) => {
@@ -224,21 +316,25 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
     }
 
     if opts.metadata_static {
+        check_cancelled()?;
         if is_image_path(path) {
             if let Some(e) = read_exif(path) {
                 r.meta.get_or_insert_with(MetaInfo::default).exif = Some(map_exif(e));
             }
         }
+        check_cancelled()?;
         if is_audio_path(path) {
             if let Some(a) = read_audio_tags(path) {
                 r.meta.get_or_insert_with(MetaInfo::default).audio = Some(map_audio(a));
             }
         }
+        check_cancelled()?;
         if path.extension().and_then(|e| e.to_str()) == Some("pdf") {
             if let Some(p) = read_pdf_info(path) {
                 r.meta.get_or_insert_with(MetaInfo::default).pdf = Some(map_pdf(p));
             }
         }
+        check_cancelled()?;
         if path.extension().and_then(|e| e.to_str()) == Some("docx") {
             if let Some(d) = read_docx_core(path) {
                 r.meta.get_or_insert_with(MetaInfo::default).docx = Some(map_docx(d));
@@ -246,12 +342,14 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
         }
     }
 
+    check_cancelled()?;
     if opts.video_ffprobe && is_video_path(path) {
         if let Some(v) = read_video_ffprobe(path, &FfprobeOptions::default()) {
             r.meta.get_or_insert_with(MetaInfo::default).video = Some(map_video(v));
         }
     }
 
+    check_cancelled()?;
     if opts.phash && is_image_path(path) {
         match phash_u64(path) {
             Ok(h) => r.meta.get_or_insert_with(MetaInfo::default).phash = Some(h),
@@ -288,7 +386,8 @@ fn build_record(path: &Path, opts: &ScanOptions) -> FileRecord {
         r.meta = None;
     }
 
-    r
+    check_cancelled()?;
+    Some(r)
 }
 
 #[cfg(unix)]
@@ -390,6 +489,194 @@ mod tests {
     use std::path::PathBuf;
     use tempfile::tempdir;
     use tempfile::NamedTempFile;
+
+    fn record() -> FileRecord {
+        let mut rec = FileRecord::default();
+        rec.identity.size = 3;
+        rec
+    }
+
+    #[test]
+    fn delivers_before_producer_finishes_on_calling_thread_without_send_callbacks() {
+        use std::cell::Cell;
+        use std::rc::Rc;
+        let caller = std::thread::current().id();
+        let delivered = Rc::new(Cell::new(false));
+        let state = delivered.clone();
+        let (ack_tx, ack_rx) = mpsc::channel();
+        let counts = consume_records(
+            move |tx, _| {
+                tx.send(record()).unwrap();
+                ack_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+                Ok(())
+            },
+            &mut || false,
+            &mut |_| assert_eq!(std::thread::current().id(), caller),
+            &mut |_| {
+                assert_eq!(std::thread::current().id(), caller);
+                state.set(true);
+                ack_tx.send(()).unwrap();
+                Ok(())
+            },
+        )
+        .unwrap();
+        assert!(delivered.get());
+        assert_eq!(counts, (1, 3));
+    }
+
+    #[test]
+    fn queue_is_bounded_and_callback_failure_joins_blocked_producer() {
+        let attempted = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let finished = Arc::new(AtomicBool::new(false));
+        let attempts = attempted.clone();
+        let done = finished.clone();
+        let (full_tx, full_rx) = mpsc::channel();
+        let result = consume_records(
+            move |tx, _| {
+                for i in 0..1000 {
+                    attempts.store(i + 1, Ordering::SeqCst);
+                    if i == RECORD_QUEUE_CAPACITY + 1 {
+                        full_tx.send(()).unwrap();
+                    }
+                    if tx.send(record()).is_err() {
+                        break;
+                    }
+                }
+                done.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+            &mut || false,
+            &mut |_| {},
+            &mut |_| {
+                // One record is held by this callback, 256 are queued and the
+                // next send is attempted but cannot complete until we return.
+                full_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+                assert_eq!(attempted.load(Ordering::SeqCst), RECORD_QUEUE_CAPACITY + 2);
+                Err(std::io::Error::other("callback failure").into())
+            },
+        );
+        assert!(result.is_err());
+        assert!(finished.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn cancellation_while_queue_empty_stops_and_joins_producer() {
+        let finished = Arc::new(AtomicBool::new(false));
+        let done = finished.clone();
+        let start = std::time::Instant::now();
+        let mut polls = 0;
+        let result = consume_records(
+            move |_tx, cancelled| {
+                while !cancelled.load(Ordering::Relaxed) {
+                    std::thread::yield_now();
+                }
+                done.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+            &mut || {
+                polls += 1;
+                polls > 2
+            },
+            &mut |_| panic!("unexpected progress"),
+            &mut |_| panic!("unexpected record"),
+        )
+        .unwrap();
+        assert_eq!(result, (0, 0));
+        assert!(finished.load(Ordering::SeqCst));
+        assert!(start.elapsed() < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn cancellation_returns_only_successfully_delivered_counts() {
+        let delivered = std::cell::Cell::new(0);
+        let result = consume_records(
+            |tx, _| {
+                for _ in 0..1000 {
+                    if tx.send(record()).is_err() {
+                        break;
+                    }
+                }
+                Ok(())
+            },
+            &mut || delivered.get() == 2,
+            &mut |_| {},
+            &mut |_| {
+                delivered.set(delivered.get() + 1);
+                Ok(())
+            },
+        )
+        .unwrap();
+        assert_eq!(result, (2, 6));
+    }
+
+    #[test]
+    fn producer_error_is_returned_after_join() {
+        let result = consume_records(
+            |_tx, _| Err(std::io::Error::other("producer failure").into()),
+            &mut || false,
+            &mut |_| {},
+            &mut |_| Ok(()),
+        );
+        assert!(result.unwrap_err().to_string().contains("producer failure"));
+    }
+
+    #[test]
+    fn progress_cancellation_does_not_count_or_deliver_record() {
+        let stop = std::cell::Cell::new(false);
+        let result = consume_records(
+            |tx, _| {
+                let _ = tx.send(record());
+                Ok(())
+            },
+            &mut || stop.get(),
+            &mut |_| stop.set(true),
+            &mut |_| panic!("record delivered after cancellation"),
+        )
+        .unwrap();
+        assert_eq!(result, (0, 0));
+    }
+
+    #[test]
+    fn callback_panic_unblocks_and_joins_producer() {
+        let finished = Arc::new(AtomicBool::new(false));
+        let done = finished.clone();
+        let result = std::panic::catch_unwind(|| {
+            let _ = consume_records(
+                move |tx, _| {
+                    while tx.send(record()).is_ok() {}
+                    done.store(true, Ordering::SeqCst);
+                    Ok(())
+                },
+                &mut || false,
+                &mut |_| {},
+                &mut |_| panic!("callback panic"),
+            );
+        });
+        assert!(result.is_err());
+        assert!(finished.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn pre_cancelled_scan_does_not_start_producer() {
+        let result = consume_records(
+            |_tx, _| -> Result<(), ScanError> { panic!("producer started after cancellation") },
+            &mut || true,
+            &mut |_| panic!("unexpected progress"),
+            &mut |_| panic!("unexpected record"),
+        )
+        .unwrap();
+        assert_eq!(result, (0, 0));
+    }
+
+    #[test]
+    fn cancelled_extraction_produces_no_record() {
+        assert!(build_record(
+            Path::new("missing"),
+            &ScanOptions::default(),
+            &AtomicBool::new(true)
+        )
+        .is_none());
+    }
 
     #[test]
     fn apply_fs_timestamps_sets_modified_at_for_temp_file() {

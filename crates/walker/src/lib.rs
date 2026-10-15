@@ -6,4 +6,4 @@ mod walk;
 
 pub use checkpoint::Checkpoint;
 pub use filter::{config_hash, FilterOptions};
-pub use walk::{walk_roots_fn, WalkError, WalkMode, WalkOutcome};
+pub use walk::{walk_roots_cancellable_fn, walk_roots_fn, WalkError, WalkMode, WalkOutcome};
