@@ -14,17 +14,10 @@ fn preferred_record_matches_pre_change_golden() {
     let mut bytes = Vec::new();
     scan(&opts, &mut bytes).unwrap();
     let mut actual: Value = serde_json::from_slice(&bytes).unwrap();
-    let baseline: Value = serde_json::from_str(include_str!(
-        "../../../docs/follow-up/baseline-contracts.json"
-    ))
-    .unwrap();
-    let mut expected = baseline["preferred"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|v| v["name"] == "hello.txt")
-        .unwrap()
-        .clone();
+    // Copied from the immutable phase-1 baseline-contracts.json preferred
+    // hello.txt record, kept in-package for cargo package verification.
+    let mut expected: Value =
+        serde_json::from_str(include_str!("fixtures/preferred-record.json")).unwrap();
     for key in ["source", "device", "directory", "name", "extension"] {
         expected.as_object_mut().unwrap().remove(key);
     }

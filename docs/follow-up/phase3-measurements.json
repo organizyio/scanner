@@ -1,0 +1,28 @@
+{
+  "catalog_source_commit": "d7bbf02895640ae249b44dfed11cecb2d73e134d",
+  "fixture_bytes": 16777216,
+  "fixture_files": 4096,
+  "measurements": [
+    {
+      "cancellation_seconds": null,
+      "elapsed_seconds": 0.19022356893401593,
+      "exit": 0,
+      "interrupted": false,
+      "peak_rss_bytes": 9162752,
+      "records": 4096,
+      "time_to_first_record_seconds": 0.016628947923891246
+    },
+    {
+      "cancellation_seconds": 0.01723282504826784,
+      "elapsed_seconds": null,
+      "exit": 130,
+      "interrupted": true,
+      "peak_rss_bytes": null,
+      "records": 4,
+      "time_to_first_record_seconds": null
+    }
+  ],
+  "notes": "Local debug build; no cross-host performance or release claim. Cancellation starts after first record; baseline traversal may already be complete.",
+  "platform": "Darwin-x86_64",
+  "source_commit": "1d7e43a21cee585b9cdb798c9e2609413a45a140"
+}
