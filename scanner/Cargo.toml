@@ -4,7 +4,7 @@ version = "0.2.3"
 edition = "2021"
 rust-version = "1.88"
 description = "Public facade for the Archivist filesystem scanner (scan API and FileRecord types)."
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/organizyio/scanner"
 readme = "../README.md"
 
