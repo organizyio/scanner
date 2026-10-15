@@ -47,7 +47,6 @@ jobs:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
 
       - name: Resolve version
         id: version
@@ -207,7 +206,6 @@ jobs:
           ref: ${{ steps.meta.outputs.checkout_ref }}
 
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - name: Locked metadata and tests
         run: |
           cargo fetch --locked
@@ -220,10 +218,8 @@ jobs:
         run: |
           rustup toolchain install nightly --profile minimal --no-self-update
           cargo +nightly -Zminimal-versions check --workspace --all-targets
-      - name: Semver vs crates.io (optional)
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-semver-checks@0.47.0
+      - name: Install pinned semver checker
+        run: cargo install cargo-semver-checks --version 0.47.0 --locked
       - name: cargo-semver-checks
         run: cargo semver-checks check-release -p scanner-core
         continue-on-error: true
@@ -248,7 +244,6 @@ jobs:
           ref: ${{ needs.preflight.outputs.checkout_ref }}
 
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - name: Build release binary
         run: cargo build --locked --release -p scanfs
       - name: Stage artifact (Unix)
@@ -282,12 +277,11 @@ jobs:
         run: |
           mkdir -p release-assets
           find artifacts -type f \( -name 'scanfs-*' -o -name 'scanfs-*.exe' \) -exec cp {} release-assets/ \;
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.preflight.outputs.tag_name }}
-          files: release-assets/*
+      - name: Publish explicitly requested release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.preflight.outputs.tag_name }}
+        run: gh release create "$RELEASE_TAG" release-assets/* --verify-tag --generate-notes
 
   publish-crate:
     name: Publish crates to crates.io
@@ -301,7 +295,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.preflight.outputs.checkout_ref }}
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
       - name: Publish workspace crates (ordered)
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
