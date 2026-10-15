@@ -104,6 +104,29 @@ int main(void) {
     [w release];
     drainUntil(&completed);
     assert(atomic_load(&created) == atomic_load(&freed));
+    // Simulate OnStopped after the native event loop drained. Background Close
+    // must return even while the owner is deliberately not pumping its queue.
+    w = window();
+    h = scanner_platform_attach((uintptr_t)w);
+    assert(h);
+    int before = atomic_load(&freed);
+    atomic_store(&completed, 0);
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+      scanner_platform_close(h, 0);
+      scanner_platform_release(h);
+      atomic_store(&completed, 1);
+    });
+    for (int i = 0; i < 500 && !atomic_load(&completed); i++)
+      usleep(1000);
+    assert(atomic_load(&completed));
+    assert(atomic_load(&freed) == before);
+    // The retained native owner performs actual destruction when it resumes.
+    __block atomic_int drained = 0;
+    dispatch_async(dispatch_get_main_queue(), ^{ atomic_store(&drained, 1); });
+    drainUntil(&drained);
+    assert(atomic_load(&freed) == before + 1);
+    [w close];
+    [w release];
     // A queued attach must compare live addresses before dereferencing a closed
     // window.
     w = window();

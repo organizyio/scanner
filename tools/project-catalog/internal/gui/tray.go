@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"context"
 	"scan-projects/internal/controller"
 
 	"fyne.io/fyne/v2"
@@ -11,6 +12,10 @@ import (
 )
 
 func SetupTray(a fyne.App, w fyne.Window, ctrl *controller.Controller) {
+	setupTray(a, w, ctrl, newQuitAction(context.Background(), ctrl.Cancel, ctrl.IsRunning, fyne.Do, a.Quit), func() bool { return true })
+}
+
+func setupTray(a fyne.App, w fyne.Window, ctrl *controller.Controller, quit func(), canStart func() bool) {
 	desk, ok := a.(desktop.App)
 	if !ok {
 		// Not a desktop platform (mobile/web), no tray support
@@ -27,6 +32,9 @@ func SetupTray(a fyne.App, w fyne.Window, ctrl *controller.Controller) {
 		}),
 		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Start", func() {
+			if !canStart() {
+				return
+			}
 			if err := ctrl.Start(false); err != nil {
 				dialog.ShowError(err, w)
 			}
@@ -35,10 +43,7 @@ func SetupTray(a fyne.App, w fyne.Window, ctrl *controller.Controller) {
 		fyne.NewMenuItem("Resume", func() { ctrl.Resume() }),
 		fyne.NewMenuItem("Cancel", func() { ctrl.Cancel() }),
 		fyne.NewMenuItemSeparator(),
-		fyne.NewMenuItem("Exit", func() {
-			ctrl.Cancel()
-			a.Quit()
-		}),
+		fyne.NewMenuItem("Exit", quit),
 	)
 
 	desk.SetSystemTrayMenu(menu)

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	fynetest "fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -267,5 +268,42 @@ func TestFolderTreeHasDistinctVisibleFocusWithoutChangingSelection(t *testing.T)
 	window.Canvas().Focus(tree)
 	if !renderer.border.Visible() || tree.selected != selected {
 		t.Fatal("returning focus did not restore boundary independently of selection")
+	}
+}
+
+func TestQuitShortcutWorksWithModalButNotAfterWindowLifecycle(t *testing.T) {
+	app := fynetest.NewApp()
+	defer app.Quit()
+	window := fynetest.NewWindow(widget.NewLabel("Synthetic"))
+	defer window.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	calls := 0
+	registerQuitShortcut(ctx, window, func() { calls++ })
+	dispatcher, ok := window.Canvas().(interface{ TypedShortcut(fyne.Shortcut) })
+	if !ok {
+		t.Fatal("test canvas does not dispatch shortcuts")
+	}
+	popup := widget.NewModalPopUp(widget.NewLabel("Synthetic modal"), window.Canvas())
+	popup.Show()
+	defer popup.Hide()
+	shortcut := &desktop.CustomShortcut{KeyName: fyne.KeyQ, Modifier: fyne.KeyModifierShortcutDefault}
+	dispatcher.TypedShortcut(shortcut)
+	if calls != 1 {
+		t.Fatal("modal prevented explicit application quit")
+	}
+	menuQuit := window.MainMenu().Items[0].Items[0]
+	if !menuQuit.IsQuit {
+		t.Fatal("native application menu lacks explicit quit action")
+	}
+	menuQuit.Action()
+	if calls != 2 {
+		t.Fatal("native menu bypassed application quit")
+	}
+	cancel()
+	dispatcher.TypedShortcut(shortcut)
+	menuQuit.Action()
+	if calls != 2 {
+		t.Fatal("closed window dispatched quit")
 	}
 }

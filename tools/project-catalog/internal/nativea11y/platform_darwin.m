@@ -97,8 +97,19 @@ char *scanner_platform_poll(void *opaque, uintptr_t window) {
 }
 void scanner_platform_close(void *opaque, uintptr_t window) {
   MacHandle *h = opaque;
-  onMain(^{
+  if ([NSThread isMainThread]) {
     h->closed = 1;
     finishMac(h);
+    return;
+  }
+  // Fyne's OnStopped callback can run after the native loop has drained while
+  // the OS main thread waits for that callback. Never synchronously dispatch
+  // from this fallback. Keep the control/window alive until its owner can run
+  // cleanup; if the owner never resumes, retain safely until process exit.
+  scanner_platform_retain(h);
+  dispatch_async(dispatch_get_main_queue(), ^{
+    h->closed = 1;
+    finishMac(h);
+    scanner_platform_release(h);
   });
 }

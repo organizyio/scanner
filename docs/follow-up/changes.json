@@ -167,7 +167,7 @@
         "go test -mod=readonly -race ./internal/gui",
         "go build -mod=readonly ./cmd/scan-gui"
       ],
-      "current_sha256": "ede28acc35ef60279bc9e0a623d843646515bfbdd307a780a8524eb1eb39e759"
+      "current_sha256": "51e110caa07aadba9cf55e458bfee93693b6d48ceac4dd1568458d3cfd9b00e1"
     },
     "tools/project-catalog/internal/gui/window.go": {
       "phase": 4,
@@ -177,7 +177,7 @@
         "headless Go characterization and vet",
         "native platform qualification recorded separately"
       ],
-      "current_sha256": "7c5b1318861810c7a823553cc9534749886ecb4e9241bdcfdd12b4c95dbf2ee1"
+      "current_sha256": "0a648cd9a8827b5621034d52df875e8df18b5f3edd77d50027e6bc589c962afe"
     },
     "tools/project-catalog/internal/markers/deep.go": {
       "phase": 2,
@@ -355,7 +355,7 @@
         "headless Go characterization and vet",
         "native platform qualification recorded separately"
       ],
-      "current_sha256": "bbe1ef7a199c9005028f6f3eb03a022af67b22bd86d0cdc92fce4baed4a04ee5"
+      "current_sha256": "1d00dee8b4cc1f6921757de2134897451bf0561590bc9fbe3d548d6f2a1a52d8"
     },
     "tools/project-catalog/internal/pipeline/deep.go": {
       "phase": 4,

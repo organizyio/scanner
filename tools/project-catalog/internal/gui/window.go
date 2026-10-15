@@ -5,6 +5,7 @@ package gui
 import (
 	"context"
 	"scan-projects/internal/controller"
+	"sync/atomic"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -17,20 +18,27 @@ import (
 func Run(a fyne.App, ctrl *controller.Controller) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cleanupAccessibility := func() {}
-	defer func() { cleanupAccessibility(); cancel() }()
-	a.Lifecycle().SetOnStopped(func() { cleanupAccessibility(); cancel(); ctrl.Cancel() })
+	defer func() { cancel(); cleanupAccessibility() }()
+	a.Lifecycle().SetOnStopped(func() { cancel(); cleanupAccessibility(); ctrl.Cancel() })
 	w := a.NewWindow("Scanner")
 	w.SetOnClosed(func() { cleanupAccessibility(); cancel(); ctrl.Cancel() })
 	w.Resize(fyne.NewSize(1200, 720))
 
 	refreshActions := func() {}
+	var quitting atomic.Bool
 	startBtn := widget.NewButton("Start", func() {
+		if quitting.Load() {
+			return
+		}
 		if err := ctrl.Start(false); err != nil {
 			dialog.ShowError(err, w)
 		}
 		refreshActions()
 	})
 	startResBtn := widget.NewButton("Start (Resume)", func() {
+		if quitting.Load() {
+			return
+		}
 		if err := ctrl.Start(true); err != nil {
 			dialog.ShowError(err, w)
 		}
@@ -40,10 +48,33 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	resumeBtn := widget.NewButton("Resume", func() { ctrl.Resume(); refreshActions() })
 	cancelBtn := widget.NewButton("Cancel", func() { ctrl.Cancel(); refreshActions() })
 
-	addFolderBtn := widget.NewButton("Add Folder", func() { ShowFolderPicker(ctx, w, ctrl, nil) })
+	addFolderBtn := widget.NewButton("Add Folder", func() {
+		if !quitting.Load() {
+			ShowFolderPicker(ctx, w, ctrl, nil)
+		}
+	})
+	finishQuit := newQuitAction(ctx, ctrl.Cancel, ctrl.IsRunning, fyne.Do, func() {
+		cleanupAccessibility()
+		cancel()
+		a.Quit()
+	})
+	var quitBtn *widget.Button
+	quit := func() {
+		if !quitting.CompareAndSwap(false, true) {
+			return
+		}
+		quitBtn.SetText("Quitting: waiting for scan checkpoint")
+		quitBtn.Disable()
+		refreshActions()
+		finishQuit()
+	}
+	quitBtn = widget.NewButton("Quit", quit)
+	registerQuitShortcut(ctx, w, quit)
 	profiles := NewProfilesSelect(ctx, w, ctrl)
 	settingsBtn := widget.NewButton("Settings", func() {
-		ShowConfigEditor(ctx, w, ctrl)
+		if !quitting.Load() {
+			showConfigEditor(ctx, w, ctrl, quit)
+		}
 	})
 
 	top := container.NewHBox(
@@ -51,7 +82,7 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 		widget.NewSeparator(),
 		addFolderBtn, widget.NewLabel("Profile:"),
 		profiles,
-		settingsBtn,
+		settingsBtn, quitBtn,
 	)
 
 	details := widget.NewLabel("Select a folder")
@@ -63,7 +94,7 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	split.Offset = 0.42
 
 	status := NewProgressPanel(ctx, ctrl)
-	shortcutHelp := widget.NewLabel("Ctrl/Cmd: O Add Folder · S Start · Shift+S Resume Scan · P Pause · R Resume · K Cancel · B Profiles · L Folders · , Settings")
+	shortcutHelp := widget.NewLabel("Ctrl/Cmd: O Add Folder · S Start · Shift+S Resume Scan · P Pause · R Resume · K Cancel · B Profiles · L Folders · , Settings · Q Quit")
 	shortcutHelp.Wrapping = fyne.TextWrapWord
 
 	content := container.NewBorder(top, container.NewVBox(shortcutHelp, status), nil, nil, split)
@@ -98,6 +129,7 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	refreshActions = func() {
 		running, paused := ctrl.IsRunning(), ctrl.IsPaused()
 		canceling := ctrl.Progress().State() == "canceling"
+		stopping := quitting.Load()
 		setEnabled := func(button *widget.Button, enabled bool) {
 			if enabled {
 				button.Enable()
@@ -105,13 +137,13 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 				button.Disable()
 			}
 		}
-		setEnabled(startBtn, !running)
-		setEnabled(startResBtn, !running)
-		setEnabled(pauseBtn, running && !paused && !canceling)
-		setEnabled(resumeBtn, running && paused && !canceling)
-		setEnabled(cancelBtn, running && !canceling)
-		setEnabled(addFolderBtn, !running)
-		if running {
+		setEnabled(startBtn, !running && !stopping)
+		setEnabled(startResBtn, !running && !stopping)
+		setEnabled(pauseBtn, running && !paused && !canceling && !stopping)
+		setEnabled(resumeBtn, running && paused && !canceling && !stopping)
+		setEnabled(cancelBtn, running && !canceling && !stopping)
+		setEnabled(addFolderBtn, !running && !stopping)
+		if running || stopping {
 			profiles.Disable()
 		} else {
 			profiles.Enable()
@@ -122,7 +154,7 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	w.Canvas().Focus(startBtn)
 
 	cleanupAccessibility = attachWindowAccessibility(ctx, w)
-	SetupTray(a, w, ctrl)
+	setupTray(a, w, ctrl, quit, func() bool { return !quitting.Load() })
 	SetupCloseToTray(w)
 
 	w.ShowAndRun()

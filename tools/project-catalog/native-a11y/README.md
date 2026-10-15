@@ -76,6 +76,14 @@ clang -std=c11 -fblocks native-a11y/tests/macos_lifecycle.m \
 /tmp/scanner-macos-lifecycle
 ```
 
+macOS closes synchronously on the native owner. A background shutdown callback
+uses retained asynchronous owner cleanup because Fyne may call it after its
+native loop has stopped while the main thread waits for lifecycle callbacks.
+The regression proves background Close returns without an event pump and that
+resuming the owner frees the bridge exactly once. If the native loop never
+resumes, resources remain safely retained until process exit; this is not a
+claim that every shutdown path drains native cleanup.
+
 Linux checked X11 stale-window regression (actual X11 or an isolated Xvfb):
 
 ```sh

@@ -52,6 +52,10 @@ func NewProfilesSelect(ctx context.Context, parent fyne.Window, ctrl *controller
 }
 
 func ShowConfigEditor(parentCtx context.Context, parent fyne.Window, ctrl *controller.Controller) {
+	showConfigEditor(parentCtx, parent, ctrl, newQuitAction(parentCtx, ctrl.Cancel, ctrl.IsRunning, fyne.Do, fyne.CurrentApp().Quit))
+}
+
+func showConfigEditor(parentCtx context.Context, parent fyne.Window, ctrl *controller.Controller, quit func()) {
 	p := ctrl.Profiles().Active()
 
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -59,6 +63,7 @@ func ShowConfigEditor(parentCtx context.Context, parent fyne.Window, ctrl *contr
 	cleanupAccessibility := func() {}
 	w.SetOnClosed(func() { cleanupAccessibility(); cancel() })
 	w.Resize(fyne.NewSize(900, 680))
+	registerQuitShortcut(ctx, w, quit)
 	saveStatus := widget.NewLabel("")
 	saveStatus.Wrapping = fyne.TextWrapWord
 	if err := ctrl.Profiles().LastError(); err != nil {
