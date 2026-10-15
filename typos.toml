@@ -1,4 +1,8 @@
 # https://github.com/crate-ci/typos — identifiers not in default dictionary.
+[default]
+# Preserve Windows whoami's documented "/fo" output-format flag.
+extend-ignore-re = ['"/fo"']
+
 [default.extend-identifiers]
 scanfs = "scanfs"
 xxhash = "xxhash"

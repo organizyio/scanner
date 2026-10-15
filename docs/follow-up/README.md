@@ -7,10 +7,10 @@ Owner-approved implementation specification, 2026-10-15. Sole owner: @ArmanAvane
 | Phase | Required evidence | Implementation | Platform/consumer qualification | Release |
 | --- | --- | --- | --- | --- |
 | 1: contracts and licensing | Immutable baseline checks, golden fixtures, measured synthetic baseline, owner licensing grant | Merged ([PR #6](https://github.com/organizyio/scanner/pull/6)) | Baseline only | Not accepted |
-| 2: Go discovery | Worktrees/submodules; timeout/cancel; null unknown dirty; safe logger; sanitized remotes; shared markers; honest timestamps; visible partial results | Implemented; in review | Pending | Not accepted |
-| 3: preferred execution | Queue bound 256; caller-thread callbacks; 100ms cancellation polling; stage checks; joined workers and failure cleanup | Implemented; in review | Deterministic execution tests passed; native/consumer qualification pending | Not accepted |
-| 4: platforms and Fyne | CLI matrix plus actual ACL denial; interactive GUI/keyboard/accessibility on macOS, Linux and Windows | Pending | Pending; compile success is insufficient | Not accepted |
-| 5: consumers | Exact-main candidate; real engine; fixture enrollment/inventory; isolated published Organizy Cargo patches; rollback; Archivist boundary | Pending | Pending; production pins unchanged | Not accepted |
+| 2: Go discovery | Worktrees/submodules; timeout/cancel; null unknown dirty; safe logger; sanitized remotes; shared markers; honest timestamps; visible partial results | Merged ([PR #8](https://github.com/organizyio/scanner/pull/8)) | Regression and native CLI checks passed; GUI gates remain separate | Not accepted |
+| 3: preferred execution | Queue bound 256; caller-thread callbacks; 100ms cancellation polling; stage checks; joined workers and failure cleanup | Merged ([PR #7](https://github.com/organizyio/scanner/pull/7)) | Deterministic execution and documented consumer flows qualified; broader native gates remain | Not accepted |
+| 4: platforms and Fyne | CLI matrix plus actual ACL denial; interactive GUI/keyboard/accessibility on macOS, Linux and Windows | Native harness implemented | [CLI passed; GUI partial; native accessibility failed](platform-qualification.md) | Not accepted |
+| 5: consumers | Exact-main candidate; real engine; fixture enrollment/inventory; isolated published Organizy Cargo patches; rollback; Archivist boundary | Qualification harness merged | Exact reviewed candidate qualified for documented flows; private results retained; production pins unchanged | Not accepted |
 
 Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only after exact-head checks pass. Missing native evidence keeps qualification pending rather than converting compilation into acceptance. Runtime convergence and publishing/releases are excluded.
 
