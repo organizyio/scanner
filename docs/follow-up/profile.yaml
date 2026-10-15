@@ -1,0 +1,15 @@
+active_profile: Fixture
+profiles:
+    Fixture:
+        name: Fixture
+        scan_roots:
+            - path: synthetic-root
+              enabled: true
+        exclude_dirs:
+            - excluded
+        max_file_size_mb: 2
+        hash_files: true
+        hash_max_file_size_mb: 8
+        project_detection: true
+        checkpoint_enabled: true
+        checkpoint_path: checkpoint.json

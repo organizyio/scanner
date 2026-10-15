@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"scan-projects/internal/scan"
+	"scan-projects/internal/scan/checkpoint"
+	"scan-projects/internal/storage"
 	"sort"
 	"testing"
 )
@@ -64,5 +66,20 @@ func TestCatalogAndDeepGoldenShapes(t *testing.T) {
 			}
 			break
 		}
+	}
+}
+
+func TestHistoricalProfileAndCheckpointGolden(t *testing.T) {
+	cfg, err := storage.LoadYAML[storage.AppConfig]("../../../../docs/follow-up/profile.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := storage.ScanProfile{Name: "Fixture", ScanRoots: []storage.ScanRoot{{Path: "synthetic-root", Enabled: true}}, ExcludeDirs: []string{"excluded"}, MaxFileSizeMB: 2, HashFiles: true, HashMaxFileSizeMB: 8, ProjectDetection: true, CheckpointEnabled: true, CheckpointPath: "checkpoint.json"}
+	if cfg.ActiveProfile != "Fixture" || len(cfg.Profiles) != 1 || !reflect.DeepEqual(cfg.Profiles["Fixture"], expected) {
+		t.Fatalf("profile golden changed: %+v", cfg)
+	}
+	cp, ok := checkpoint.Load("../../../../docs/follow-up/checkpoint.json")
+	if !ok || cp.LastPath != "synthetic-root/hello.txt" || cp.UpdatedAt != "2026-10-15T00:00:00Z" {
+		t.Fatalf("checkpoint golden changed: %+v", cp)
 	}
 }
