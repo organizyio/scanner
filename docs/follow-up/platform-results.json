@@ -167,5 +167,104 @@
     },
     "release_acceptance": false,
     "runtime_convergence": false
-  }
+  },
+  "completion_candidate_run": {
+    "source_revision": "79c62aea833c76f161a1742fa3cc1e4b216e6201",
+    "qualification_status": "Available host flows qualified within recorded scope; additional-host and hardware-renderer gates remain pending",
+    "formal_phase_completion": false,
+    "host_versions": {
+      "macos-x86_64": "macOS 15.7.9 (24G830), Intel x86_64; Go 1.27.2; actual 1x display",
+      "linux-x86_64": "Ubuntu 24.04.5; Linux 6.17.0-1033-oem; Go 1.27.0; GNOME Wayland/Xwayland; software OpenGL renderer",
+      "windows-x86_64": "Windows 10.0.26300.0; PowerShell 5.1.26100.9711; Go 1.26.2"
+    },
+    "gui_binary_sha256": {
+      "macos-x86_64": "7aea484ce34d39f37d2e1620d189e64015ac0c08aef191eed04ff043a720061c",
+      "linux-x86_64": "ffe8adef0589b07f2bb26d1391a6a29a283a5fa097e951bf65a1bd26eb84a1ed",
+      "windows-x86_64": "34a4c7c350af121a13e6540983c1361d8d33bccec2f8cba3d221fd409e0f679d"
+    },
+    "cli_binary_sha256": {
+      "macos-x86_64": "0db112d8c127eec6995dfdd0358a53008825a05bf6615600285cfeae2bef993a",
+      "linux-x86_64": "bbbcde643c2927360327b5c7019fa9e214bab4b89f633c9150e8df4ee7c2ac61",
+      "windows-x86_64": "b259f12787bcc1cb6b577c8136a68f1821ed257dd5b4e57590b80bd5280ce342"
+    },
+    "filesystem_and_cli": "Rebuilt native CLI from exact d572 source on all three hosts. All Go source/module file hashes match that commit. Four deterministic native filesystem probes, fs interruption and strict native access-denial/Unicode checks passed on all three hosts. Windows console sharing denial passed with associated diagnostic and explicit affected hash-error record; POSIX advisory-lock behavior remains not applicable.",
+    "gui": {
+      "macos-x86_64": "Final native AX press/focus/value, picker error/recovery and root persistence, readable actual permission warning, keyboard tree/details and distinct visual focus passed. Earlier tiny-FIFO pause/resume/cancel and process-restart partial-resume evidence retained separately; controller/scan code unchanged specifically between 515adec and d572dec, final native status replay passed.",
+      "windows-x86_64": "Final native UIA Invoke/Value/focus, picker error/recovery, Unicode root persistence, keyboard selected/focused row plus details, profile switch/restore, process restart/settings/partial resume and distinct visual focus passed. Pause/resume/cancel evidence from 515adec retained with controller/scan source unchanged specifically between 515adec and d572dec.",
+      "linux-x86_64": "Final actual AT-SPI Text/EditableText/actions/focus, error/recovery, root persistence, tree/details, profiles and native wire passed on private memory-only bus with LIBGL_ALWAYS_SOFTWARE=1. Silent Orca observed app/error/tree focus; zero cache signature warnings and parent lookup exceptions. Lifecycle and process restart evidence recorded by the completion harness."
+    },
+    "reader_scope": "Native control exposure/actions/text and silent Orca navigation evidence only; spoken announcements, caret and selection semantics are not qualified.",
+    "linux_cache_regression": "Actual private D-Bus positive test passed; isolated unpatched negative control failed as expected. Actual GUI GetItems/AddAccessible/RemoveAccessible signatures verified.",
+    "pending": [
+      "Interactive macOS arm64 host unavailable; explicitly left pending by owner.",
+      "Actual Retina 2x display unavailable; pure/native transform tests do not replace real-display qualification",
+      "Linux hardware-accelerated host driver run stalled in glfwMakeContextCurrent; software-renderer evidence does not qualify that driver",
+      "Screen-reader spoken announcements and caret/selection behavior remain outside this tested scope"
+    ],
+    "evidence_sha256": {
+      "macos-final-source-binary": "9e8cdab620232eead77d7b3ee34d3845368ca626f1a1f95111b0d635859cb054",
+      "macos-denied-warning": "eaa43ddef4300d5c12dbba4c2d51ac2adeafb71419de465e986cc91f12b067ec",
+      "macos-native-picker-error": "5a7b62ce0a29eced07fd7ef6e09a35c6ea1581dadf274e869fedccb6de63bbf7",
+      "macos-native-picker-recovery": "10f1128873b326a0b09ffe5c71eb3b7125a036e2f6ca2216a0828b6fca090f7a",
+      "macos-visible-tree-focused": "90860655e40e17e78f3f753198dfd7cff96f2df26fd21146da4ffe55fbd0b324",
+      "macos-visible-profile-focused": "b39e1b5e8bb0753077abbcea52967aedfd95b404f571cd4f79e3a00400190e8b",
+      "windows-final-controls": "9bfc8751ff2110dd22acb90c58c9bad88ff76880dc26d3991987559bd8e3005a",
+      "windows-visible-tree-focused": "a70dd3533ddea02ba73a13086639398698da1383a9e7d25e5a2ffc33ffaad1c7",
+      "windows-visible-profile-focused": "28944416f7662d10e3f7a6b7fe0faab957e2ada78e52804025465f04e0323bd3",
+      "linux-final-controls-reader": "8eb33b5354114169c525b2b1ed29d5f94cb7cf817b3c1cdf0268e1a96a293cbb",
+      "linux-host-settings-unchanged": "39a7df3ed92b327d59888bf28822f0267fbe5acb258ee91ffa1e9e5639f9a6bf",
+      "linux-native-cache-wire": "14972fb317f6a7587f91d48b88dcf1d6f517a1dd1917aca344f87a867b3198c4",
+      "linux-visible-tree-focused": "1a8b6ece0e91f340a5d757ee33734cebdc14df6224329024aa27dbca17f7f223",
+      "linux-visible-profile-focused": "9e1be6299d902b65baa524eae3784cdf7721563d29418bdb6d376c015ae66f9a",
+      "linux-native-canceled": "f60366eddca6c9fc1c87616cfe431e17a45f8f21c324603c21fac20f3421041b",
+      "linux-native-restarted": "eaf090e17e87846bb16f7b8037aca5f367853700506260319685afa99b8e47fb",
+      "linux-native-wire-positive": "b04f8537b773a87db04f2914512023b626a149fde32c5916d824eb8419eee7e2",
+      "linux-native-wire-unpatched-negative": "b9f4f68717c4a4c18966e1786bae9aa722e6cd1b010678bb68f99ee4b2c6421f",
+      "macos-final-native-filesystem": "f058e815eb13fc1fa4c765061ea2526788f165e14efc905be7ad4405d7131e24",
+      "macos-final-cli-signals": "8607aab60693680ddb98ee989b654e7917f764f44b70e6c9b84eebd0e42a2a33",
+      "macos-final-cli-denial": "d311fbff1e529296b61e94135f4515d16889e07891b4f77871154b246d02c98a",
+      "linux-final-native-filesystem": "02bd47c7d45060053a7bd49331344ae14825c4e3672fbee1cbf629cec5fdbac3",
+      "linux-final-cli-signals": "516e29c0a786f91f0f01ea78116bdd4d130bfcdb7c6ba71941457537d3056950",
+      "linux-final-cli-denial": "3e3e36c7c48f5df109e2a87fb5ad0efe032fdb274a088f46d47ca7e5a5d0c6c4",
+      "windows-final-native-filesystem": "37233bdf2a949e07142cc57706083fbfe26f4b89cb186933f83c170e298f8a13",
+      "windows-final-cli-signals": "d1135ed7d6895fc1d8532f78adbaf1f02bc9ccdeeb72d012ce0e781d9fe18010",
+      "windows-final-cli-denial-sharing": "982f2dd91f50acf9026e6eb438a14642327a54da510da347bc875d0f89898529",
+      "all-hosts-final-go-source-equivalence": "d54b9d30b5c3ada3e558ee6c8851c706c8bbbe6f58caf4fc0cec1995445a7342",
+      "macos-native-quit-pending": "5991977ab81162c06f56c6194377052308ee3b944d219233b2e7991b1e512bb7",
+      "macos-final-native-active-quit": "ca5c84067cde83c28a4a9d7d035f1d65ce9c41bf73ced4dab1d18cf8366d437a",
+      "macos-final-native-shortcut-quit": "faa1b9868547ae31709e1ec2bfd1795118bcc1f2e2540925939318e3208220e5",
+      "linux-final-native-quit-reader": "30d4dd78b912f6588c9d596b512690dd308a0c287f8c0e7ded94df6d2d31b441",
+      "linux-final-host-settings-unchanged": "39a7df3ed92b327d59888bf28822f0267fbe5acb258ee91ffa1e9e5639f9a6bf",
+      "windows-final-native-quit": "b4cf56d888aceca8e436bb7dff980a724ad12f2afd9116267d6aecb7ac6adaa4",
+      "windows-final-native-shortcut-quit": "488cf0687e512278b19620a27ae3dbaa51df33ccc0557fd37c296b32e76e1dc1",
+      "final-cli-dependency-equivalence": "c17a1eddd041a26215a7f025802cf6b947941e8cbeea3e5d877043c340714908"
+    },
+    "release_acceptance": false,
+    "runtime_convergence": false,
+    "case_disposition": {
+      "UI-A11Y-001": "Resolved for tested native controls/text/actions on three available hosts; reader announcements/caret are separately unqualified.",
+      "UI-WIN-LIFECYCLE-001": "Resolved: bounded lifecycle plus final root edit/settings/process restart evidence.",
+      "UI-RESUME-001": "Resolved for saved-prefix union inclusive-resumed-suffix file/hash inventory; suffix folder aggregates remain partial.",
+      "UI-MAC-RESTART-001": "Resolved by retained actual restart/partial-resume evidence; final status mapping separately replayed.",
+      "CLI-TRANSIENT-001": "Resolved for recorded native disappearance and interruption cases on three hosts.",
+      "UI-KEYBOARD-001": "Resolved for tested controls/tree/profile/picker navigation and distinct focus on available hosts; broader reader behavior not claimed.",
+      "UI-TREE-001": "Resolved for native tree focus/selection/details plus actionable errors.",
+      "UI-FOCUS-GUARD-001": "Resolved by final own-foreground guarded replay; original fail-closed evidence retained.",
+      "UI-MAC-ARM64-001": "Pending interactive ARM64 host.",
+      "UI-MAC-RETINA-001": "Pending actual 2x display.",
+      "UI-LINUX-GPU-001": "Pending hardware-accelerated driver qualification; software renderer qualified.",
+      "UI-MAC-QUIT-001": "Resolved in 17ce: native Quit and Cmd+Q exited 0; active FIFO Quit waited for read release and checkpoint flush. d572 failure remains historical."
+    },
+    "cleanup": "Owned GUI processes and Windows temporary tasks exited or were cleaned; final native Quit probes required exit 0 without forced termination. Linux private sessions stopped and host accessibility state remained unchanged. Synthetic ACLs restored; no user ScannerApp settings changed.",
+    "gui_tested_revision": "17ce6cf3dbf63aa9777a1979db707838d32ea700",
+    "cli_tested_revision": "d572dec045d12066a171805a7e3e163dcf7c705b",
+    "earlier_full_gui_revision": "d572dec045d12066a171805a7e3e163dcf7c705b",
+    "source_equivalence": "CLI dependency Go sources and module manifests are byte-identical from tested d572 to final 79c62a. Final GUI 17ce includes the shutdown fix; subsequent 79c62a changes only exported standalone SetupTray fallback start guarding and its regression/disposition. The main application uses internal setupTray, so its qualified path is unchanged. Earlier d572 full GUI evidence remains separately identified.",
+    "shutdown_followup": {
+      "macos-x86_64": "17ce native Quit during active synthetic FIFO waited for extraction release, flushed checkpoint and exited 0; separate guarded Cmd+Q exited 0. No Fyne wrong-thread warnings on launch, tree refresh or quit. Earlier d572 Cmd+Q failure retained as resolved historical evidence.",
+      "windows-x86_64": "17ce native UIA Quit and Ctrl+Q both exited 0 using retained native process-handle proof after keyboard tree focus/details checks; no forced termination or Fyne wrong-thread warnings.",
+      "linux-x86_64": "17ce full native controls/reader/lifecycle/restart replay plus AT-SPI Quit exited 0 without Fyne wrong-thread warnings; private software-rendered session only."
+    }
+  },
+  "platforms_record_scope": "Historical pre-bridge baseline, retained unchanged. Current results and resolved case dispositions are in completion_candidate_run."
 }

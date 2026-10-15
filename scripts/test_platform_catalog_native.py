@@ -20,6 +20,8 @@ spec_linux.loader.exec_module(linux_session)
 class NativeCatalogTests(unittest.TestCase):
     def test_linux_activation_cannot_use_host_or_persistent_settings(self):
         linux_session.require_private_bus({"GSETTINGS_BACKEND": "memory", "DBUS_SESSION_BUS_ADDRESS": "private"}, "host")
+        with self.assertRaisesRegex(RuntimeError, "private"):
+            linux_session.require_private_bus({"GSETTINGS_BACKEND": "memory", "DBUS_SESSION_BUS_ADDRESS": "private"}, None)
         for env in [{"GSETTINGS_BACKEND": "memory", "DBUS_SESSION_BUS_ADDRESS": "host"},
                     {"GSETTINGS_BACKEND": "dconf", "DBUS_SESSION_BUS_ADDRESS": "private"},
                     {"GSETTINGS_BACKEND": "memory"}]:

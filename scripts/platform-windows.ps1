@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$Binary,
     [Parameter(Mandatory=$true)][string]$Fixture,
     [string]$CliBinary,
-    [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart)(,(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart))*$')]
+    [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart|quit|quitshortcut)(,(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart|quit|quitshortcut))*$')]
     [string]$Actions='start',
     [switch]$Interactive,
     [string]$RunId=''
@@ -103,6 +103,10 @@ public class QualificationWindow {
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out Rect r);
+    [StructLayout(LayoutKind.Sequential)] public struct Point { public int X,Y; }
+    [DllImport("kernel32.dll", SetLastError=true)] public static extern bool GetExitCodeProcess(IntPtr handle, out uint code);
+    [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out Rect r);
+    [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref Point p);
     [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
@@ -130,11 +134,14 @@ public class QualificationWindow {
         [QualificationWindow]::GetWindowThreadProcessId($current, [ref]$owner) | Out-Null
         if ($owner -ne $process.Id) { throw 'Focus left synthetic process; refusing screenshot' }
         $bounds = New-Object QualificationWindow+Rect
-        [QualificationWindow]::GetWindowRect($current, [ref]$bounds) | Out-Null
-        $image = [Drawing.Bitmap]::new(($bounds.Right-$bounds.Left), ($bounds.Bottom-$bounds.Top))
+        $origin = New-Object QualificationWindow+Point
+        if (-not [QualificationWindow]::GetClientRect($current, [ref]$bounds) -or -not [QualificationWindow]::ClientToScreen($current, [ref]$origin)) { throw 'Owned client capture bounds unavailable' }
+        if ($bounds.Right -lt 300 -or $bounds.Bottom -lt 200) { throw 'Owned client window is too small for qualification' }
+        $image = [Drawing.Bitmap]::new($bounds.Right, $bounds.Bottom)
         $canvas = [Drawing.Graphics]::FromImage($image)
         try {
-            $canvas.CopyFromScreen($bounds.Left,$bounds.Top,0,0,$image.Size)
+            $canvas.CopyFromScreen($origin.X,$origin.Y,0,0,$image.Size)
+            if ([QualificationWindow]::GetForegroundWindow() -ne $current) { throw 'Focus changed during capture; image discarded' }
             $image.Save((Join-Path $out $name), [Drawing.Imaging.ImageFormat]::Png)
         } finally { $canvas.Dispose(); $image.Dispose() }
     }
@@ -179,21 +186,42 @@ public class QualificationWindow {
         $values | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 (Join-Path $out $name)
         return $values
     }
+    function Read-NativeStatus {
+        Require-OwnedForeground
+        $nodes = $element.FindAll([System.Windows.Automation.TreeScope]::Subtree, [System.Windows.Automation.Condition]::TrueCondition)
+        foreach ($node in $nodes) {
+            $text = Native-Value $node
+            if ($text -match '^(idle|running|paused|canceling|canceled|finished|error) \| files=') { return $text }
+        }
+        return ''
+    }
     function Wait-NativeStatus([string]$prefix) {
         $deadline = (Get-Date).AddSeconds(10)
         do {
-            $status = Native-Value (Find-NativeControl 'Scan status')
+            $status = Read-NativeStatus
             if ($status -like ($prefix + '*')) { return $status }
             Start-Sleep -Milliseconds 100
         } while ((Get-Date) -lt $deadline)
         throw ('Expected ' + $prefix + ', observed native status: ' + $status)
     }
     $qualified = @{}
+    $quitObserved = $false
     # Use native UIA Invoke actions: changed layouts cannot click another control.
     $names = @{start='Start'; restart='Start (Resume)'; pause='Pause'; resume='Resume'; cancel='Cancel'; settings='Settings'}
     $sequence = 0
     foreach ($action in $Actions.Split(',')) {
-        if ($action -eq 'picker') {
+        if ($action -eq 'quit' -or $action -eq 'quitshortcut') {
+            if ($action -ne $Actions.Split(',')[-1]) { throw 'Quit must be the final action' }
+            Require-OwnedForeground
+            $exitHandle = $process.Handle
+            if ($action -eq 'quit') { Invoke-NativeControl 'Quit' }
+            else { [System.Windows.Forms.SendKeys]::SendWait('^q') }
+            if (-not $process.WaitForExit(8000)) { throw 'Owned native Quit did not terminate within eight seconds' }
+            [uint32]$nativeExitCode = 259
+            if (-not [QualificationWindow]::GetExitCodeProcess($exitHandle, [ref]$nativeExitCode) -or $nativeExitCode -ne 0) { throw ('Owned native Quit returned ' + $nativeExitCode) }
+            $quitObserved = $true
+            $qualified.quit = @{native_action=$action; exit_code=$nativeExitCode; forced=$false}
+        } elseif ($action -eq 'picker') {
             Invoke-NativeControl 'Add Folder'
             Start-Sleep -Milliseconds 500
             $entry = Find-NativeControl 'Folder path: type a path, then Enter or Go'
@@ -222,7 +250,7 @@ public class QualificationWindow {
             $settingsBefore = (Get-FileHash -LiteralPath $settings -Algorithm SHA256).Hash
             if (-not (Test-Path -LiteralPath (Join-Path $Fixture 'checkpoint.json'))) { throw 'No synthetic checkpoint available for restart' }
             Stop-Process -Id $process.Id
-            $process.WaitForExit(5000) | Out-Null
+            if (-not $process.WaitForExit(5000)) { throw 'Owned previous GUI did not stop before restart' }
             $process = Start-Process -FilePath $Binary -PassThru -RedirectStandardError (Join-Path $out 'restart.stderr.txt')
             @{run_id=$RunId; pid=$process.Id; start_ticks=$process.StartTime.ToUniversalTime().Ticks} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'process.json')
             $deadline = (Get-Date).AddSeconds(30)
@@ -281,21 +309,17 @@ public class QualificationWindow {
             Invoke-NativeControl $names[$action]
         }
         Start-Sleep -Seconds 2
-        Save-WindowCapture ('action-{0}-{1}.png' -f $sequence,$action)
+        if (-not $quitObserved) { Save-WindowCapture ('action-{0}-{1}.png' -f $sequence,$action) }
         if ($action -eq 'settings') { $handle = [QualificationWindow]::GetForegroundWindow() }
         $sequence++
     }
     # Input belongs to explicit cases above; final capture never activates a
     # newly focused control or changes settings after its asserted result.
-    Require-OwnedForeground
-    $rect = New-Object QualificationWindow+Rect
-    [QualificationWindow]::GetWindowRect($handle, [ref]$rect) | Out-Null
-    $bitmap = [Drawing.Bitmap]::new(($rect.Right-$rect.Left), ($rect.Bottom-$rect.Top))
-    $graphics = [Drawing.Graphics]::FromImage($bitmap)
-    try {
-        $graphics.CopyFromScreen($rect.Left, $rect.Top, 0, 0, $bitmap.Size)
-        $bitmap.Save((Join-Path $out 'window.png'), [Drawing.Imaging.ImageFormat]::Png)
-    } finally { $graphics.Dispose(); $bitmap.Dispose() }
+    if (-not $quitObserved) {
+        Require-OwnedForeground
+        Save-WindowCapture 'window.png'
+    }
+    if ((Get-Content -LiteralPath (Join-Path $out 'stderr.txt') -Raw) -match 'Error in Fyne call thread') { throw 'Fyne wrong-thread diagnostic observed' }
     @{system='Windows'; architecture=$env:PROCESSOR_ARCHITECTURE; interactive=$true;
       input=$Actions; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
         ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')

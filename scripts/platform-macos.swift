@@ -45,7 +45,7 @@ let before = inspectWindows()
 try JSONSerialization.data(withJSONObject: before, options: [.prettyPrinted, .sortedKeys])
     .write(to: output.appendingPathComponent("accessibility-before.json"))
 if CommandLine.arguments.count > 3 {
-    let codes: [String: CGKeyCode] = ["b": 11, "o": 31, "s": 1, "p": 35, "r": 15, "k": 40, "l": 37, "comma": 43, "a": 0, "tab": 48, "space": 49, "escape": 53, "return": 36,
+    let codes: [String: CGKeyCode] = ["q": 12, "b": 11, "o": 31, "s": 1, "p": 35, "r": 15, "k": 40, "l": 37, "comma": 43, "a": 0, "tab": 48, "space": 49, "escape": 53, "return": 36,
                                     "left": 123, "right": 124, "down": 125, "up": 126]
     NSRunningApplication(processIdentifier: pid)?.activate(options: [.activateAllWindows])
     _ = AXUIElementSetAttributeValue(application, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
@@ -58,9 +58,9 @@ if CommandLine.arguments.count > 3 {
     let separator: Character = CommandLine.arguments[3].contains(";") ? ";" : ","
     for key in CommandLine.arguments[3].split(separator: separator) {
         guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fail("synthetic app lost focus; no input sent") }
-        if key.hasPrefix("axpress:") || key.hasPrefix("axfocus:") || key.hasPrefix("axvalue|") {
+        if key.hasPrefix("axpress:") || key.hasPrefix("axfocus:") || key.hasPrefix("axvalue|") || key.hasPrefix("axhit:") {
             let parts = key.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
-            let title = key.hasPrefix("axvalue|") && parts.count == 3 ? parts[1] : String(key.dropFirst(8))
+            let title = key.hasPrefix("axvalue|") && parts.count == 3 ? parts[1] : String(key.dropFirst(key.hasPrefix("axhit:") ? 6 : 8))
             func find(_ e: AXUIElement) -> AXUIElement? {
                 if value(e, kAXTitleAttribute) as? String == title { return e }
                 for child in value(e, kAXChildrenAttribute) as? [AXUIElement] ?? [] {
@@ -69,6 +69,20 @@ if CommandLine.arguments.count > 3 {
                 return nil
             }
             guard let control = (value(application, kAXWindowsAttribute) as? [AXUIElement] ?? []).compactMap({ find($0) }).first else { fail("native accessible control not found") }
+            if key.hasPrefix("axhit:") {
+                guard let p = value(control, kAXPositionAttribute), let z = value(control, kAXSizeAttribute),
+                      CFGetTypeID(p) == AXValueGetTypeID(), CFGetTypeID(z) == AXValueGetTypeID() else { fail("native bounds missing") }
+                var point = CGPoint.zero
+                var size = CGSize.zero
+                guard AXValueGetValue(p as! AXValue, .cgPoint, &point),
+                      AXValueGetValue(z as! AXValue, .cgSize, &size), size.width > 0, size.height > 0 else { fail("native bounds invalid") }
+                var hit: AXUIElement?
+                guard AXUIElementCopyElementAtPosition(application, Float(point.x + size.width / 2), Float(point.y + size.height / 2), &hit) == .success,
+                      let hit = hit, value(hit, kAXTitleAttribute) as? String == title else { fail("native center hit test did not resolve expected control") }
+                try JSONSerialization.data(withJSONObject: ["name": title, "x": point.x, "y": point.y, "width": size.width, "height": size.height, "hit_test": "passed"], options: [.prettyPrinted, .sortedKeys])
+                    .write(to: output.appendingPathComponent("native-hit-test.json"))
+                continue
+            }
             let result: AXError
             if key.hasPrefix("axfocus:") {
                 result = AXUIElementSetAttributeValue(control, kAXFocusedAttribute as CFString, kCFBooleanTrue)
@@ -110,6 +124,21 @@ if CommandLine.arguments.count > 3 {
             event?.post(tap: .cghidEventTap)
         }
         Thread.sleep(forTimeInterval: 0.25)
+    }
+}
+if CommandLine.arguments.count > 3 {
+    let requested = CommandLine.arguments[3]
+    if requested == "cmd+q" || requested == "axpress:Quit" {
+        let deadline = Date().addingTimeInterval(8)
+        while Date() < deadline {
+            if NSRunningApplication(processIdentifier: pid)?.isTerminated != false {
+                try JSONSerialization.data(withJSONObject: ["owned_pid": pid, "native_quit": requested, "process_exited": true], options: [.prettyPrinted, .sortedKeys])
+                    .write(to: output.appendingPathComponent("native-quit.json"))
+                exit(0)
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        fail("owned native quit did not terminate the app within eight seconds")
     }
 }
 try JSONSerialization.data(withJSONObject: inspectWindows(), options: [.prettyPrinted, .sortedKeys])

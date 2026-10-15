@@ -9,7 +9,7 @@ Owner-approved implementation specification, 2026-10-15. Sole owner: @ArmanAvane
 | 1: contracts and licensing | Immutable baseline checks, golden fixtures, measured synthetic baseline, owner licensing grant | Merged ([PR #6](https://github.com/organizyio/scanner/pull/6)) | Baseline only | Not accepted |
 | 2: Go discovery | Worktrees/submodules; timeout/cancel; null unknown dirty; safe logger; sanitized remotes; shared markers; honest timestamps; visible partial results | Merged ([PR #8](https://github.com/organizyio/scanner/pull/8)) | Regression and native CLI checks passed; GUI gates remain separate | Not accepted |
 | 3: preferred execution | Queue bound 256; caller-thread callbacks; 100ms cancellation polling; stage checks; joined workers and failure cleanup | Merged ([PR #7](https://github.com/organizyio/scanner/pull/7)) | Deterministic execution and documented consumer flows qualified; broader native gates remain | Not accepted |
-| 4: platforms and Fyne | CLI matrix plus actual ACL denial; interactive GUI/keyboard/accessibility on macOS, Linux and Windows | Native bridge, lifecycle and keyboard corrections implemented; qualification in progress | [Exact host results and unavailable-host gates](platform-qualification.md) | Not accepted |
+| 4: platforms and Fyne | CLI matrix plus actual ACL denial; interactive GUI/keyboard/accessibility on macOS, Linux and Windows | Native bridge, lifecycle and keyboard corrections implemented ([PR #10](https://github.com/organizyio/scanner/pull/10)); host gates remain | [Exact host results and unavailable-host gates](platform-qualification.md) | Not accepted |
 | 5: consumers | Exact-main candidate; real engine; fixture enrollment/inventory; isolated published Organizy Cargo patches; rollback; Archivist boundary | Qualification harness merged | Exact reviewed candidate qualified for documented flows; private results retained; production pins unchanged | Not accepted |
 
 Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only after exact-head checks pass. Missing native evidence keeps qualification pending rather than converting compilation into acceptance. Runtime convergence and publishing/releases are excluded.
@@ -50,11 +50,19 @@ Consumer qualification uses exact candidate SHA ancestry from reviewed Scanner m
 
 [The platform register](platform-results.json) retains the earlier baseline and adds development evidence separately. Native filesystem probes now cover disappearing files, symlink hashing, cancellation and reconstruction from a saved prefix plus an inclusive resumed suffix. Native `scan-cli fs` interruption retains its existing exit-zero partial-output convention; this does not change the catalog command's separate signal contract.
 
-| Interactive host | Development evidence | Remaining gate |
+| Interactive host | Recorded qualification | Remaining gate |
 | --- | --- | --- |
-| macOS x86_64, 1x display | Native AX actions, text editing, focus, errors, folder selection, tree selection, pause/resume/cancel and process restart with partial resume | Replay the final source revision; actual 2x display unavailable |
-| Linux x86_64, Xwayland | Actual graphics and AT-SPI actions/focus on a private memory-only accessibility bus; host settings unchanged | Correct native text/status exposure, then replay final source |
-| Windows x86_64 | Native UIA Start/Settings actions; actual console control-event interruption; Win32 adapter lifetime probes | Complete extended native picker/keyboard/lifecycle replay against final source |
+| macOS x86_64, 1x display | Final native AX picker/value/focus/error and real permission warning; keyboard tree/details and distinct focus; retained earlier lifecycle/restart evidence with unchanged controller/scan code | Native Quit/Cmd+Q and active-extraction checkpoint shutdown passed on17ce; actual 2x display unavailable; additional reader behavior remains separately scoped |
+| Linux x86_64, Xwayland | Final native AT-SPI text/actions, picker/error, profiles, keyboard tree/details, pause/resume/cancel and actual process restart; silent Orca app/error/tree navigation; correct native cache wire signatures | Qualified with child-only software rendering; hardware-accelerated host driver stalled in GLFW and remains unqualified |
+| Windows x86_64 | Final UIA picker/value/focus/error, Unicode roots, profiles, keyboard tree/details, distinct focus and process restart/settings/partial resume; earlier lifecycle evidence with unchanged controller/scan code | Spoken reader/caret behavior is outside the recorded scope |
 | macOS arm64 | No interactive evidence from the available Intel host | Pending interactive arm64 host |
 
-The private Linux bus preserves the existing desktop's accessibility settings. It exercises the real native protocol and actual graphical window, with its session scope recorded in evidence. Native text/status failures remain failures until corrected and verified. GUI compilation, platform qualification, runtime convergence and release acceptance remain separate.
+The private Linux bus preserves the existing desktop's accessibility settings. It exercises the real native protocol and actual graphical window, with its session scope recorded in evidence. The final native text/status and Linux cache corrections were verified; the register retains their earlier failures and exact-source evidence separately. GUI compilation, platform qualification, runtime convergence and release acceptance remain separate.
+
+The final register identifies CLI qualification at `d572dec`, shutdown/refresh
+qualification at `17ce6cf`, and their scoped source equivalence to candidate
+`79c62ae`. Native Quit passed on all available hosts; macOS and Windows shortcuts
+also exited successfully. macOS active-I/O Quit waited for read release and
+checkpoint flush. No Fyne wrong-thread diagnostics occurred in those final
+probes. The earlier shutdown failure remains historical evidence. Interactive
+macOS arm64 remains explicitly pending; release acceptance remains separate.

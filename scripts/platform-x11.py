@@ -242,7 +242,9 @@ def main():
                 if app.get_process_id() == args.pid:
                     def inspect(node, depth=0):
                         record = {"name": node.get_name(), "role": node.get_role_name(),
-                                  "focused": node.get_state_set().contains(Atspi.StateType.FOCUSED)}
+                                  "focused": node.get_state_set().contains(Atspi.StateType.FOCUSED),
+                                  "selected": node.get_state_set().contains(Atspi.StateType.SELECTED),
+                                  "expanded": node.get_state_set().contains(Atspi.StateType.EXPANDED)}
                         try:
                             text = node.get_text_iface()
                             if text:
