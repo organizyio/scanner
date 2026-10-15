@@ -7,8 +7,11 @@ revisions and distinguishes CLI, compilation, interaction and accessibility.
 
 ## Reproduce safely
 
-Use source from reviewed Scanner main and build `tools/project-catalog` commands
-`./cmd/scan-cli` and `./cmd/scan-gui` on the target host. Record the complete source
+Use an exact reviewed Scanner commit (a PR candidate before merge, or merged
+main) and build `tools/project-catalog` commands
+`./cmd/scan-cli` and `./cmd/scan-gui` on the target host. Build the isolated native
+accessibility library first with `python3 scripts/build-native-a11y.py --check`
+from the Scanner root; it uses pinned Rust 1.88 and never downloads a binary. Record the complete source
 SHA and binary SHA-256. Do not change production dependency pins.
 
 Use a new private evidence directory outside the checkout for every run:
@@ -70,3 +73,30 @@ results contain synthetic summaries, exact public source revisions and hashes;
 never usernames, host aliases, private repository history or recovery material.
 Record unsupported scenarios and failed checks honestly. Runtime convergence,
 GUI support announcements and release publication remain excluded.
+
+## Native semantics and remaining host gates
+
+The GUI owns a semantic tree through an isolated AccessKit adapter for macOS AX,
+Windows UIA and Linux AT-SPI. Actions are delivered through the existing widget
+callbacks on the Fyne event loop. Folder and profile selection use app-owned,
+named controls. Tree keyboard navigation keeps actual selection, details and
+semantic focus aligned. Disabled, removed and background modal actions are
+rejected against the current tree. The native adapter must close before its
+window is destroyed; concurrent queries and shutdown are separate lifecycle
+regressions, not evidence of screen-reader usability.
+
+Linux qualification covers X11/Xwayland. Native Wayland attachment is explicitly
+unsupported. An isolated session bus with an in-memory settings backend may be
+used to activate AT-SPI without changing the operator's desktop configuration;
+such evidence must identify that scope.
+
+No interactive macOS arm64 host is available; the owner explicitly retained that
+gate as pending. The available Intel Mac has a 1× display. Automated 1×/2× bounds
+transform checks do not qualify actual Retina hit testing or display transitions.
+These gates cannot be satisfied by CI compilation or extrapolated from another
+host. The qualification register must retain them independently of merged fixes.
+
+Checkpoint continuation returns an inclusive cursor suffix, not a complete
+replacement inventory. Compare the deduplicated union of the saved prefix and
+resumed suffix with an uninterrupted inventory. Active filesystem calls are not
+preempted: cancellation stops subsequent work after the call returns.

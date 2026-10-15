@@ -1,0 +1,6 @@
+/target/
+
+# Reviewed public upstream backport, pinned by vendor/provenance.json.
+!vendor/
+!vendor/**
+vendor/**/target/

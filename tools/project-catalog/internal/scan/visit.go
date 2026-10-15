@@ -29,22 +29,17 @@ func ingestFile(path string, d os.DirEntry, info os.FileInfo, folders map[string
 	NoteMarkerFile(folders[dir], d.Name())
 
 	hashFiles := opts.HashFiles
-	hashMaxMB := opts.HashMaxFileSizeMB
-	projectDetect := opts.ProjectDetection
+	hashMaxBytes := opts.HashMaxFileSizeMB * 1024 * 1024
 	if opts.Runtime != nil {
 		hashFiles = opts.Runtime.HashFiles.Load()
-		maxBytes := opts.Runtime.HashMaxSizeBytes.Load()
-		if maxBytes > 0 {
-			hashMaxMB = maxBytes / (1024 * 1024)
-		}
-		projectDetect = opts.Runtime.ProjectDetection.Load()
-		_ = projectDetect
+		// Zero explicitly means unlimited; it must not restore the initial limit.
+		hashMaxBytes = opts.Runtime.HashMaxSizeBytes.Load()
 	}
 
 	sha := ""
 	hashStatus := "skipped"
 	if hashFiles {
-		if hashMaxMB <= 0 || info.Size() <= hashMaxMB*1024*1024 {
+		if hashMaxBytes <= 0 || info.Size() <= hashMaxBytes {
 			h, herr := hash.SHA256(path)
 			if herr != nil {
 				hashStatus = "error"

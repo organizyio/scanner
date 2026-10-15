@@ -21,6 +21,7 @@ class QualificationTests(unittest.TestCase):
             for key in ["HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME"]:
                 self.assertTrue(Path(env[key]).is_relative_to(root))
             self.assertIn("Qualification", (qualification.settings_directory(root) / "settings.yaml").read_text())
+            self.assertIn("Secondary", (qualification.settings_directory(root) / "settings.yaml").read_text())
             with self.assertRaises(ValueError):
                 qualification.prepare(root)
         self.assertEqual(original, dict(os.environ))

@@ -3,7 +3,9 @@
 package gui
 
 import (
+	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"scan-projects/internal/controller"
@@ -15,106 +17,162 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func NewProfilesSelect(ctrl *controller.Controller) *widget.Select {
-	names := ctrl.Profiles().Names()
-	sel := widget.NewSelect(names, func(v string) {
-		ctrl.Profiles().SetActive(v)
-	})
-	sel.SetSelected(ctrl.Profiles().ActiveName())
-	return sel
+// NewProfilesSelect uses app-owned buttons so profile choices share the same
+// keyboard and native accessibility actions instead of private popup internals.
+func NewProfilesSelect(ctx context.Context, parent fyne.Window, ctrl *controller.Controller) *widget.Button {
+	button := widget.NewButton("Profile: "+ctrl.Profiles().ActiveName(), nil)
+	button.OnTapped = func() {
+		if ctx.Err() != nil {
+			return
+		}
+		choices := container.NewVBox()
+		var picker *dialog.CustomDialog
+		for _, name := range ctrl.Profiles().Names() {
+			name := name
+			choices.Add(widget.NewButton("Use profile "+name, func() {
+				if ctx.Err() != nil {
+					return
+				}
+				if !ctrl.Profiles().SetActive(name) {
+					dialog.ShowError(fmt.Errorf("profile is no longer available: %s", name), parent)
+					return
+				}
+				button.SetText("Profile: " + ctrl.Profiles().ActiveName())
+				picker.Hide()
+				if err := ctrl.Profiles().LastError(); err != nil {
+					dialog.ShowError(err, parent)
+				}
+			}))
+		}
+		picker = dialog.NewCustomWithoutButtons("Choose Profile", choices, parent)
+		picker.SetButtons([]fyne.CanvasObject{widget.NewButton("Close", func() { picker.Hide() })})
+		picker.Show()
+	}
+	return button
 }
 
-func ShowConfigEditor(parent fyne.Window, ctrl *controller.Controller) {
+func ShowConfigEditor(parentCtx context.Context, parent fyne.Window, ctrl *controller.Controller) {
+	showConfigEditor(parentCtx, parent, ctrl, newQuitAction(parentCtx, ctrl.Cancel, ctrl.IsRunning, fyne.Do, fyne.CurrentApp().Quit))
+}
+
+func showConfigEditor(parentCtx context.Context, parent fyne.Window, ctrl *controller.Controller, quit func()) {
 	p := ctrl.Profiles().Active()
 
+	ctx, cancel := context.WithCancel(parentCtx)
 	w := fyne.CurrentApp().NewWindow("Settings")
-	w.Resize(fyne.NewSize(800, 620))
+	cleanupAccessibility := func() {}
+	w.SetOnClosed(func() { cleanupAccessibility(); cancel() })
+	w.Resize(fyne.NewSize(900, 680))
+	registerQuitShortcut(ctx, w, quit)
+	saveStatus := widget.NewLabel("")
+	saveStatus.Wrapping = fyne.TextWrapWord
+	if err := ctrl.Profiles().LastError(); err != nil {
+		saveStatus.SetText("Settings not saved: " + err.Error())
+	}
+	save := func() {
+		if err := ctrl.Profiles().UpdateActive(p); err != nil {
+			saveStatus.SetText("Settings not saved: " + err.Error())
+		} else {
+			saveStatus.SetText("Settings saved")
+		}
+	}
 
 	// roots editor (checkbox table-like)
 	rootsBox := container.NewVBox(widget.NewLabelWithStyle("Scan Roots", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}))
 	for i := range p.ScanRoots {
 		idx := i
-		check := widget.NewCheck("", func(v bool) {
+		check := widget.NewCheck(fmt.Sprintf("Enable root %d", i+1), func(v bool) {
 			p.ScanRoots[idx].Enabled = v
-			ctrl.Profiles().UpdateActive(p)
+			save()
 		})
 		check.SetChecked(p.ScanRoots[i].Enabled)
 
 		pathEntry := widget.NewEntry()
+		pathEntry.SetPlaceHolder("Folder path")
 		pathEntry.SetText(p.ScanRoots[i].Path)
 		pathEntry.OnChanged = func(s string) {
 			p.ScanRoots[idx].Path = s
-			ctrl.Profiles().UpdateActive(p)
+			save()
 		}
 
-		rootsBox.Add(container.NewBorder(nil, nil, check, nil, pathEntry))
+		browse := widget.NewButton(fmt.Sprintf("Browse root %d", i+1), func() { showDirectoryPicker(ctx, w, pathEntry.Text, func(path string) { pathEntry.SetText(path) }) })
+
+		rootsBox.Add(container.NewBorder(nil, nil, check, browse, pathEntry))
 	}
 
 	addRootBtn := widget.NewButton("+ Add Root", func() {
 		p.ScanRoots = append(p.ScanRoots, storage.ScanRoot{Path: "", Enabled: true})
-		ctrl.Profiles().UpdateActive(p)
+		save()
 		w.Close()
-		ShowConfigEditor(parent, ctrl)
+		ShowConfigEditor(parentCtx, parent, ctrl)
 	})
 
 	excludes := widget.NewMultiLineEntry()
+	excludes.SetPlaceHolder("Excluded directory names, one per line")
 	excludes.SetText(strings.Join(p.ExcludeDirs, "\n"))
 	excludes.OnChanged = func(s string) {
 		p.ExcludeDirs = splitLines(s)
-		ctrl.Profiles().UpdateActive(p)
+		save()
 	}
 
 	maxFile := widget.NewEntry()
+	maxFile.SetPlaceHolder("Maximum file size in MB; 0 means unlimited")
 	maxFile.SetText(fmt.Sprintf("%d", p.MaxFileSizeMB))
 	maxFile.OnChanged = func(s string) {
 		if v, err := parseInt64(s); err == nil {
 			p.MaxFileSizeMB = v
-			ctrl.Profiles().UpdateActive(p)
+			save()
+		} else {
+			saveStatus.SetText("Max file size must be a nonnegative integer")
 		}
 	}
 
-	hashCheck := widget.NewCheck("", func(v bool) {
+	hashCheck := widget.NewCheck("Enable file hashing", func(v bool) {
 		p.HashFiles = v
-		ctrl.Profiles().UpdateActive(p)
+		save()
 		// live mid-scan apply
 		ctrl.Runtime().HashFiles.Store(v)
 	})
 	hashCheck.SetChecked(p.HashFiles)
 
 	hashMax := widget.NewEntry()
+	hashMax.SetPlaceHolder("Maximum hashing size in MB; 0 means unlimited")
 	hashMax.SetText(fmt.Sprintf("%d", p.HashMaxFileSizeMB))
 	hashMax.OnChanged = func(s string) {
 		if v, err := parseInt64(s); err == nil {
 			p.HashMaxFileSizeMB = v
-			ctrl.Profiles().UpdateActive(p)
+			save()
 			ctrl.Runtime().HashMaxSizeBytes.Store(v * 1024 * 1024)
+		} else {
+			saveStatus.SetText("Hash size limit must be a nonnegative integer")
 		}
 	}
 
-	projCheck := widget.NewCheck("", func(v bool) {
+	projCheck := widget.NewCheck("Detect projects", func(v bool) {
 		p.ProjectDetection = v
-		ctrl.Profiles().UpdateActive(p)
+		save()
 		ctrl.Runtime().ProjectDetection.Store(v)
 	})
 	projCheck.SetChecked(p.ProjectDetection)
 
-	cpCheck := widget.NewCheck("", func(v bool) {
+	cpCheck := widget.NewCheck("Save checkpoint", func(v bool) {
 		p.CheckpointEnabled = v
-		ctrl.Profiles().UpdateActive(p)
+		save()
 	})
 	cpCheck.SetChecked(p.CheckpointEnabled)
 
 	cpPath := widget.NewEntry()
+	cpPath.SetPlaceHolder("Checkpoint file path")
 	cpPath.SetText(p.CheckpointPath)
 	cpPath.OnChanged = func(s string) {
 		p.CheckpointPath = s
-		ctrl.Profiles().UpdateActive(p)
+		save()
 	}
 
 	validateBtn := widget.NewButton("Validate", func() {
 		errs := controller.ValidateProfile(p)
 		if len(errs) > 0 {
-			dialog.ShowError(fmt.Errorf(controller.JoinErrors(errs)), w)
+			dialog.ShowError(fmt.Errorf("%s", controller.JoinErrors(errs)), w)
 			return
 		}
 		dialog.ShowInformation("OK", "Profile looks valid.", w)
@@ -127,19 +185,24 @@ func ShowConfigEditor(parent fyne.Window, ctrl *controller.Controller) {
 		widget.NewFormItem("Max File Size MB (0=none)", maxFile),
 		widget.NewFormItem("Hash Files (live)", hashCheck),
 		widget.NewFormItem("Hash Max File Size MB (live)", hashMax),
-		widget.NewFormItem("Project Detection (live)", projCheck),
+		widget.NewFormItem("Project Detection (live; applied at completion)", projCheck),
 		widget.NewFormItem("Checkpoint Enabled", cpCheck),
 		widget.NewFormItem("Checkpoint Path", cpPath),
 	)
 
+	behaviorHint := widget.NewLabel("Roots, exclusions and file-size changes apply to the next scan. Live hashing changes apply to subsequent files.")
+	behaviorHint.Wrapping = fyne.TextWrapWord
 	content := container.NewVScroll(container.NewVBox(
+		behaviorHint,
 		rootsBox,
 		widget.NewSeparator(),
 		form,
 		validateBtn,
+		saveStatus,
 	))
 	w.SetContent(content)
 	w.Show()
+	cleanupAccessibility = attachWindowAccessibility(ctx, w)
 }
 
 func splitLines(s string) []string {
@@ -155,7 +218,12 @@ func splitLines(s string) []string {
 }
 
 func parseInt64(s string) (int64, error) {
-	var v int64
-	_, err := fmt.Sscanf(strings.TrimSpace(s), "%d", &v)
-	return v, err
+	v, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	if v < 0 {
+		return 0, fmt.Errorf("value must be nonnegative")
+	}
+	return v, nil
 }

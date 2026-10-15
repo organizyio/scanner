@@ -21,7 +21,11 @@ type DeepScanInput struct {
 func DeepScan(ctx context.Context, in DeepScanInput) (scan.ScanResult, error) {
 	res, err := scan.Scan(ctx, in.Roots, in.ExcludeDirs, in.Options, in.ResumeFrom)
 	if err == nil || err == context.Canceled {
-		analysis.PostProcessFolders(res.Folders, in.Options.ProjectDetection)
+		projectDetection := in.Options.ProjectDetection
+		if in.Options.Runtime != nil {
+			projectDetection = in.Options.Runtime.ProjectDetection.Load()
+		}
+		analysis.PostProcessFolders(res.Folders, projectDetection)
 	}
 	return res, err
 }

@@ -3,6 +3,7 @@
 package controller
 
 import (
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -10,14 +11,17 @@ import (
 )
 
 type Profiles struct {
-	path   string
-	config storage.AppConfig
+	path    string
+	config  storage.AppConfig
+	saveErr error
 }
 
 func NewProfiles() *Profiles {
-	p := &Profiles{
-		path: storage.SettingsPath(),
-	}
+	return newProfiles(storage.SettingsPath())
+}
+
+func newProfiles(path string) *Profiles {
+	p := &Profiles{path: path}
 	p.loadOrInit()
 	return p
 }
@@ -27,14 +31,22 @@ func (p *Profiles) loadOrInit() {
 	if err != nil || cfg.Profiles == nil || len(cfg.Profiles) == 0 {
 		cp := filepath.Join(storage.AppDataDir(), "output", "checkpoint.json")
 		cfg = storage.DefaultConfig(cp)
-		_ = storage.SaveYAML(p.path, cfg)
 	}
 	_ = cfg.EnsureValid()
 	p.config = cfg
-	_ = storage.SaveYAML(p.path, p.config)
+	_ = p.Save()
 }
 
-func (p *Profiles) Save() { _ = storage.SaveYAML(p.path, p.config) }
+func (p *Profiles) Save() error {
+	if err := os.MkdirAll(filepath.Dir(p.path), 0700); err != nil {
+		p.saveErr = err
+		return err
+	}
+	p.saveErr = storage.SaveYAML(p.path, p.config)
+	return p.saveErr
+}
+
+func (p *Profiles) LastError() error { return p.saveErr }
 
 func (p *Profiles) Names() []string {
 	names := make([]string, 0, len(p.config.Profiles))
@@ -57,14 +69,17 @@ func (p *Profiles) SetActive(name string) bool {
 }
 
 func (p *Profiles) Active() storage.ScanProfile {
-	return p.config.Profiles[p.config.ActiveProfile]
+	profile := p.config.Profiles[p.config.ActiveProfile]
+	profile.ScanRoots = append([]storage.ScanRoot(nil), profile.ScanRoots...)
+	profile.ExcludeDirs = append([]string(nil), profile.ExcludeDirs...)
+	return profile
 }
 
-func (p *Profiles) UpdateActive(profile storage.ScanProfile) {
+func (p *Profiles) UpdateActive(profile storage.ScanProfile) error {
 	key := p.config.ActiveProfile
 	profile.Name = key
 	p.config.Profiles[key] = profile
-	p.Save()
+	return p.Save()
 }
 
 func (p *Profiles) New(name string) bool {

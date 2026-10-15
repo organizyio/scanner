@@ -103,9 +103,45 @@ jobs:
           cache-dependency-path: tools/project-catalog/go.sum
       - name: Linux Fyne prerequisites
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libxcb1-dev xorg-dev xvfb xauth
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install pinned native accessibility compiler
+        run: rustup toolchain install 1.88 --profile minimal --component clippy --component rustfmt --no-self-update
+      - name: Validate and build native accessibility adapter
+        run: python scripts/build-native-a11y.py --check
+      - name: Windows native owner-thread and query-close lifecycle regression
+        if: runner.os == 'Windows'
+        working-directory: tools/project-catalog
+        shell: pwsh
+        run: |
+          gcc -std=c11 -O2 native-a11y/tests/windows_lifecycle.c -luser32 -o "$env:RUNNER_TEMP/scanner-a11y-lifecycle.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$env:RUNNER_TEMP/scanner-a11y-lifecycle.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: macOS native owner-close and reentrant update regression
+        if: runner.os == 'macOS'
+        working-directory: tools/project-catalog
+        run: |
+          clang -std=c11 -fblocks native-a11y/tests/macos_lifecycle.m -framework AppKit -framework Foundation -o "$RUNNER_TEMP/scanner-a11y-lifecycle"
+          "$RUNNER_TEMP/scanner-a11y-lifecycle"
+      - name: Linux checked stale-window and concurrent close regression
+        if: runner.os == 'Linux'
+        working-directory: tools/project-catalog
+        run: |
+          gcc -std=c11 -O2 native-a11y/tests/linux_lifecycle.c -lxcb -lpthread -o "$RUNNER_TEMP/scanner-a11y-lifecycle"
+          xvfb-run -a "$RUNNER_TEMP/scanner-a11y-lifecycle"
+      - name: Linux real D-Bus cache-signal regression
+        if: runner.os == 'Linux'
+        run: python scripts/test-native-cache-signals.py
+      - name: Native GUI semantic and lifecycle regression tests
+        working-directory: tools/project-catalog
+        env:
+          CGO_ENABLED: '1'
+        run: go test -a -mod=readonly -tags ci ./internal/gui ./internal/nativea11y
       - name: Compile native Fyne application (operation remains separately qualified)
         working-directory: tools/project-catalog
         env:
           CGO_ENABLED: '1'
-        run: go build -mod=readonly ./cmd/scan-gui
+        run: go build -a -mod=readonly ./cmd/scan-gui
+      - name: Validate GUI archive and upstream notices (no publication)
+        run: python scripts/build-components.py catalog --gui --archive
