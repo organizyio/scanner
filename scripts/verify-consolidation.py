@@ -21,7 +21,12 @@ for path in git('ls-tree', '-r', '--name-only', source['head']).splitlines():
     if path.endswith('.go') or path in ('go.mod', 'go.sum', 'Makefile', 'build.sh'):
         expected = subprocess.check_output(['git', 'show', source['head'] + ':' + path], cwd=ROOT)
         actual = (ROOT / 'tools/project-catalog' / path).read_bytes()
-        assert actual.replace(b'\r\n', b'\n') == expected.replace(b'\r\n', b'\n'), path
+        adaptation = manifest.get('project_catalog_source_adaptations', {}).get(path)
+        if adaptation:
+            assert hashlib.sha256(expected.replace(b'\r\n', b'\n')).hexdigest() == adaptation['original_sha256']
+            assert hashlib.sha256(actual.replace(b'\r\n', b'\n')).hexdigest() == adaptation['current_sha256']
+        else:
+            assert actual.replace(b'\r\n', b'\n') == expected.replace(b'\r\n', b'\n'), path
 notices = json.loads((ROOT / 'licenses/upstream/manifest.json').read_text())
 for notice in notices:
     assert hashlib.sha256((ROOT / notice['path']).read_bytes()).hexdigest() == notice['sha256'], notice['path']

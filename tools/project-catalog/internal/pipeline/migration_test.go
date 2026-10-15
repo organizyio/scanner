@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -180,5 +181,63 @@ func TestInaccessibleOrMissingRootRetainsPartialSuccess(t *testing.T) {
 	result, err := DeepScan(context.Background(), DeepScanInput{Roots: []string{filepath.Join(t.TempDir(), "missing")}})
 	if err != nil || len(result.Files) != 0 {
 		t.Fatalf("legacy missing-root behavior: %+v %v", result, err)
+	}
+}
+
+func TestGitDiscoveryDoesNotRefreshTrackedIndex(t *testing.T) {
+	root := t.TempDir()
+	git := func(args ...string) {
+		t.Helper()
+		c := exec.Command("git", args...)
+		c.Dir = root
+		if b, e := c.CombinedOutput(); e != nil {
+			t.Fatalf("git %v: %v %s", args, e, b)
+		}
+	}
+	git("init", "-q")
+	file := filepath.Join(root, "tracked.txt")
+	put(t, file, "tracked")
+	git("add", "tracked.txt")
+	git("-c", "user.name=Migration Test", "-c", "user.email=migration@example.invalid", "commit", "-qm", "fixture")
+	index := filepath.Join(root, ".git/index")
+	before, e := os.ReadFile(index)
+	if e != nil {
+		t.Fatal(e)
+	}
+	old := time.Now().Add(-24 * time.Hour)
+	if e := os.Chtimes(file, old, old); e != nil {
+		t.Fatal(e)
+	}
+	t.Setenv("GIT_OPTIONAL_LOCKS", "1")
+	info := catalog.CollectProjectInfo(root, catalog.NewLogger(false))
+	if info.Dirty == nil || *info.Dirty {
+		t.Fatalf("metadata %+v", info)
+	}
+	after, e := os.ReadFile(index)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if string(before) != string(after) {
+		t.Fatal("read-only discovery refreshed the Git index")
+	}
+}
+
+func TestInaccessibleDirectoryIsSkippedWithoutClaimingCompleteness(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix permission-bit characterization; Windows requires ACL-based qualification")
+	}
+	root := t.TempDir()
+	locked := filepath.Join(root, "locked")
+	put(t, filepath.Join(locked, "hidden.txt"), "hidden")
+	if err := os.Chmod(locked, 0); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(locked, 0755)
+	if _, err := os.ReadDir(locked); !os.IsPermission(err) {
+		t.Fatalf("fixture must actually deny access, got %v", err)
+	}
+	result, err := DeepScan(context.Background(), DeepScanInput{Roots: []string{locked}})
+	if err != nil || len(result.Files) != 0 {
+		t.Fatalf("legacy inaccessible behavior: %+v %v", result, err)
 	}
 }

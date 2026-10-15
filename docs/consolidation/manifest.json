@@ -24,7 +24,8 @@
     "Separately qualified RUSTSEC-2026-0187 and RUSTSEC-2026-0204 dependency fixes before artifact publication",
     "Updated catalog build-directory example; retained implementation files unchanged",
     "Portable contract hashes normalize checkout CRLF to Git LF",
-    "Retain dependency license and notice texts in component archives; optional font embedding is not enabled"
+    "Retain dependency license and notice texts in component archives; optional font embedding is not enabled",
+    "Prevent Git status index-cache writes during discovery; preserve schema and other catalog limitations"
   ],
   "retained_contract_files": {
     "crates/engine/Cargo.toml": "f0a79a6a83dab055cf485467bb505a6029852be8fcd8781613bb23aa6ebc0932",
@@ -81,5 +82,12 @@
     "scope": "Root and compatibility parser dependencies; public package versions, API/schema and Organizy pins unchanged; malicious nested PDFs now rejected",
     "previous_metadata_manifest_sha256": "370788176d7965f82db5528b7c094438bbd9a2c8921af56b7403ab8d21d0af63",
     "aes": "0.9.2 (Rust 1.88 compatible)"
+  },
+  "project_catalog_source_adaptations": {
+    "internal/gitmeta/gitmeta.go": {
+      "original_sha256": "a4cf363a57ff238c0c9a045ca5883d2c444f0d3d1c4fa5ae0a4dda9209028064",
+      "current_sha256": "d494195e277bbd91eb62f6c4e229e362033cec585ea1e2cbfd36b2116047fb30",
+      "reason": "Enforce required read-only Git discovery with GIT_OPTIONAL_LOCKS=0; reproduced and tested index-cache mutation before the fix"
+    }
   }
 }

@@ -4,6 +4,7 @@ package gitmeta
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -18,6 +19,8 @@ type Logger interface {
 func runGit(dir string, args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
+	// Discovery must not refresh repository index caches while reading status.
+	cmd.Env = append(os.Environ(), "GIT_OPTIONAL_LOCKS=0")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("git %v: %w", args, err)
