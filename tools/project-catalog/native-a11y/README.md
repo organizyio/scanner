@@ -89,3 +89,31 @@ reentrancy deterministic. Native AX/UIA/AT-SPI content and actions require the
 separate real-library qualification runs. macOS geometry multiplies the current
 native backing factor and Fyne scale before AccessKit converts pixels to AX
 points; changing displays refreshes that factor. Empty geometry remains omitted.
+
+### Linux cache-signal backport
+
+`vendor/accesskit_unix` preserves the published public 0.24.0 crate with the
+upstream [AccessKit #819](https://github.com/AccessKit/accesskit/pull/819)
+two-line cache-signal serialization fix. The released adapter flattened D-Bus
+structure arguments; native AT-SPI clients reject these cache signals. This is
+not a workaround that suppresses warnings. `vendor/provenance.json` records the
+original archive and file hashes, upstream revision, licenses and review scope.
+All other dependencies retain their locked registry versions. This patch applies
+only to this isolated GUI bridge, not the preferred Scanner crates.
+
+The additional regression comes from the primary reproducer in
+[AccessKit #818](https://github.com/AccessKit/accesskit/issues/818). On Linux, run
+it against the bridge's locked dependency graph on a private bus:
+
+```sh
+timeout 120 dbus-run-session -- cargo +1.88 test --locked \
+  --manifest-path tools/project-catalog/native-a11y/Cargo.toml \
+  -p accesskit_unix cache_signals_preserve_struct_arguments -- --ignored
+```
+
+It calls the production cache-signal helper, checks encoded raw D-Bus SIGNATURE
+headers for both AddAccessible and RemoveAccessible, and round-trips payloads.
+Parsed zbus signatures alone normalize the missing structure boundary and cannot
+serve as this regression. The test is explicitly ignored during ordinary tests
+because it requires the private D-Bus session; Linux qualification must execute
+it separately. It does not replace native assistive-technology qualification.

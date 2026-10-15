@@ -48,6 +48,27 @@ for path in git('ls-tree', '-r', '--name-only', source['head']).splitlines():
 notices = json.loads((ROOT / 'licenses/upstream/manifest.json').read_text())
 for notice in notices:
     assert hashlib.sha256((ROOT / notice['path']).read_bytes()).hexdigest() == notice['sha256'], notice['path']
+def verify_vendor(directory, register):
+    original = register['original_files_sha256']
+    current = register['current_files_sha256']
+    modified = register['modified_files']
+    added = register['added_files_sha256']
+    assert set(modified) <= set(original), 'Unknown upstream modification'
+    assert set(current) == set(original) | set(added), 'Unregistered vendor files'
+    assert set(added) == set(current) - set(original), 'Invalid added vendor files'
+    actual = {p.relative_to(directory).as_posix() for p in directory.rglob('*') if p.is_file()}
+    assert actual == set(current), 'Unexpected vendor files'
+    for name, expected in current.items():
+        path = directory / name
+        assert not path.is_symlink(), 'Vendor symlink forbidden: ' + name
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected, 'Vendor review hash: ' + name
+        if name in original and name not in modified:
+            assert expected == original[name], 'Unrecorded upstream change: ' + name
+        if name in added:
+            assert expected == added[name], 'Added vendor hash: ' + name
+
+vendor = ROOT / 'tools/project-catalog/native-a11y/vendor'
+verify_vendor(vendor / 'accesskit_unix', json.loads((vendor / 'provenance.json').read_text()))
 for component in ('scan-engine', 'scan-fs'):
     assert not (ROOT / 'compat' / component / '.git').exists()
     assert not (ROOT / 'compat' / component / '.cursor').exists()

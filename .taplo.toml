@@ -1,5 +1,5 @@
 # https://taplo.tamasfe.dev/ — TOML formatting (optional local: taplo fmt).
-exclude = ["**/target/**"]
+exclude = ["**/target/**", "tools/project-catalog/native-a11y/vendor/**"]
 
 [formatting]
 align_entries = false

@@ -54,7 +54,8 @@ def dependency_notices(out, component, gui=False):
             cwd=native, text=True, encoding='utf-8')
         used = {tuple(line.split()[:2]) for line in tree.splitlines()}
         packages += [(p['name'] + '-' + p['version'], Path(p['manifest_path']).parent)
-                     for p in metadata['packages'] if p['source'] is not None and
+                     for p in metadata['packages'] if
+                     (p['source'] is not None or Path(p['manifest_path']).is_relative_to(native / 'vendor')) and
                      (p['name'], 'v' + p['version']) in used]
     if component in ('wrapper', 'catalog'):
         module = ROOT / ('compat/scan-fs' if component == 'wrapper' else 'tools/project-catalog')

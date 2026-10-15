@@ -1,0 +1,2 @@
+# Preserve reviewed public upstream package bytes on every checkout platform.
+vendor/accesskit_unix/** -text whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol

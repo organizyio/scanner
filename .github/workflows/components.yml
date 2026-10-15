@@ -130,6 +130,9 @@ jobs:
         run: |
           gcc -std=c11 -O2 native-a11y/tests/linux_lifecycle.c -lxcb -lpthread -o "$RUNNER_TEMP/scanner-a11y-lifecycle"
           xvfb-run -a "$RUNNER_TEMP/scanner-a11y-lifecycle"
+      - name: Linux real D-Bus cache-signal regression
+        if: runner.os == 'Linux'
+        run: python scripts/test-native-cache-signals.py
       - name: Native GUI semantic and lifecycle regression tests
         working-directory: tools/project-catalog
         env:

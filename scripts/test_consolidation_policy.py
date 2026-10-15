@@ -28,5 +28,28 @@ class SourcePolicyTests(unittest.TestCase):
             verify('source.rs', b'unreviewed\n')
 
 
+    def test_vendor_rejects_unreviewed_source_and_extra_files(self):
+        source = Path(__file__).with_name('verify-consolidation.py').read_text()
+        function = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == 'verify_vendor')
+        namespace = {'hashlib': hashlib}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), '<vendor-policy-test>', 'exec'), namespace)
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            path = directory / 'source.rs'
+            path.write_bytes(b'reviewed public source\n')
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            register = {'original_files_sha256': {'source.rs': digest},
+                        'current_files_sha256': {'source.rs': digest},
+                        'modified_files': {}, 'added_files_sha256': {}}
+            namespace['verify_vendor'](directory, register)
+            path.write_bytes(b'unreviewed source\n')
+            with self.assertRaisesRegex(AssertionError, 'Vendor review hash'):
+                namespace['verify_vendor'](directory, register)
+            path.write_bytes(b'reviewed public source\n')
+            (directory / 'unregistered.rs').write_bytes(b'extra')
+            with self.assertRaisesRegex(AssertionError, 'Unexpected vendor files'):
+                namespace['verify_vendor'](directory, register)
+
+
 if __name__ == '__main__':
     unittest.main()
