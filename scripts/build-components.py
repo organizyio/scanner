@@ -141,7 +141,13 @@ def build(component, gui=False):
         if gui:
             run(['python3', str(ROOT / 'scripts/build-native-a11y.py')])
         for cmd in ('scan-cli', 'scan-git', 'scan-fs') + (('scan-gui',) if gui else ()):
-            run(['go', 'build', '-trimpath', '-o', str(out / (cmd + suffix)), './cmd/' + cmd], ROOT / 'tools/project-catalog', dict(env, CGO_ENABLED='1' if cmd == 'scan-gui' else '0'))
+            flags = []
+            if cmd == 'scan-gui':
+                # Go does not track external Rust static archives in its cache.
+                # Include exact archive bytes in the link action's cache key.
+                native = ROOT / 'tools/project-catalog/native-a11y/target/release/libscanner_native_a11y.a'
+                flags = ['-ldflags=-buildid=scanner-native-a11y-' + hashlib.sha256(native.read_bytes()).hexdigest()]
+            run(['go', 'build', '-trimpath', *flags, '-o', str(out / (cmd + suffix)), './cmd/' + cmd], ROOT / 'tools/project-catalog', dict(env, CGO_ENABLED='1' if cmd == 'scan-gui' else '0'))
     elif component == 'launchers':
         for alias, cmd in [('scan-projects', 'scan-git'), ('scan-export', 'scan-fs'), ('scanner', 'scan-gui')]:
             # Launchers are packaged separately and resolve only within their own component directory.

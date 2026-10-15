@@ -7,7 +7,8 @@ revisions and distinguishes CLI, compilation, interaction and accessibility.
 
 ## Reproduce safely
 
-Use source from reviewed Scanner main and build `tools/project-catalog` commands
+Use an exact reviewed Scanner commit (a PR candidate before merge, or merged
+main) and build `tools/project-catalog` commands
 `./cmd/scan-cli` and `./cmd/scan-gui` on the target host. Build the isolated native
 accessibility library first with `python3 scripts/build-native-a11y.py --check`
 from the Scanner root; it uses pinned Rust 1.88 and never downloads a binary. Record the complete source

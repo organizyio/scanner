@@ -44,10 +44,10 @@ go build -o scan-fs ./cmd/scan-fs
 
 ```bash
 python3 ../../scripts/build-native-a11y.py --check
-go build -o scan-gui ./cmd/scan-gui
+go build -a -o scan-gui ./cmd/scan-gui
 ```
 
-The GUI also requires Rust 1.88 to build its isolated, non-publishing [native accessibility bridge](native-a11y/README.md) from reviewed source. The helper selects the Windows GNU target for CGO and places the static library at the target-local link location. CLI-only builds remain Go-only.
+The GUI also requires Rust 1.88 to build its isolated, non-publishing [native accessibility bridge](native-a11y/README.md) from reviewed source. The helper selects the Windows GNU target for CGO and places the static library at the target-local link location. CLI-only builds remain Go-only. Use `-a` for manual GUI builds so Go relinks a changed external Rust archive; component packaging uses the exact archive hash in its link cache key.
 
 The Fyne app needs a working OpenGL/driver stack on your OS. Cross-compiling the GUI is not covered here; build on the target platform or follow [Fyne](https://developer.fyne.io/) cross-compile docs.
 
@@ -126,7 +126,7 @@ Run `scan-cli -h` for top-level help and `scan-cli fs -h` / `scan-cli catalog -h
 
 ```bash
 python3 ../../scripts/build-native-a11y.py --check
-go build -o scan-gui ./cmd/scan-gui
+go build -a -o scan-gui ./cmd/scan-gui
 ./scan-gui
 ```
 

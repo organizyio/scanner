@@ -134,9 +134,9 @@ jobs:
         working-directory: tools/project-catalog
         env:
           CGO_ENABLED: '1'
-        run: go test -mod=readonly -tags ci ./internal/gui ./internal/nativea11y
+        run: go test -a -mod=readonly -tags ci ./internal/gui ./internal/nativea11y
       - name: Compile native Fyne application (operation remains separately qualified)
         working-directory: tools/project-catalog
         env:
           CGO_ENABLED: '1'
-        run: go build -mod=readonly ./cmd/scan-gui
+        run: go build -a -mod=readonly ./cmd/scan-gui

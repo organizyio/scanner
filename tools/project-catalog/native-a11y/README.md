@@ -17,7 +17,10 @@ compiling with the default MSVC target is not sufficient for a MinGW Go build.
 The Go package `internal/nativea11y` links this target-matched static library by
 default. A CGO-disabled build provides an explicit unavailable adapter, never a
 successful qualification. This library is outside the root Cargo workspace and
-is not a crates.io publication target. Do not track `target/` binaries.
+is not a crates.io publication target. Do not track `target/` binaries. Go does not fingerprint external static archives
+in its build cache: use `go build -a` / `go test -a` for manual native GUI checks.
+Component packaging includes the exact library hash in its link flags to force
+a fresh link when this source-built library changes.
 
 ## Semantic and threading contract
 
