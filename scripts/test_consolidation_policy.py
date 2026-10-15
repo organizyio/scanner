@@ -4,6 +4,7 @@ import hashlib
 import tempfile
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 
 class SourcePolicyTests(unittest.TestCase):
@@ -49,6 +50,14 @@ class SourcePolicyTests(unittest.TestCase):
             (directory / 'unregistered.rs').write_bytes(b'extra')
             with self.assertRaisesRegex(AssertionError, 'Unexpected vendor files'):
                 namespace['verify_vendor'](directory, register)
+            (directory / 'unregistered.rs').unlink()
+            hidden = directory / 'tests'
+            hidden.mkdir()
+            original_is_symlink = Path.is_symlink
+            # Model a directory symlink even on Windows without symlink privilege.
+            with patch.object(Path, 'is_symlink', lambda path: path == hidden or original_is_symlink(path)):
+                with self.assertRaisesRegex(AssertionError, 'Vendor symlink forbidden'):
+                    namespace['verify_vendor'](directory, register)
 
 
 if __name__ == '__main__':

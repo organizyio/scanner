@@ -56,7 +56,10 @@ def verify_vendor(directory, register):
     assert set(modified) <= set(original), 'Unknown upstream modification'
     assert set(current) == set(original) | set(added), 'Unregistered vendor files'
     assert set(added) == set(current) - set(original), 'Invalid added vendor files'
-    actual = {p.relative_to(directory).as_posix() for p in directory.rglob('*') if p.is_file()}
+    entries = list(directory.rglob('*'))
+    assert not any(p.is_symlink() for p in entries), 'Vendor symlink forbidden'
+    assert all(p.is_file() or p.is_dir() for p in entries), 'Vendor special file forbidden'
+    actual = {p.relative_to(directory).as_posix() for p in entries if p.is_file()}
     assert actual == set(current), 'Unexpected vendor files'
     for name, expected in current.items():
         path = directory / name

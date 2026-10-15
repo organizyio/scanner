@@ -5,7 +5,9 @@ package gui
 import (
 	"context"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	fynetest "fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"os"
 	"path/filepath"
@@ -219,5 +221,51 @@ func TestFolderPickerIgnoresQueuedResultAfterTypingAndRecoversUp(t *testing.T) {
 	next()()
 	if controls.selectFolder.Disabled() || controls.path.Text != filepath.Dir(root) {
 		t.Fatal("Up did not recover the previous valid parent")
+	}
+}
+
+func TestFolderTreeHasDistinctVisibleFocusWithoutChangingSelection(t *testing.T) {
+	app := fynetest.NewApp()
+	defer app.Quit()
+	tree := newFolderTree(widget.NewTree(func(uid string) []string {
+		if uid == "" {
+			return []string{"selected row"}
+		}
+		return nil
+	}, func(string) bool { return false }, func(bool) fyne.CanvasObject { return widget.NewLabel("") }, func(uid string, _ bool, o fyne.CanvasObject) { o.(*widget.Label).SetText(uid) }))
+	other := widget.NewButton("Other control", nil)
+	window := fynetest.NewWindow(container.NewVBox(tree, other))
+	defer window.Close()
+	tree.Resize(fyne.NewSize(400, 180))
+	renderer, ok := fynetest.WidgetRenderer(tree).(*folderTreeRenderer)
+	if !ok {
+		t.Fatal("focus wrapper renderer missing")
+	}
+	window.Canvas().Focus(tree)
+	if !renderer.border.Visible() {
+		t.Fatal("focused tree has no visible boundary")
+	}
+	selected := tree.selected
+	_, _, _, alpha := renderer.border.StrokeColor.RGBA()
+	if alpha != 65535 {
+		t.Fatal("focus accent is translucent")
+	}
+	if colorContrast(renderer.border.StrokeColor, theme.Color(theme.ColorNameBackground)) < 3 {
+		t.Fatal("focus boundary lacks contrast against tree background")
+	}
+	renderer.Layout(fyne.NewSize(400, 180))
+	if renderer.border.Position().X <= 0 || renderer.border.Size().Width >= 400 {
+		t.Fatal("focus stroke clips outside widget")
+	}
+	window.Canvas().Focus(other)
+	if renderer.border.Visible() {
+		t.Fatal("unfocused tree still has focus boundary")
+	}
+	if tree.selected != selected || selected != "selected row" {
+		t.Fatal("focus changed retained selection")
+	}
+	window.Canvas().Focus(tree)
+	if !renderer.border.Visible() || tree.selected != selected {
+		t.Fatal("returning focus did not restore boundary independently of selection")
 	}
 }

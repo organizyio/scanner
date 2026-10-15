@@ -197,15 +197,30 @@ impl Snapshot {
             .iter()
             .flat_map(|n| {
                 let mut node = Node::new(role(&n.role).unwrap());
-                node.set_label(n.name.clone());
                 let text = if matches!(n.role.as_str(), "text" | "status") && n.value.is_empty() {
                     n.name.clone()
                 } else {
                     n.value.clone()
                 };
                 node.set_value(text.clone());
-                if !n.description.is_empty() {
-                    node.set_description(n.description.clone())
+                // Native macOS Label AXValue reads the label, whereas AT-SPI Text
+                // reads its TextRun. Both must expose the visible status itself.
+                if matches!(n.role.as_str(), "text" | "status") {
+                    node.set_label(text.clone());
+                    let context = if n.name != text { n.name.as_str() } else { "" };
+                    let description = [context, n.description.as_str()]
+                        .into_iter()
+                        .filter(|part| !part.is_empty())
+                        .collect::<Vec<_>>()
+                        .join(". ");
+                    if !description.is_empty() {
+                        node.set_description(description);
+                    }
+                } else {
+                    node.set_label(n.name.clone());
+                    if !n.description.is_empty() {
+                        node.set_description(n.description.clone());
+                    }
                 }
                 if !n.placeholder.is_empty() {
                     node.set_placeholder(n.placeholder.clone())
@@ -617,6 +632,48 @@ mod tests {
         assert_eq!(actions.len(), 2);
         assert_eq!(actions[0].value, "synthetic path");
         assert_eq!(actions[1].kind, "select");
+    }
+    #[test]
+    fn status_label_and_text_run_expose_actual_warning_with_context() {
+        let mut snapshot = Snapshot::default();
+        snapshot.nodes.push(SemanticNode {
+            id: 2,
+            parent: 1,
+            role: "status".into(),
+            name: "Scan status".into(),
+            value: "Finished with warnings: inaccessible folder".into(),
+            description: "Partial results".into(),
+            ..Default::default()
+        });
+        snapshot.nodes.push(SemanticNode {
+            id: 3,
+            parent: 1,
+            role: "entry".into(),
+            name: "Folder path".into(),
+            value: "/synthetic".into(),
+            ..Default::default()
+        });
+        let tree = snapshot.tree();
+        let node = |id| {
+            &tree
+                .nodes
+                .iter()
+                .find(|(key, _)| *key == NodeId(id))
+                .unwrap()
+                .1
+        };
+        assert_eq!(
+            node(2).label(),
+            Some("Finished with warnings: inaccessible folder")
+        );
+        assert_eq!(
+            node(2).value(),
+            Some("Finished with warnings: inaccessible folder")
+        );
+        assert_eq!(node(2).description(), Some("Scan status. Partial results"));
+        assert_eq!(node(2 | (1u64 << 63)).value(), node(2).value());
+        assert_eq!(node(3).label(), Some("Folder path"));
+        assert_eq!(node(3).value(), Some("/synthetic"));
     }
     #[test]
     fn offscreen_nodes_have_no_fabricated_bounds() {

@@ -8,6 +8,7 @@ from pathlib import Path
 import platform
 import shutil
 import subprocess
+import sys
 import tarfile
 import zipfile
 
@@ -112,6 +113,10 @@ def dependency_notices(out, component, gui=False):
                 retained.append(path.name)
         if not retained:
             raise RuntimeError('Required upstream notice missing for ' + name)
+        if component == 'catalog' and gui and source == ROOT / 'tools/project-catalog/native-a11y/vendor/accesskit_unix':
+            provenance = ROOT / 'tools/project-catalog/native-a11y/vendor/provenance.json'
+            shutil.copy2(provenance, out / 'third-party' / name / 'SCANNER-UPSTREAM-PATCH.json')
+            retained.append('SCANNER-UPSTREAM-PATCH.json')
         index.append({'package': name, 'license_notice_files': retained})
     if packages:
         (out / 'third-party').mkdir(exist_ok=True)
@@ -140,7 +145,7 @@ def build(component, gui=False):
             run(['go', 'build', '-trimpath', '-o', str(out / ('scan-fs' + suffix)), './cmd/scan-fs'], ROOT / 'compat/scan-fs', env)
     elif component == 'catalog':
         if gui:
-            run(['python3', str(ROOT / 'scripts/build-native-a11y.py')])
+            run([sys.executable, str(ROOT / 'scripts/build-native-a11y.py')])
         for cmd in ('scan-cli', 'scan-git', 'scan-fs') + (('scan-gui',) if gui else ()):
             flags = []
             if cmd == 'scan-gui':

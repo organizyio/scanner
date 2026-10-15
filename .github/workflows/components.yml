@@ -143,3 +143,5 @@ jobs:
         env:
           CGO_ENABLED: '1'
         run: go build -a -mod=readonly ./cmd/scan-gui
+      - name: Validate GUI archive and upstream notices (no publication)
+        run: python scripts/build-components.py catalog --gui --archive
