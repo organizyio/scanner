@@ -2,6 +2,7 @@
 """Build isolated migration components from local reviewed source; never download engines."""
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import platform
@@ -17,6 +18,66 @@ HOSTS = {('Linux', 'x86_64'): ('linux', 'amd64'), ('Windows', 'AMD64'): ('window
 
 def run(args, cwd=ROOT, env=None):
     subprocess.run(args, cwd=cwd, env=env, check=True)
+
+
+def dependency_notices(out, component, gui=False):
+    """Retain license/notice texts from the exact public dependency sources."""
+    packages = []
+    if component in ('engine', 'wrapper'):
+        metadata = json.loads(subprocess.check_output([
+            'cargo', '+1.88', 'metadata', '--locked', '--format-version', '1',
+            '--manifest-path', str(ROOT / 'compat/scan-engine/Cargo.toml')], cwd=ROOT))
+        packages += [(p['name'] + '-' + p['version'], Path(p['manifest_path']).parent)
+                     for p in metadata['packages'] if p['source'] is not None]
+    if component in ('wrapper', 'catalog'):
+        module = ROOT / ('compat/scan-fs' if component == 'wrapper' else 'tools/project-catalog')
+        commands = ['./cmd/scan-fs'] if component == 'wrapper' else ['./cmd/scan-cli', './cmd/scan-git', './cmd/scan-fs']
+        if gui and component == 'catalog':
+            commands.append('./cmd/scan-gui')
+        raw = subprocess.check_output(['go', 'list', '-mod=readonly', '-deps', '-json', *commands], cwd=module,
+                                      env=dict(os.environ, CGO_ENABLED='1' if gui else '0'), text=True)
+        decoder = json.JSONDecoder()
+        modules = {}
+        while raw.strip():
+            entry, end = decoder.raw_decode(raw.lstrip())
+            raw = raw.lstrip()[end:]
+            mod = entry.get('Module', {})
+            if not mod.get('Main') and mod.get('Dir'):
+                modules[mod['Path']] = mod
+        packages += [(m['Path'].replace('/', '_') + '-' + m['Version'], Path(m['Dir'])) for m in modules.values()]
+        goroot = Path(subprocess.check_output(['go', 'env', 'GOROOT'], text=True).strip())
+        notices = out / 'third-party/golang'
+        notices.mkdir(parents=True, exist_ok=True)
+        go_license = goroot / 'LICENSE'
+        if not go_license.exists():
+            go_license = goroot.parent / 'LICENSE'  # Homebrew separates licenses from libexec.
+        shutil.copy2(go_license, notices / 'LICENSE')
+    if component in ('engine', 'wrapper'):
+        sysroot = Path(subprocess.check_output(['rustc', '+1.88', '--print', 'sysroot'], text=True).strip())
+        rust_notices = sysroot / 'share/doc/rust'
+        shutil.copytree(rust_notices / 'licenses', out / 'third-party/rust/licenses', dirs_exist_ok=True)
+        shutil.copy2(rust_notices / 'COPYRIGHT-library.html', out / 'third-party/rust/COPYRIGHT-library.html')
+    index = []
+    for name, source in packages:
+        retained = []
+        for path in sorted(source.rglob('*')):
+            if not path.is_file() or path.is_symlink():
+                continue
+            if not path.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'COPYRIGHT')):
+                continue
+            if path.suffix.lower() in ('.go', '.rs', '.png', '.jpg'):
+                continue
+            # Only copy text notices from dependencies, never executables or caches.
+            path.read_text(encoding='utf-8')
+            relative = path.relative_to(source)
+            target = out / 'third-party' / name / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target)
+            retained.append(str(relative))
+        index.append({'package': name, 'license_notice_files': retained})
+    if packages:
+        (out / 'third-party').mkdir(exist_ok=True)
+        (out / 'third-party/index.json').write_text(json.dumps(index, indent=2) + '\n')
 
 
 def build(component, gui=False):
@@ -50,6 +111,7 @@ def build(component, gui=False):
     for license_name in ('LICENSE', 'LICENSE-MIT'):
         shutil.copy2(ROOT / license_name, out / license_name)
     shutil.copy2(ROOT / 'docs/consolidation/NOTICE.md', out / 'NOTICE.md')
+    dependency_notices(out, component, gui)
     return out
 
 
@@ -58,8 +120,9 @@ def package(out):
     archive = ROOT / 'dist' / (name + ('.zip' if platform.system() == 'Windows' else '.tar.gz'))
     if archive.suffix == '.zip':
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
-            for p in sorted(out.iterdir()):
-                z.write(p, name + '/' + p.name)
+            for p in sorted(out.rglob('*')):
+                if p.is_file():
+                    z.write(p, name + '/' + str(p.relative_to(out)))
     else:
         with tarfile.open(archive, 'w:gz') as z:
             z.add(out, arcname=name)

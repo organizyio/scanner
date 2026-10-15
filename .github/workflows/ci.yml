@@ -54,7 +54,7 @@ jobs:
       - name: cargo deny
         run: |
           cargo deny check
-          cargo deny --manifest-path compat/scan-engine/Cargo.toml check --config deny.toml
+          cargo deny --manifest-path compat/scan-engine/Cargo.toml check --config "$PWD/deny.toml"
 
   validate:
     name: Rust validation (MSRV, minimal-versions, benches)

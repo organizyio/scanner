@@ -14,7 +14,7 @@ xxhash-rust = { version = "0.8", features = ["xxh64"] }
 sha2 = "0.10"
 kamadak-exif = "0.5"
 lofty = "0.22"
-lopdf = "0.42"
+lopdf = "0.45"
 zip = "2"
 roxmltree = "0.20"
 file-format = "0.25"
