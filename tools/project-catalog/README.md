@@ -135,7 +135,7 @@ Profiles (YAML) define scan roots, excludes, hashing, checkpoints — see `inter
 On your dev machine:
 
 ```bash
-cd scan-projects
+cd scanner/tools/project-catalog
 go mod tidy
 ./build.sh
 ```

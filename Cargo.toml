@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/*", "scanfs", "scanner"]
+exclude = ["compat/scan-engine"]
 resolver = "2"
 
 [workspace.dependencies]

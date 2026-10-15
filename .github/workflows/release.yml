@@ -252,6 +252,7 @@ jobs:
           mkdir -p dist
           cp target/release/scanfs "dist/scanfs-${{ matrix.name }}"
       - name: Stage artifact (Windows)
+        shell: pwsh
         if: runner.os == 'Windows'
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null

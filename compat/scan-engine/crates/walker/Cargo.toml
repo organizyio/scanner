@@ -1,0 +1,11 @@
+[package]
+license = "MIT"
+publish = false
+name = "walker"
+version = "0.2.1"
+edition = "2021"
+
+[dependencies]
+ignore = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }

@@ -20,3 +20,6 @@ Thumbs.db
 # Local secrets / env (never commit)
 .env
 .env.*
+
+/dist/
+**/__pycache__/

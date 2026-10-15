@@ -1,0 +1,17 @@
+[package]
+license = "MIT"
+publish = false
+name = "scan"
+version = "0.2.1"
+edition = "2021"
+
+[[bin]]
+name = "scan"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+engine = { path = "../../crates/engine" }
+hash = { path = "../../crates/hash" }
+output = { path = "../../crates/output" }
+walker = { path = "../../crates/walker" }

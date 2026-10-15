@@ -117,3 +117,7 @@ cargo build --release --locked -p scanfs
 ## Optional distribution (not wired by default)
 
 If you ship **`scanfs`** as a container or system package, see the Primer: [containers](https://rustprojectprimer.com/releasing/containers.html) (e.g. multi-stage build with **cargo-chef** for layer cache) and [packaging](https://rustprojectprimer.com/releasing/packaging.html) (**cargo-deb** / **cargo-generate-rpm**). Add a `Dockerfile` or deb metadata only when that is a product goal.
+
+## Consolidated scanning components
+
+See the [repository consolidation record](docs/consolidation/README.md) for the retained Go catalog/Fyne application, isolated compatibility engine/wrapper, history/privacy boundary and pending cutover gates. Preferred interfaces remain `scanner-core` and `scanfs`.

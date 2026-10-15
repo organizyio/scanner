@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "cmd/scan"]
+
+# Transitive crates (e.g. `time`, `image`) require a recent stable; use `rust:1.88-bookworm` or newer locally/CI.
+[workspace.package]
+edition = "2021"
+rust-version = "1.88"
+
+[workspace.dependencies]
+ignore = "0.4"
+wait-timeout = "0.2"
+xxhash-rust = { version = "0.8", features = ["xxh64"] }
+sha2 = "0.10"
+kamadak-exif = "0.5"
+lofty = "0.22"
+lopdf = "0.35"
+zip = "2"
+roxmltree = "0.20"
+file-format = "0.25"
+img_hash = "3.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+clap = { version = "4", features = ["derive"] }
+thiserror = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
