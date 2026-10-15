@@ -242,10 +242,23 @@ func IsRepository(ctx context.Context, path string) bool {
 // SanitizeRemoteURL removes secrets without echoing malformed URL input.
 func SanitizeRemoteURL(raw string) string {
 	if !strings.Contains(raw, "://") {
-		if strings.Contains(raw, "@") && strings.Contains(raw, ":") && !strings.ContainsAny(raw, "?#") {
-			left := strings.SplitN(raw, "@", 2)[0]
-			if !strings.Contains(left, ":") {
-				return raw
+		// Windows drive paths are local paths, not a host/password separator.
+		if len(raw) >= 3 && ((raw[0] >= 'a' && raw[0] <= 'z') || (raw[0] >= 'A' && raw[0] <= 'Z')) && raw[1] == ':' && (raw[2] == '\\' || raw[2] == '/') && !strings.ContainsAny(raw, "@?#") {
+			return raw
+		}
+		clean := raw
+		if i := strings.IndexAny(clean, "?#"); i >= 0 {
+			clean = clean[:i]
+		}
+		if colon := strings.IndexByte(clean, ':'); colon > 0 && colon < len(clean)-1 {
+			left, right := clean[:colon], clean[colon+1:]
+			// SCP forms support optional SSH usernames, never user:password@host.
+			if !strings.Contains(right, "@") && !strings.ContainsAny(left, "/\\") && strings.Count(left, "@") <= 1 && !strings.ContainsAny(right, "\r\n") {
+				switch strings.ToLower(left) {
+				case "http", "https", "ssh", "file", "ftp":
+					return "[redacted remote]"
+				}
+				return clean
 			}
 		}
 		if !strings.ContainsAny(raw, "@?#:") {
@@ -254,7 +267,7 @@ func SanitizeRemoteURL(raw string) string {
 		return "[redacted remote]"
 	}
 	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" {
+	if err != nil || (u.Host == "" && !(strings.EqualFold(u.Scheme, "file") && u.Path != "" && strings.HasPrefix(u.Path, "/"))) {
 		return "[redacted remote]"
 	}
 	u.RawQuery = ""

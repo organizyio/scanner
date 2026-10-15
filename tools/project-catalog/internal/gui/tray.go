@@ -6,6 +6,7 @@ import (
 	"scan-projects/internal/controller"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
@@ -25,7 +26,11 @@ func SetupTray(a fyne.App, w fyne.Window, ctrl *controller.Controller) {
 			w.Hide()
 		}),
 		fyne.NewMenuItemSeparator(),
-		fyne.NewMenuItem("Start", func() { _ = ctrl.Start(false) }),
+		fyne.NewMenuItem("Start", func() {
+			if err := ctrl.Start(false); err != nil {
+				dialog.ShowError(err, w)
+			}
+		}),
 		fyne.NewMenuItem("Pause", func() { ctrl.Pause() }),
 		fyne.NewMenuItem("Resume", func() { ctrl.Resume() }),
 		fyne.NewMenuItem("Cancel", func() { ctrl.Cancel() }),

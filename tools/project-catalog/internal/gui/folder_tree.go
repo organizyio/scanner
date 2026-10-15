@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -16,7 +17,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func NewFolderTree(ctrl *controller.Controller, details *widget.Label) fyne.CanvasObject {
+func NewFolderTree(ctx context.Context, ctrl *controller.Controller, details *widget.Label) fyne.CanvasObject {
 	const rootID = "ROOT"
 
 	tree := widget.NewTree(
@@ -43,14 +44,7 @@ func NewFolderTree(ctrl *controller.Controller, details *widget.Label) fyne.Canv
 		showFolderDetails(ctrl, id, details)
 	}
 
-	// SAFE refresh loop
-	go func() {
-		t := time.NewTicker(2 * time.Second)
-		defer t.Stop()
-		for range t.C {
-			tree.Refresh()
-		}
-	}()
+	startUIPoller(ctx, 2*time.Second, fyne.Do, tree.Refresh)
 
 	return container.NewBorder(
 		widget.NewLabel("Folders"),

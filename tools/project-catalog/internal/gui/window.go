@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"context"
 	"scan-projects/internal/controller"
 
 	"fyne.io/fyne/v2"
@@ -12,7 +13,11 @@ import (
 )
 
 func Run(a fyne.App, ctrl *controller.Controller) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	a.Lifecycle().SetOnStopped(func() { cancel(); ctrl.Cancel() })
 	w := a.NewWindow("Scanner")
+	w.SetOnClosed(func() { cancel(); ctrl.Cancel() })
 	w.Resize(fyne.NewSize(1200, 720))
 
 	startBtn := widget.NewButton("Start", func() {
@@ -45,11 +50,11 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	details := widget.NewLabel("Select a folder")
 	details.Wrapping = fyne.TextWrapWord
 
-	tree := NewFolderTree(ctrl, details)
+	tree := NewFolderTree(ctx, ctrl, details)
 	split := container.NewHSplit(tree, container.NewVScroll(details))
 	split.Offset = 0.42
 
-	status := NewProgressPanel(ctrl)
+	status := NewProgressPanel(ctx, ctrl)
 
 	content := container.NewBorder(top, status, nil, nil, split)
 	w.SetContent(content)

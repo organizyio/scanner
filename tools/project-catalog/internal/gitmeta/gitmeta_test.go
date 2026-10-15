@@ -75,6 +75,10 @@ func TestSanitizeRemoteURL(t *testing.T) {
 		{"https://user:FAKE_PASSWORD@example.invalid/repo.git?FAKE_TOKEN#fragment", "https://example.invalid/repo.git"},
 		{"ssh://git:FAKE_PASSWORD@example.invalid/repo.git?FAKE_TOKEN", "ssh://git@example.invalid/repo.git"},
 		{"git@example.invalid:team/repo.git", "git@example.invalid:team/repo.git"},
+		{"file:///synthetic/repo", "file:///synthetic/repo"},
+		{`C:\synthetic\repo`, `C:\synthetic\repo`},
+		{"example.com:owner/repo", "example.com:owner/repo"},
+		{"example.com:owner/repo?FAKE_TOKEN#fragment", "example.com:owner/repo"},
 		{"https://user:FAKE_PASSWORD@%invalid/repo", "[redacted remote]"},
 		{"user:FAKE_PASSWORD@example.invalid/repo", "[redacted remote]"},
 	} {

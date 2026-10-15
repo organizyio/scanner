@@ -28,9 +28,10 @@ type Controller struct {
 	progress *scan.Progress
 
 	// scan lifecycle
-	running bool
-	paused  bool
-	lastErr string
+	running      bool
+	paused       bool
+	lastErr      string
+	warningCount int
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -113,6 +114,7 @@ func (c *Controller) Start(resume bool) error {
 	c.running = true
 	c.paused = false
 	c.lastErr = ""
+	c.warningCount = 0
 	c.folders = map[string]*scan.FolderRecord{}
 	c.stats = nil
 	c.lastSeen = ""
@@ -142,7 +144,8 @@ func (c *Controller) Start(resume bool) error {
 		Runtime:           c.runtime.Opts,
 		OnWarning: func(path string, err error) {
 			c.mu.Lock()
-			c.lastErr = fmt.Sprintf("Partial scan: %s: %v", path, err)
+			c.warningCount++
+			c.lastErr = fmt.Sprintf("Partial scan (%d warnings): %s: %v", c.warningCount, path, err)
 			c.mu.Unlock()
 		},
 		OnCheckpoint: func(path string) {
