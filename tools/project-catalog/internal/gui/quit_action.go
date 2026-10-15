@@ -21,7 +21,7 @@ func newQuitAction(ctx context.Context, cancelWorker func(), running func() bool
 			}
 		}
 		if !running() {
-			finish()
+			dispatch(finish)
 			return
 		}
 		go func() {
@@ -40,4 +40,17 @@ func newQuitAction(ctx context.Context, cancelWorker func(), running func() bool
 			}
 		}()
 	}
+}
+
+// Native menus may invoke actions outside Fyne's event queue. Recheck lifecycle
+// inside the dispatched callback as a window can close while it is queued.
+func dispatchWhileAlive(ctx context.Context, dispatch func(func()), action func()) {
+	if ctx.Err() != nil {
+		return
+	}
+	dispatch(func() {
+		if ctx.Err() == nil {
+			action()
+		}
+	})
 }

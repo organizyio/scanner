@@ -59,3 +59,34 @@ func TestQueuedQuitDoesNotRunAfterLifecycleEnds(t *testing.T) {
 		t.Fatal("queued action outlived window lifecycle")
 	}
 }
+
+func TestIdleQuitDispatchesRatherThanRunningOnNativeCallback(t *testing.T) {
+	queued := make(chan func(), 1)
+	quit := false
+	action := newQuitAction(context.Background(), func() {}, func() bool { return false }, func(f func()) { queued <- f }, func() { quit = true })
+	action()
+	if quit {
+		t.Fatal("idle native menu action bypassed UI dispatcher")
+	}
+	(<-queued)()
+	if !quit {
+		t.Fatal("dispatched idle quit was not executed")
+	}
+}
+
+func TestNativeUIActionIsDispatchedAndLifecycleChecked(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	queued := make(chan func(), 1)
+	called := false
+	dispatchWhileAlive(ctx, func(f func()) { queued <- f }, func() { called = true })
+	if called {
+		t.Fatal("native callback mutated UI before dispatch")
+	}
+	cancel()
+	(<-queued)()
+	if called {
+		t.Fatal("queued native callback outlived window")
+	}
+	dispatchWhileAlive(ctx, func(f func()) { t.Fatal("closed window queued native callback") }, func() { called = true })
+}

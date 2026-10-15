@@ -63,10 +63,12 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 		if !quitting.CompareAndSwap(false, true) {
 			return
 		}
-		quitBtn.SetText("Quitting: waiting for scan checkpoint")
-		quitBtn.Disable()
-		refreshActions()
-		finishQuit()
+		dispatchWhileAlive(ctx, fyne.Do, func() {
+			quitBtn.SetText("Quitting: waiting for scan checkpoint")
+			quitBtn.Disable()
+			refreshActions()
+			finishQuit()
+		})
 	}
 	quitBtn = widget.NewButton("Quit", quit)
 	registerQuitShortcut(ctx, w, quit)
@@ -154,7 +156,7 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	w.Canvas().Focus(startBtn)
 
 	cleanupAccessibility = attachWindowAccessibility(ctx, w)
-	setupTray(a, w, ctrl, quit, func() bool { return !quitting.Load() })
+	setupTray(ctx, a, w, ctrl, quit, func() bool { return !quitting.Load() })
 	SetupCloseToTray(w)
 
 	w.ShowAndRun()
