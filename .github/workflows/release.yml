@@ -1,28 +1,5 @@
-# Release scanfs binaries and optionally publish scanner crate.
-#
-# Three ways this workflow is triggered:
-#
-#   1. workflow_dispatch — Actions → Release → Run workflow. Set version (e.g. 0.2.3,
-#      no "v"). Same prepare path as (2), then preflight → build → GitHub Release in
-#      this run (no extra workflow, no PAT).
-#
-#   2. workflow_run — After CI succeeds on a push to main: patch-bump from the last
-#      tag, conventional-commit CHANGELOG, update README release marker, commit as
-#      github-actions[bot], push tag,
-#      then continues with preflight → build → GitHub Release here. Skipped if HEAD
-#      is already tagged.
-#
-#   3. push (tags v*) — You pushed a tag manually; only preflight → build → release
-#      runs (no version bump).
-#
-# Optional crates publish: enable repository variable PUBLISH_TO_CRATES_IO=true and
-# configure environment `crates-io` with secret CARGO_REGISTRY_TOKEN.
-#
-# Tag pushes from GITHUB_TOKEN do not start a new workflow run, so prepare and release
-# must live in the same workflow (like GoReleaser inlined after prepare in forge).
-#
-# Branch protection: bot push in prepare may fail unless github-actions[bot] can push
-# to the default branch (see README).
+# Releases require an explicit dispatch or existing v* tag. Main CI never releases.
+# Consolidation does not authorize crate publication.
 
 name: Release
 
@@ -33,11 +10,11 @@ on:
         description: 'Version (e.g. 0.2.3 — without the "v" prefix)'
         required: true
         type: string
-
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [main]
+      publish_crates:
+        description: Explicitly publish crates (separate from repository migration)
+        required: true
+        default: false
+        type: boolean
 
   push:
     tags:
@@ -57,11 +34,7 @@ env:
 jobs:
   prepare:
     name: Prepare release
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       skip: ${{ steps.version.outputs.skip }}
@@ -319,7 +292,7 @@ jobs:
   publish-crate:
     name: Publish crates to crates.io
     needs: [release, preflight]
-    if: vars.PUBLISH_TO_CRATES_IO == 'true'
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_crates && vars.PUBLISH_TO_CRATES_IO == 'true'
     runs-on: ubuntu-latest
     environment: crates-io
     steps:
