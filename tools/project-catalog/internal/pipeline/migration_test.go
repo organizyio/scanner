@@ -43,7 +43,7 @@ func TestCatalogDiscoveryCharacterization(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
-	// A .git file alone is intentionally not recognized by the legacy catalog.
+	// An invalid .git file remains unrecognized; valid worktree/gitdir files have separate regressions.
 }
 
 func TestGitDiscoveryDoesNotChangeRepository(t *testing.T) {
@@ -167,13 +167,13 @@ func TestProfilesKeepConfigurationIdentity(t *testing.T) {
 	}
 }
 
-// Existing failure semantics are recorded, not corrected by relocation.
-func TestMissingGitRetainsLegacyDirtyFalse(t *testing.T) {
+// Post-consolidation correction: failed Git inspection must remain unknown.
+func TestMissingGitReportsUnknownDirty(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	var info model.ProjectInfo
 	gitmeta.Enrich(t.TempDir(), &info, nil)
-	if !info.IsGit || info.Dirty == nil || *info.Dirty {
-		t.Fatalf("legacy failure result: %+v", info)
+	if !info.IsGit || info.Dirty != nil {
+		t.Fatalf("unknown failure result: %+v", info)
 	}
 }
 

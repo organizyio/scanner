@@ -1,13 +1,16 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"scan-projects/internal/pipeline"
 )
@@ -66,7 +69,10 @@ func RunCatalog(args []string) int {
 
 	extra := make([]string, len(excludes))
 	copy(extra, excludes)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 	allProjects := pipeline.CatalogInventory(pipeline.CatalogInput{
+		Context:       ctx,
 		Roots:         []string(roots),
 		ExtraExcludes: extra,
 		Verbose:       verbose,

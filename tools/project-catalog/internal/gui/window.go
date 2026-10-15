@@ -7,6 +7,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -14,8 +15,16 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	w := a.NewWindow("Scanner")
 	w.Resize(fyne.NewSize(1200, 720))
 
-	startBtn := widget.NewButton("Start", func() { _ = ctrl.Start(false) })
-	startResBtn := widget.NewButton("Start (Resume)", func() { _ = ctrl.Start(true) })
+	startBtn := widget.NewButton("Start", func() {
+		if err := ctrl.Start(false); err != nil {
+			dialog.ShowError(err, w)
+		}
+	})
+	startResBtn := widget.NewButton("Start (Resume)", func() {
+		if err := ctrl.Start(true); err != nil {
+			dialog.ShowError(err, w)
+		}
+	})
 	pauseBtn := widget.NewButton("Pause", func() { ctrl.Pause() })
 	resumeBtn := widget.NewButton("Resume", func() { ctrl.Resume() })
 	cancelBtn := widget.NewButton("Cancel", func() { ctrl.Cancel() })

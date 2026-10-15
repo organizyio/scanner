@@ -140,6 +140,11 @@ func (c *Controller) Start(resume bool) error {
 		Pause:             c.pause,
 		Progress:          c.progress,
 		Runtime:           c.runtime.Opts,
+		OnWarning: func(path string, err error) {
+			c.mu.Lock()
+			c.lastErr = fmt.Sprintf("Partial scan: %s: %v", path, err)
+			c.mu.Unlock()
+		},
 		OnCheckpoint: func(path string) {
 			c.onCheckpoint(p, path)
 		},

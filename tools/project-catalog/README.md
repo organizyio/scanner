@@ -156,3 +156,24 @@ For a deep scan on that host:
 ```bash
 ./scan-cli-linux-amd64 fs -root ~/dev -o deep.json -no-hash
 ```
+
+## Discovery correctness and partial results
+
+Catalog and deep scans share filename/extension markers, including Go, Rust,
+Java and the existing Kotlin label for Gradle. Detected stacks are sorted;
+the primary stack/project kind is an alphabetical display label, not a measure
+of language dominance. Linked worktree and submodule `.git` files are validated
+with read-only Git inspection. Git subprocesses disable optional locks and
+filesystem monitor hooks, honor cancellation and have a ten-second timeout.
+Failed status inspection leaves `dirty` null rather than claiming a clean tree.
+Exported HTTP URLs omit user information, query strings and fragments; SSH
+passwords are removed while ordinary SSH usernames and addressing are retained.
+Malformed credential-bearing URL forms are redacted.
+
+An unavailable creation time is the empty `created_at` string; modification time
+is never substituted as birth time. Skipped/inaccessible paths and hashing
+failures produce stderr warnings and partial-result status in the GUI. Existing
+JSON envelopes and exit conventions are retained: successful completion can
+contain partial results. Check stderr/status before treating an inventory as
+complete. Settings, profiles and checkpoint formats and locations are unchanged.
+These corrections do not qualify GUI operation or authorize a release.

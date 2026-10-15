@@ -46,6 +46,7 @@ type ScanOptions struct {
 	HashMaxFileSizeMB int64
 	ProjectDetection  bool
 
+	OnWarning    func(path string, err error)
 	Pause        <-chan bool
 	OnCheckpoint func(string)
 

@@ -30,6 +30,9 @@ func NewProgressPanel(ctrl *controller.Controller) *widget.Label {
 				snap.MBProcessed,
 				snap.FilesPerSecond,
 			)
+			if warning := ctrl.LastError(); warning != "" {
+				msg += " | " + warning
+			}
 			_ = text.Set(msg) // thread-safe
 		}
 	}()
