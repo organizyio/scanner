@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"syscall"
 
 	"scan-projects/internal/pipeline"
 )
@@ -28,6 +27,13 @@ func (i *arrayFlags) Set(value string) error {
 
 // RunCatalog runs the catalog / inventory CLI (same flags as legacy scan-git). Returns a process exit code.
 func RunCatalog(args []string) int {
+	// Handle SIGINT gracefully while retaining the OS default for SIGTERM.
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	return runCatalog(ctx, args)
+}
+
+func runCatalog(ctx context.Context, args []string) int {
 	var roots arrayFlags
 	var excludes arrayFlags
 	var output string
@@ -69,8 +75,6 @@ func RunCatalog(args []string) int {
 
 	extra := make([]string, len(excludes))
 	copy(extra, excludes)
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
 	allProjects := pipeline.CatalogInventory(pipeline.CatalogInput{
 		Context:       ctx,
 		Roots:         []string(roots),
@@ -98,5 +102,8 @@ func RunCatalog(args []string) int {
 	}
 
 	fmt.Printf("[INFO] Written %d projects to %s\n", len(allProjects), output)
+	if ctx.Err() != nil {
+		return 130
+	}
 	return 0
 }

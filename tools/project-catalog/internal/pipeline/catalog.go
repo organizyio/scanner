@@ -49,6 +49,9 @@ func CatalogInventory(in CatalogInput) []model.ProjectInfo {
 		fmt.Printf("[INFO] Scanning root: %s\n", rootPath)
 		paths := catalog.FindProjectsContext(ctx, rootPath, excludeMap, logger)
 		for _, p := range paths {
+			if ctx.Err() != nil {
+				break
+			}
 			fmt.Printf("  - Found project: %s\n", p)
 			all = append(all, catalog.CollectProjectInfoContext(ctx, p, logger))
 		}
