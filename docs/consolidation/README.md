@@ -1,7 +1,7 @@
 # Scanning repository consolidation
 
 Owner-approved execution packet, 2026-10-15. Sole owner: @ArmanAvanesyan.
-This record defines the migration boundary and baseline. Original repositories remain authoritative until cutover gates pass; [migration PR #3](https://github.com/organizyio/scanner/pull/3) records the validated revisions, consumer acceptance, immutable artifact tags and archival outcome.
+Validated cutover is complete; Scanner is the maintenance authority and the original repositories are archived recovery sources. This record retains the migration boundary and baseline; [migration PR #3](https://github.com/organizyio/scanner/pull/3) records the validated revisions, consumer acceptance, immutable artifact tags and archival outcome.
 Repository consolidation does not establish runtime convergence or product release acceptance.
 
 ## Repository layout and disposition
@@ -40,3 +40,11 @@ Do not install both `scan-fs` implementations into the same binary directory. Le
 Organizy keeps its published Scanner pin and managed traversal, root identity fencing, authorization and durable delivery. This repository move changes no runtime API/schema. Organizy Scan's substrate check must use this repository's compatibility engine at the same exact checkout revision. Archivist has an independent embedded engine and must be reviewed separately; it is not replaced here.
 
 A Rust project-discovery port, marker/Git fixes, bounded live callbacks, supported Go SDK and dependency upgrades are separate follow-ups. Historical repository-intelligence proposals are not accepted requirements by import.
+
+## Local checkout retirement
+
+Original source folders and migration-only checkouts were retired after separate
+ref, reflog, object and file recovery verification. Private recovery archives and
+bundles remain outside this public repository. Restore archived sources only for
+recovery; use the paths above for active builds. Historical source and PR links
+remain provenance references.
