@@ -1,0 +1,10 @@
+[package]
+license = "MIT"
+publish = false
+name = "format"
+version = "0.2.1"
+edition = "2021"
+
+[dependencies]
+file-format = { workspace = true }
+thiserror = { workspace = true }

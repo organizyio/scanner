@@ -1,0 +1,111 @@
+name: Consolidated components
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: components-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compatibility:
+    name: Compatibility (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install pinned Rust
+        run: rustup toolchain install 1.88 --profile minimal --component rustfmt --component clippy --no-self-update
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24.13'
+          cache-dependency-path: compat/scan-fs/go.sum
+      - name: Engine format, lint and tests
+        working-directory: compat/scan-engine
+        run: |
+          cargo +1.88 fmt --all -- --check
+          cargo +1.88 clippy --workspace --all-targets --locked -- -D warnings
+          cargo +1.88 test --workspace --locked
+      - name: Component archive regressions
+        run: python -m unittest discover -s scripts -p "test_*.py"
+      - name: Build local engine and embedded wrapper
+        run: |
+          python scripts/build-components.py engine --archive
+          python scripts/build-components.py wrapper --archive
+      - name: Wrapper unit and required real-engine integration
+        working-directory: compat/scan-fs
+        run: |
+          go vet -mod=readonly ./...
+          go test -mod=readonly ./... -count=1
+          go test -mod=readonly -tags=integration ./tests/integration/... -count=1
+      - name: Project discovery characterization
+        working-directory: tools/project-catalog
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          go vet -mod=readonly ./...
+          go test -mod=readonly ./... -count=1
+      - name: Package independent catalog and legacy launchers
+        run: |
+          python scripts/build-components.py catalog --archive
+          python scripts/build-components.py launchers --archive
+      - name: Verify public history and component source contracts
+        run: python scripts/verify-consolidation.py
+      - uses: actions/upload-artifact@v6
+        with:
+          name: components-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+  catalog-build-matrix:
+    name: Catalog CLI (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24.13'
+          cache-dependency-path: tools/project-catalog/go.sum
+      - name: Preserve project CLI cross-build matrix
+        working-directory: tools/project-catalog
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -mod=readonly ./cmd/scan-cli
+  gui-build:
+    name: Fyne build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24.13'
+          cache-dependency-path: tools/project-catalog/go.sum
+      - name: Linux Fyne prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev
+      - name: Compile native Fyne application (operation remains separately qualified)
+        working-directory: tools/project-catalog
+        env:
+          CGO_ENABLED: '1'
+        run: go build -mod=readonly ./cmd/scan-gui

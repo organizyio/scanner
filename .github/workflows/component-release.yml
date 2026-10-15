@@ -1,0 +1,70 @@
+name: Component release
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Component to publish independently
+        required: true
+        type: choice
+        options: [engine, wrapper, catalog, launchers]
+      validation_run:
+        description: Successful Consolidated components push-to-main run ID at current main
+        required: true
+        type: string
+      version:
+        description: New component version (for example 0.1.0)
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Verify exact-head validation and collect artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_RUN: ${{ inputs.validation_run }}
+          COMPONENT_VERSION: ${{ inputs.version }}
+          COMPONENT_NAME: ${{ inputs.component }}
+        run: |
+          python - <<'PY'
+          import json, os, re, subprocess
+          run_id = os.environ['VALIDATION_RUN']
+          version = os.environ['COMPONENT_VERSION']
+          assert re.fullmatch(r'[0-9]+', run_id)
+          assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version)
+          def gh(*args): return subprocess.check_output(['gh', *args], text=True)
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          run = json.loads(gh('api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run_id}'))
+          assert run['name'] == 'Consolidated components' and run['event'] == 'push'
+          assert run['conclusion'] == 'success' and run['head_branch'] == 'main' and run['head_sha'] == head
+          ci = json.loads(gh('api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/workflows/ci.yml/runs?head_sha={head}&event=push&per_page=100'))
+          assert any(r['conclusion'] == 'success' and r['head_sha'] == head and r['head_branch'] == 'main' for r in ci['workflow_runs']), 'Root CI must also pass at exact main'
+          subprocess.run(['gh','run','download',run_id,'--pattern','components-*','--dir','artifacts'],check=True)
+          PY
+      - name: Publish separate immutable component releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPONENT_VERSION: ${{ inputs.version }}
+          COMPONENT_NAME: ${{ inputs.component }}
+        run: |
+          python - <<'PY'
+          import hashlib, os, pathlib, subprocess
+          for component in (os.environ['COMPONENT_NAME'],):
+              assert component in ('engine','wrapper','catalog','launchers')
+              files = sorted(pathlib.Path('artifacts').glob('**/'+component+'-*'))
+              archives = [p for p in files if p.name.endswith(('.zip','.tar.gz'))]
+              assert len(archives) == 3, (component, archives)
+              for p in archives:
+                  expected = p.with_name(p.name+'.sha256').read_text().split()[0]
+                  assert hashlib.sha256(p.read_bytes()).hexdigest() == expected
+              tag = component+'/v'+os.environ['COMPONENT_VERSION']
+              # gh release create fails for an existing release; never upload/clobber.
+              subprocess.run(['gh','release','create',tag,'--target',subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'--title',tag,'--notes','Repository compatibility distribution; product release acceptance remains separate.',*[str(p) for p in files]],check=True)
+          PY

@@ -1,0 +1,11 @@
+[package]
+license = "MIT"
+publish = false
+name = "output"
+version = "0.2.1"
+edition = "2021"
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -1,0 +1,36 @@
+# Normalize line endings; core.autocrlf still applies per checkout OS.
+* text=auto
+
+# Source & config — LF everywhere (CI, rustfmt, cross-platform)
+*.rs text eol=lf
+*.toml text eol=lf
+Cargo.lock text eol=lf
+rustfmt.toml text eol=lf
+.clippy.toml text eol=lf
+
+# Markdown & docs
+*.md text eol=lf
+
+# GitHub Actions / shell
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+
+# Windows-only scripts (native CRLF)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Test fixtures & assets (do not touch line endings)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.docx binary
+*.mp3 binary
+*.mp4 binary
+*.mov binary
