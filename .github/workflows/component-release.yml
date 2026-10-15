@@ -2,6 +2,11 @@ name: Component release
 on:
   workflow_dispatch:
     inputs:
+      component:
+        description: Component to publish independently
+        required: true
+        type: choice
+        options: [engine, wrapper, catalog, launchers]
       validation_run:
         description: Successful Consolidated components push-to-main run ID at current main
         required: true
@@ -26,6 +31,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VALIDATION_RUN: ${{ inputs.validation_run }}
           COMPONENT_VERSION: ${{ inputs.version }}
+          COMPONENT_NAME: ${{ inputs.component }}
         run: |
           python - <<'PY'
           import json, os, re, subprocess
@@ -38,16 +44,20 @@ jobs:
           run = json.loads(gh('api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run_id}'))
           assert run['name'] == 'Consolidated components' and run['event'] == 'push'
           assert run['conclusion'] == 'success' and run['head_branch'] == 'main' and run['head_sha'] == head
+          ci = json.loads(gh('api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/workflows/ci.yml/runs?head_sha={head}&event=push&per_page=100'))
+          assert any(r['conclusion'] == 'success' and r['head_sha'] == head and r['head_branch'] == 'main' for r in ci['workflow_runs']), 'Root CI must also pass at exact main'
           subprocess.run(['gh','run','download',run_id,'--pattern','components-*','--dir','artifacts'],check=True)
           PY
       - name: Publish separate immutable component releases
         env:
           GH_TOKEN: ${{ github.token }}
           COMPONENT_VERSION: ${{ inputs.version }}
+          COMPONENT_NAME: ${{ inputs.component }}
         run: |
           python - <<'PY'
           import hashlib, os, pathlib, subprocess
-          for component in ('engine','wrapper','catalog','launchers'):
+          for component in (os.environ['COMPONENT_NAME'],):
+              assert component in ('engine','wrapper','catalog','launchers')
               files = sorted(pathlib.Path('artifacts').glob('**/'+component+'-*'))
               archives = [p for p in files if p.name.endswith(('.zip','.tar.gz'))]
               assert len(archives) == 3, (component, archives)
