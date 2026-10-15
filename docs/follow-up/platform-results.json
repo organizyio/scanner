@@ -10,8 +10,8 @@
       "gui_compile": "passed",
       "native_window_launch": "passed",
       "start_progress_checkpoint": "passed",
-      "pause_resume": "passed",
-      "cancel": "pending final snapshot review",
+      "pause_resume": "passed: native state screenshots",
+      "cancel": "passed: native Cancel reached canceled state at 1620 MiB",
       "settings_root_keyboard_edit": "passed on earlier GUI-equivalent candidate",
       "restart_resume": "pending",
       "cli_unicode": "passed",
@@ -38,7 +38,7 @@
       "gui_compile": "passed",
       "native_window_launch": "passed in existing interactive console",
       "start_progress_checkpoint": "passed",
-      "pause_resume_cancel": "pending bounded console lifecycle run",
+      "pause_resume_cancel": "pause/resume passed; Cancel did not reach terminal state within bounded capture and remains pending",
       "settings_root_keyboard_edit": "pending",
       "restart_resume": "pending",
       "cli_unicode": "passed",
@@ -53,7 +53,9 @@
   "open_cases": {
     "UI-A11Y-001": "All three Fyne hosts fail native content-control exposure; requires a reviewed native accessibility bridge or framework solution. Widget labels alone do not satisfy this gate.",
     "UI-MAC-ARM64-001": "Interactive ARM64 host not available; x86_64 operation and ARM64 CI compilation are distinct.",
-    "UI-WIN-LIFECYCLE-001": "Complete bounded pause/resume/cancel, root edit and restart evidence; do not infer from Start.",
-    "UI-RESUME-001": "Checkpoint load/continuation exercised; complete inventory equivalence across interrupted runs remains separately required."
+    "UI-WIN-LIFECYCLE-001": "Complete Windows Cancel terminal-state, root edit and restart evidence; native Start/Pause/Resume pass.",
+    "UI-RESUME-001": "Checkpoint load/continuation exercised; complete inventory equivalence across interrupted runs remains separately required.",
+    "UI-MAC-RESTART-001": "Native restart/resume remains pending; saved synthetic root and checkpoint creation were verified.",
+    "CLI-TRANSIENT-001": "Native disappearing-file and signal-interruption scenarios require additional exact-host evidence; automated regressions do not substitute for this gate."
   }
 }
