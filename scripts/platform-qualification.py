@@ -12,9 +12,39 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import subprocess
 import sys
 import time
+
+
+def normalized_path(value):
+    return re.sub(r"/+", "/", str(value).replace("\\", "/")).casefold()
+
+
+def assess_denial(name, result, payload, stderr, affected, verified, windows=None):
+    """Require this fixture's actual diagnostic, successful partial envelope,
+    and an affected read-error record for sharing violations. Unrelated stderr
+    and unsuccessful CLI execution can never satisfy a native qualification.
+    """
+    windows = os.name == "nt" if windows is None else windows
+    diagnostic = normalized_path(affected) in normalized_path(stderr)
+    affected_error = bool(payload) and any(
+        normalized_path(v.get("path", "")) == normalized_path(affected)
+        and v.get("hash_status") == "error" for v in payload.get("files", []))
+    result.update(actual_denial_verified=verified, associated_diagnostic=diagnostic,
+                  affected_hash_error=affected_error)
+    if result["exit_code"] != 0 or not result["valid_envelope"]:
+        result["status"] = "failed"
+    elif not verified:
+        result["status"] = "pending-native-read-denial" if windows else "failed"
+    elif diagnostic and (name == "access-denied" or affected_error):
+        result["status"] = "passed"
+    elif windows and not affected_error and not diagnostic:
+        result["status"] = "pending-native-read-denial"
+    else:
+        result["status"] = "failed"
+    return result
 
 
 def isolated_environment(root):
@@ -101,7 +131,9 @@ def denied_directory(path):
         import csv
         sid = next(csv.reader([who.strip()]))[1]
         # Explicit deny on this directory only; no inherited/user-profile ACL changes.
-        subprocess.run(["icacls", str(path), "/deny", "*" + sid + ":(OI)(CI)(R)"],
+        # Deny data/list access only. Generic R also denies READ_CONTROL, which
+        # icacls needs to remove the temporary ACE under ordinary CI tokens.
+        subprocess.run(["icacls", str(path), "/deny", "*" + sid + ":(OI)(CI)(RD)"],
                        check=True, capture_output=True)
         restore = lambda: subprocess.run(["icacls", str(path), "/remove:d", "*" + sid],
                                          check=True, capture_output=True)
@@ -156,6 +188,7 @@ def cli(binary, root):
     results = {"schema": 1, "system": platform.system(), "architecture": platform.machine(),
                "binary_sha256": hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
                "release_acceptance": False, "gui_qualification": "pending", "cases": {}}
+    observations = {}
 
     def run(name):
         output = root / (name + ".json")
@@ -175,19 +208,19 @@ def cli(binary, root):
                 "Unicode-Δ-日本語" in record.get("path", "") for record in payload.get("files", []))
             value["status"] = "passed" if value["valid_envelope"] and value["unicode_record_present"] and p.returncode == 0 else "failed"
         results["cases"][name] = value
+        observations[name] = (payload, p.stderr)
         return value
 
     run("unicode-symlink")
     with denied_directory(scan / "denied-fixture") as denied:
         value = run("access-denied")
-        value["actual_denial_verified"] = denied
-        value["status"] = "passed" if denied and value["valid_envelope"] and value["diagnostic_present"] else (
-            "pending-native-read-denial" if os.name == "nt" and denied and value["hash_error_count"] == 0 else "failed")
+        assess_denial("access-denied", value, *observations["access-denied"], scan / "denied-fixture", denied)
     with exclusive_file(scan / "file-000000.txt") as locked:
         value = run("locked-file")
-        value["actual_denial_verified"] = locked
-        value["status"] = ("passed" if value["diagnostic_present"] and value["valid_envelope"] else (
-            "pending-native-read-denial" if value["hash_error_count"] == 0 else "failed")) if locked else "not-applicable-posix-advisory-locks"
+        if os.name == "nt":
+            assess_denial("locked-file", value, *observations["locked-file"], scan / "file-000000.txt", locked)
+        else:
+            value.update(actual_denial_verified=False, status="not-applicable-posix-advisory-locks")
     (root / "cli-report.json").write_text(json.dumps(results, indent=2) + "\n")
     return results
 

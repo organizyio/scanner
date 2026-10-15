@@ -12,6 +12,27 @@ from pathlib import Path
 import time
 
 
+def descendant_of(window, selected, parent_lookup):
+    seen = set()
+    while window not in seen and window not in (0, 1):
+        if window == selected:
+            return True
+        seen.add(window)
+        window = parent_lookup(window)
+    return False
+
+
+def checked_sequence(check_focus, events):
+    check_focus()
+    for event in events:
+        event()
+
+
+def validate_point(px, py, width, height):
+    if not 0 <= px < width or not 0 <= py < height:
+        raise ValueError("click must be inside the actual selected window geometry")
+
+
 class XImage(C.Structure):
     _fields_ = [("width", C.c_int), ("height", C.c_int), ("xoffset", C.c_int),
                 ("format", C.c_int), ("data", C.c_void_p), ("byte_order", C.c_int),
@@ -47,6 +68,10 @@ def main():
                                     C.POINTER(ulong), C.POINTER(ulong), C.POINTER(C.c_void_p)]
     x.XFree.argtypes = [C.c_void_p]
     x.XCloseDisplay.argtypes = [C.c_void_p]
+    x.XGetInputFocus.argtypes = [C.c_void_p, C.POINTER(ulong), C.POINTER(C.c_int)]
+    x.XGetGeometry.argtypes = [C.c_void_p, ulong, C.POINTER(ulong), C.POINTER(C.c_int),
+                              C.POINTER(C.c_int), C.POINTER(C.c_uint), C.POINTER(C.c_uint),
+                              C.POINTER(C.c_uint), C.POINTER(C.c_uint)]
     x.XFetchName.argtypes = [C.c_void_p, ulong, C.POINTER(C.c_void_p)]
     atom = x.XInternAtom(display, b"_NET_WM_PID", 0)
 
@@ -89,6 +114,29 @@ def main():
     if not windows:
         x.XCloseDisplay(display)
         raise SystemExit("No X11 window for requested process; qualification pending")
+    selected = windows[0]
+
+    def parent_of(window):
+        root, parent, count = ulong(), ulong(), C.c_uint()
+        values = C.POINTER(ulong)()
+        ok = x.XQueryTree(display, window, C.byref(root), C.byref(parent), C.byref(values), C.byref(count))
+        if values:
+            x.XFree(values)
+        return parent.value if ok else 0
+
+    def assert_focus():
+        focused, revert = ulong(), C.c_int()
+        x.XGetInputFocus(display, C.byref(focused), C.byref(revert))
+        if not descendant_of(focused.value, selected, parent_of):
+            raise RuntimeError("focus left selected synthetic window; no input sent")
+
+    def dimensions(window):
+        root, px, py = ulong(), C.c_int(), C.c_int()
+        width, height, border, depth = [C.c_uint() for _ in range(4)]
+        if not x.XGetGeometry(display, window, C.byref(root), C.byref(px), C.byref(py),
+                              C.byref(width), C.byref(height), C.byref(border), C.byref(depth)):
+            raise RuntimeError("selected window geometry unavailable")
+        return width.value, height.value
     args.output.mkdir(parents=True, exist_ok=True)
     try:
         if args.keys or args.click or args.text:
@@ -100,26 +148,31 @@ def main():
             x.XKeysymToKeycode.restype = C.c_uint
             x.XFlush.argtypes = [C.c_void_p]
             xtst.XTestFakeKeyEvent.argtypes = [C.c_void_p, C.c_uint, C.c_int, ulong]
-            x.XSetInputFocus(display, windows[0], 2, 0)
+            x.XSetInputFocus(display, selected, 2, 0)
+            assert_focus()
+
+            def send_keys(events):
+                checked_sequence(assert_focus, [
+                    lambda code=code, down=down: xtst.XTestFakeKeyEvent(display, code, down, 0)
+                    for code, down in events])
             if args.click:
                 x.XWarpPointer.argtypes = [C.c_void_p, ulong, ulong, C.c_int, C.c_int,
                                           C.c_uint, C.c_uint, C.c_int, C.c_int]
                 xtst.XTestFakeButtonEvent.argtypes = [C.c_void_p, C.c_uint, C.c_int, ulong]
                 for point in args.click.split(";"):
                     px, py = [int(v) for v in point.split(",")]
-                    if not 0 <= px < 1200 or not 0 <= py < 720:
-                        raise ValueError("click must be inside the configured synthetic window")
-                    x.XWarpPointer(display, 0, windows[0], 0, 0, 0, 0, px, py)
-                    xtst.XTestFakeButtonEvent(display, 1, 1, 0)
-                    xtst.XTestFakeButtonEvent(display, 1, 0, 0)
+                    validate_point(px, py, *dimensions(selected))
+                    checked_sequence(assert_focus, [
+                        lambda: x.XWarpPointer(display, 0, selected, 0, 0, 0, 0, px, py),
+                        lambda: xtst.XTestFakeButtonEvent(display, 1, 1, 0),
+                        lambda: xtst.XTestFakeButtonEvent(display, 1, 0, 0)])
                     x.XFlush(display)
                     time.sleep(1)
             for key in args.keys.split(",") if args.keys else []:
                 if key == "ctrl+a":
                     control = x.XKeysymToKeycode(display, x.XStringToKeysym(b"Control_L"))
                     a = x.XKeysymToKeycode(display, x.XStringToKeysym(b"a"))
-                    for code, down in [(control, 1), (a, 1), (a, 0), (control, 0)]:
-                        xtst.XTestFakeKeyEvent(display, code, down, 0)
+                    send_keys([(control, 1), (a, 1), (a, 0), (control, 0)])
                     x.XFlush(display)
                     time.sleep(0.25)
                     continue
@@ -128,8 +181,7 @@ def main():
                 code = x.XKeysymToKeycode(display, x.XStringToKeysym(key.encode()))
                 if not code:
                     raise ValueError("key absent from session keymap")
-                xtst.XTestFakeKeyEvent(display, code, 1, 0)
-                xtst.XTestFakeKeyEvent(display, code, 0, 0)
+                send_keys([(code, 1), (code, 0)])
                 x.XFlush(display)
                 time.sleep(0.25)
             if args.text:
@@ -139,8 +191,7 @@ def main():
                     code = x.XKeysymToKeycode(display, ord(char))
                     if not code:
                         raise ValueError("text character absent from session keymap")
-                    xtst.XTestFakeKeyEvent(display, code, 1, 0)
-                    xtst.XTestFakeKeyEvent(display, code, 0, 0)
+                    send_keys([(code, 1), (code, 0)])
                     x.XFlush(display)
                     time.sleep(0.025)
                 time.sleep(1)

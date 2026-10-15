@@ -16,7 +16,27 @@
       "restart_resume": "pending",
       "cli_unicode": "passed",
       "cli_actual_denial": "passed",
-      "native_accessibility": "failed: application content controls absent from AX tree"
+      "native_accessibility": "failed: application content controls absent from AX tree",
+      "host_build_metadata": {
+        "os": "macOS 15.7.9 (24G830)",
+        "go": "go1.27.2 darwin/amd64",
+        "cli_sha256": "c0eb877360822d80befd8410d393f2f3866a2becb03fcb53216a437d3c8e9592",
+        "gui_sha256": "4e490e06ff2de133d283453e1270f24206776f8df92bc857bbc917a13a06cfab",
+        "fyne": "v2.7.3"
+      },
+      "evidence": {
+        "mac-cli": "a79c7eb3c034ec5841b96576f77423189c74a8c8f4e2b82b5dee4d67e9c83a44",
+        "mac-pause": "6883eec6b73f99dbe157d822d2480dc9e9e903021d70234f667d8df2fac96399",
+        "mac-resume": "5b24c444a8aa96ae9dce0037dcb1f9a542c128df2cc9fd9cf5940266699fb2d1",
+        "mac-cancel": "04ebfaf459085edb0dcd86a29c712245dba43eafa1d519746894229cfab51fbd",
+        "mac-ax": "e83fefb82a5b97013d9b59ad74f5eed7819b568b877e6294fb5ffb16d748eb09",
+        "mac-root-edit": "8136c7a1cfb38711031cc224b63fdb6aaa428bcab6db51f4ffcc4498498ae0c4"
+      },
+      "native_folder_picker": "not provided by current GUI; no qualification claim",
+      "keyboard_focus_navigation": "pending: root text editing alone does not qualify full navigation or visible focus",
+      "tree_navigation": "pending",
+      "actionable_error_presentation": "pending native GUI validation; CLI diagnostics are separately verified",
+      "source_equivalence": "Tested catalog tree at 5d10665 matches reviewed main baca0cc exactly."
     },
     "macos-arm64": {
       "interactive_gui": "pending; local x86_64 evidence does not qualify arm64"
@@ -31,7 +51,25 @@
       "restart_resume": "passed: process restart restores profile and Start (Resume) completes",
       "cli_unicode": "passed",
       "cli_actual_denial": "passed",
-      "native_accessibility": "failed: no application content in AT-SPI tree"
+      "native_accessibility": "failed: no application content in AT-SPI tree",
+      "host_build_metadata": {
+        "os": "Ubuntu 24.04.5 LTS; Linux 6.17.0-1033-oem x86_64",
+        "go": "go1.27.0 linux/amd64",
+        "cli_sha256": "ff522614d5449886b5e5495be4befb4258d5b0fd0f23cc41a3d7012442c619ed",
+        "gui_sha256": "9e0396e5be67857ff87604e1cf06b5a79350a117973a1213b6e617c1636f8c18",
+        "fyne": "v2.7.3"
+      },
+      "evidence": {
+        "linux-cli": "8f848b31b8d7cff7c483c837426d01fc5c5be2ceea29357f173298397daf988a",
+        "linux-pause": "1fa1be4dbf8615b04708f85efb784e87859a8d9dbdfcb13719f8d7c0f157a851",
+        "linux-resume": "b9a60c8aadc73ee8c322f5b4633e9831945dc187e3d07d755d1e2b23b1fc5857",
+        "linux-cancel": "d7801aac8dc388071b9e4c1efb816e4011b3cee708362f1516b6488dea4add1d",
+        "linux-atspi": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      "native_folder_picker": "not provided by current GUI; no qualification claim",
+      "keyboard_focus_navigation": "pending: root text editing alone does not qualify full navigation or visible focus",
+      "tree_navigation": "pending",
+      "actionable_error_presentation": "pending native GUI validation; CLI diagnostics are separately verified"
     },
     "windows-x86_64": {
       "tested_source": "9cb145b1dfb75e95cab4b3b926f6362d94c8602f",
@@ -42,9 +80,28 @@
       "settings_root_keyboard_edit": "pending",
       "restart_resume": "pending",
       "cli_unicode": "passed",
-      "actual_acl_and_sharing_denial": "passed in interactive console; actual denial and diagnostic verified",
+      "actual_acl_and_sharing_denial": "passed strict console rerun: DENY(RD), exit 0, associated fixture diagnostics; locked affected record hash_status=error; access restored afterward",
       "ssh_token_denial": "not qualified: Go could read where Python denied; console evidence is authoritative for this test",
-      "native_accessibility": "failed: UIAutomation exposes only top-level window"
+      "native_accessibility": "failed: UIAutomation exposes only top-level window",
+      "host_build_metadata": {
+        "os": "Windows NT 10.0.26300.0; PowerShell 5.1.26100.9711",
+        "go": "go1.26.2 windows/amd64",
+        "cli_sha256": "3fd076b4bcae0d9dca01ffb3d8a659e758d81a88cb6fe65a0512d7d064147b13",
+        "fyne": "v2.7.3",
+        "gui_sha256": "4505d2bc5d46dc769792c3cf228e7b7d8a0656176796184d175ef7f1fa3f861f"
+      },
+      "evidence": {
+        "windows-cli": "3e2a0c2a32ef486a17e0375eb6f183263954bd5d15fd1125b063f0a9d6f72328",
+        "windows-pause": "62520102050d300a53d5b053349c78da413e80eca5a9178f27b1473ab5daf1aa",
+        "windows-resume": "6b23ce7123b7677214e2c5b8e0238845c775d245154b0ffd588c66cea555b829",
+        "windows-cancel-pending": "340cf9382ded4ee84b8f2a5676668bac2a6602763fd41174e1d0c3b4797e4ee8",
+        "windows-uia": "9ce2a36b9fe1c75c6675d0784b66417e390720f26b37bb239de5fba3615de7e0",
+        "windows-focus-guard": "2146dee3d8c9d6a1f4425e341aef8910e29b439b220f070a50bde320aca869dc"
+      },
+      "native_folder_picker": "not provided by current GUI; no qualification claim",
+      "keyboard_focus_navigation": "pending: root text editing alone does not qualify full navigation or visible focus",
+      "tree_navigation": "pending",
+      "actionable_error_presentation": "pending native GUI validation; CLI diagnostics are separately verified"
     }
   },
   "candidate_revision": "9cb145b1dfb75e95cab4b3b926f6362d94c8602f",
@@ -56,6 +113,17 @@
     "UI-WIN-LIFECYCLE-001": "Complete Windows Cancel terminal-state, root edit and restart evidence; native Start/Pause/Resume pass.",
     "UI-RESUME-001": "Checkpoint load/continuation exercised; complete inventory equivalence across interrupted runs remains separately required.",
     "UI-MAC-RESTART-001": "Native restart/resume remains pending; saved synthetic root and checkpoint creation were verified.",
-    "CLI-TRANSIENT-001": "Native disappearing-file and signal-interruption scenarios require additional exact-host evidence; automated regressions do not substitute for this gate."
-  }
+    "CLI-TRANSIENT-001": "Native disappearing-file and signal-interruption scenarios require additional exact-host evidence; automated regressions do not substitute for this gate.",
+    "UI-KEYBOARD-001": "Complete visible-focus and keyboard navigation coverage across all controls on each native host.",
+    "UI-TREE-001": "Qualify actual folder-tree navigation and actionable GUI error/status presentation.",
+    "UI-FOCUS-GUARD-001": "A subsequent Windows attempt lost foreground focus and correctly failed closed; no stale report was accepted. Repeat unqualified GUI cases under stable console focus."
+  },
+  "evidence_checksum_algorithm": "sha256",
+  "evidence_policy": "Raw evidence is private. Artifact checksums identify exact captures in the private evidence index; no host identities, user paths or raw logs are published.",
+  "commands": [
+    "go build ./cmd/scan-cli; go build ./cmd/scan-gui (tools/project-catalog)",
+    "python platform-qualification.py cli --fixture <synthetic-fixture> --binary <native-cli>",
+    "native Mac AX/CGEvent, Linux X11/XTest+AT-SPI, Windows console task+UIAutomation runners; screenshot states reviewed individually"
+  ],
+  "cleanup": "Owned GUI processes stopped, temporary same-user tasks absent, fixture ACLs restored and sharing handles released; regenerable large workloads removed. Raw evidence retained privately."
 }

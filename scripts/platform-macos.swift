@@ -3,9 +3,14 @@ import AppKit
 import ApplicationServices
 import Foundation
 
+func fail(_ message: String) -> Never {
+    FileHandle.standardError.write(Data((message + "\n").utf8))
+    exit(2)
+}
+
 guard CommandLine.arguments.count >= 3,
       let pid = Int32(CommandLine.arguments[1]) else {
-    fatalError("usage: swift platform-macos.swift PID OUTPUT_DIRECTORY [tab,space,escape,...]")
+    fail("usage: swift platform-macos.swift PID OUTPUT_DIRECTORY [tab,space,escape,...]")
 }
 let output = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
 try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
@@ -13,7 +18,7 @@ let application = AXUIElementCreateApplication(pid)
 let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
 let owned = windows.filter { $0[kCGWindowOwnerPID as String] as? Int32 == pid && $0[kCGWindowLayer as String] as? Int == 0 }
 let targetTitle = CommandLine.arguments.count > 4 ? CommandLine.arguments[4] : "Scanner"
-guard ["Scanner", "Settings"].contains(targetTitle) else { fatalError("unsupported synthetic window title") }
+guard ["Scanner", "Settings"].contains(targetTitle) else { fail("unsupported synthetic window title") }
 let targetWindows = owned.filter { $0[kCGWindowName as String] as? String == targetTitle }
 func value(_ element: AXUIElement, _ attribute: String) -> CFTypeRef? {
     var result: CFTypeRef?
@@ -31,7 +36,7 @@ func inspect(_ element: AXUIElement, _ depth: Int = 0) -> [String: Any] {
     }
     return record
 }
-guard AXIsProcessTrusted() else { fatalError("Accessibility permission unavailable; qualification pending") }
+guard AXIsProcessTrusted() else { fail("Accessibility permission unavailable; qualification pending") }
 func inspectWindows() -> [String: Any] {
     let appWindows = value(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
     return ["AXRole": "AXApplication", "children": appWindows.map { inspect($0) }]
@@ -49,13 +54,13 @@ if CommandLine.arguments.count > 3 {
     }
     Thread.sleep(forTimeInterval: 0.25)
     for key in CommandLine.arguments[3].split(separator: ",") {
-        guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fatalError("synthetic app lost focus; no input sent") }
+        guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fail("synthetic app lost focus; no input sent") }
         if key.hasPrefix("click:") {
             let parts = key.split(separator: ":")
             guard parts.count == 3, let dx = Double(parts[1]), let dy = Double(parts[2]),
                   let bounds = targetWindows.first?[kCGWindowBounds as String] as? [String: Double],
                   let x = bounds["X"], let y = bounds["Y"], let width = bounds["Width"], let height = bounds["Height"],
-                  dx >= 0, dy >= 0, dx < width, dy < height else { fatalError("click must be inside the synthetic window") }
+                  dx >= 0, dy >= 0, dx < width, dy < height else { fail("click must be inside the synthetic window") }
             let point = CGPoint(x: x + dx, y: y + dy)
             CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
             Thread.sleep(forTimeInterval: 0.1)
@@ -65,9 +70,9 @@ if CommandLine.arguments.count > 3 {
             Thread.sleep(forTimeInterval: 1)
             continue
         }
-        guard let code = codes[String(key)] else { fatalError("unsupported key") }
+        guard let code = codes[String(key)] else { fail("unsupported key") }
         // Native HID delivery is required by GLFW; AX frontmost selects this app.
-        guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fatalError("synthetic app lost focus; no input sent") }
+        guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fail("synthetic app lost focus; no input sent") }
         CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: true)?.post(tap: .cghidEventTap)
         CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: false)?.post(tap: .cghidEventTap)
         Thread.sleep(forTimeInterval: 0.25)
