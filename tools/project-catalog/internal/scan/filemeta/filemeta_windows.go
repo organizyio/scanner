@@ -23,16 +23,19 @@ func Fill(path string, name string, info os.FileInfo) Extra {
 	}
 
 	mod := time.Unix(0, fad.LastWriteTime.Nanoseconds()).UTC()
-	cre := time.Unix(0, fad.CreationTime.Nanoseconds()).UTC()
+	cre := ""
+	if fad.CreationTime.HighDateTime != 0 || fad.CreationTime.LowDateTime != 0 {
+		cre = time.Unix(0, fad.CreationTime.Nanoseconds()).UTC().Format(time.RFC3339)
+	}
 	acc := time.Unix(0, fad.LastAccessTime.Nanoseconds()).UTC()
 
 	fa := fad.FileAttributes
 	return Extra{
-		CreatedAt:   cre.Format(time.RFC3339),
-		ModifiedAt:  mod.Format(time.RFC3339),
-		AccessedAt:  acc.Format(time.RFC3339),
-		ReadOnly:    fa&windows.FILE_ATTRIBUTE_READONLY != 0,
-		Hidden:      fa&windows.FILE_ATTRIBUTE_HIDDEN != 0,
-		SystemFile:  fa&windows.FILE_ATTRIBUTE_SYSTEM != 0,
+		CreatedAt:  cre,
+		ModifiedAt: mod.Format(time.RFC3339),
+		AccessedAt: acc.Format(time.RFC3339),
+		ReadOnly:   fa&windows.FILE_ATTRIBUTE_READONLY != 0,
+		Hidden:     fa&windows.FILE_ATTRIBUTE_HIDDEN != 0,
+		SystemFile: fa&windows.FILE_ATTRIBUTE_SYSTEM != 0,
 	}
 }

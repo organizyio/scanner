@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Fill uses atime/mtime from Lstat. created_at equals modified_at (no birth time in Stat_t).
+// Fill uses atime/mtime from Lstat. created_at is empty (no birth time in Stat_t).
 func Fill(path string, name string, info os.FileInfo) Extra {
 	var st unix.Stat_t
 	if err := unix.Lstat(path, &st); err != nil {
@@ -21,12 +21,12 @@ func Fill(path string, name string, info os.FileInfo) Extra {
 
 	m := info.Mode()
 	return Extra{
-		CreatedAt:   mod.Format(time.RFC3339),
-		ModifiedAt:  mod.Format(time.RFC3339),
-		AccessedAt:  acc.Format(time.RFC3339),
-		ReadOnly:    m.IsRegular() && m&0200 == 0,
-		Hidden:      isUnixHidden(name),
-		SystemFile:  false,
+		CreatedAt:  "",
+		ModifiedAt: mod.Format(time.RFC3339),
+		AccessedAt: acc.Format(time.RFC3339),
+		ReadOnly:   m.IsRegular() && m&0200 == 0,
+		Hidden:     isUnixHidden(name),
+		SystemFile: false,
 	}
 }
 

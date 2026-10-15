@@ -2,6 +2,7 @@
 package catalog
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,12 +17,19 @@ import (
 // excludeMap contains directory names to skip during scanning.
 // If logger is provided, debug information will be logged when verbose mode is enabled.
 func FindProjectsWithProgress(root string, excludeMap map[string]struct{}, logger *Logger) []string {
+	return FindProjectsContext(context.Background(), root, excludeMap, logger)
+}
+
+func FindProjectsContext(ctx context.Context, root string, excludeMap map[string]struct{}, logger *Logger) []string {
 	var projects []string
 	var totalDirs int
 
 	pb := NewProgressBar(0) // Will update total dynamically
 
 	filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[WARN] Error accessing %s: %v\n", path, err)
 			if logger != nil {
@@ -73,9 +81,8 @@ func FindProjectsWithProgress(root string, excludeMap map[string]struct{}, logge
 		pb.Total = totalDirs
 
 		isProject := false
-		gitDir := filepath.Join(path, ".git")
 		hasGit := false
-		if info, err := os.Stat(gitDir); err == nil && info.IsDir() {
+		if gitmeta.IsRepository(ctx, path) {
 			projects = append(projects, path)
 			isProject = true
 			hasGit = true
@@ -91,8 +98,7 @@ func FindProjectsWithProgress(root string, excludeMap map[string]struct{}, logge
 				if checkPathClean == rootClean {
 					break
 				}
-				parentGitDir := filepath.Join(checkPath, ".git")
-				if info, err := os.Stat(parentGitDir); err == nil && info.IsDir() {
+				if gitmeta.IsRepository(ctx, checkPath) {
 					isInsideProject = true
 					break
 				}
@@ -136,6 +142,10 @@ func FindProjectsWithProgress(root string, excludeMap map[string]struct{}, logge
 
 // CollectProjectInfo builds a ProjectInfo struct for a given directory path.
 func CollectProjectInfo(path string, logger *Logger) model.ProjectInfo {
+	return CollectProjectInfoContext(context.Background(), path, logger)
+}
+
+func CollectProjectInfoContext(ctx context.Context, path string, logger *Logger) model.ProjectInfo {
 	name := filepath.Base(path)
 	stacks := markers.DetectStacks(path)
 	var primary string
@@ -160,12 +170,11 @@ func CollectProjectInfo(path string, logger *Logger) model.ProjectInfo {
 		Dirty:          nil,
 	}
 
-	gitDir := filepath.Join(path, ".git")
-	if info, err := os.Stat(gitDir); err == nil && info.IsDir() {
+	if gitmeta.IsRepository(ctx, path) {
 		if logger != nil {
 			logger.Debugf("Collecting Git info for: %s", path)
 		}
-		gitmeta.Enrich(path, &p, logger)
+		gitmeta.EnrichContext(ctx, path, &p, logger)
 	}
 
 	return p

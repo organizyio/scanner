@@ -3,7 +3,9 @@
 package gui
 
 import (
+	"context"
 	"fmt"
+	"fyne.io/fyne/v2"
 	"time"
 
 	"scan-projects/internal/controller"
@@ -12,27 +14,25 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func NewProgressPanel(ctrl *controller.Controller) *widget.Label {
+func NewProgressPanel(ctx context.Context, ctrl *controller.Controller) *widget.Label {
 	text := binding.NewString()
 	label := widget.NewLabelWithData(text)
 
-	go func() {
-		t := time.NewTicker(1 * time.Second)
-		defer t.Stop()
-
-		for range t.C {
-			snap := ctrl.Progress().Snapshot()
-			msg := fmt.Sprintf(
-				"%s | files=%d | hashed=%d | %.1f MB | %.1f files/sec",
-				snap.State,
-				snap.FilesSeen,
-				snap.FilesHashed,
-				snap.MBProcessed,
-				snap.FilesPerSecond,
-			)
-			_ = text.Set(msg) // thread-safe
+	startUIPoller(ctx, time.Second, fyne.Do, func() {
+		snap := ctrl.Progress().Snapshot()
+		msg := fmt.Sprintf(
+			"%s | files=%d | hashed=%d | %.1f MB | %.1f files/sec",
+			snap.State,
+			snap.FilesSeen,
+			snap.FilesHashed,
+			snap.MBProcessed,
+			snap.FilesPerSecond,
+		)
+		if warning := ctrl.LastError(); warning != "" {
+			msg += " | " + warning
 		}
-	}()
+		_ = text.Set(msg) // UI lifecycle dispatcher
+	})
 
 	return label
 }

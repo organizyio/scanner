@@ -83,6 +83,7 @@ func scanStream(ctx context.Context, roots []string, excludeDirs []string, opts 
 		Pause:      opts.Pause,
 		OnPaused:   onPaused,
 		OnResumed:  onResumed,
+		OnError:    warningReporter(opts),
 	}, h)
 
 	finalizeFolders(folders)

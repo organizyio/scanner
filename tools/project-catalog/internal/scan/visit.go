@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,6 +48,7 @@ func ingestFile(path string, d os.DirEntry, info os.FileInfo, folders map[string
 			h, herr := hash.SHA256(path)
 			if herr != nil {
 				hashStatus = "error"
+				warningReporter(opts)(path, herr)
 			} else {
 				sha = h
 				hashStatus = "ok"
@@ -82,4 +84,14 @@ func ingestFile(path string, d os.DirEntry, info os.FileInfo, folders map[string
 	}
 
 	return rec, true
+}
+
+func warningReporter(opts ScanOptions) func(string, error) {
+	return func(path string, err error) {
+		if opts.OnWarning != nil {
+			opts.OnWarning(path, err)
+		} else {
+			fmt.Fprintf(os.Stderr, "[WARN] Partial scan: %s: %v\n", path, err)
+		}
+	}
 }

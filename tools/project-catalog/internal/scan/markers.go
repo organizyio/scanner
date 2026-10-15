@@ -14,11 +14,7 @@ func NoteMarkerFile(fr *FolderRecord, name string) {
 	}
 	l := strings.ToLower(name)
 
-	if _, ok := markers.DeepFileKind[l]; ok {
-		fr.MarkerFiles[l] = true
-	}
-
-	if strings.HasSuffix(l, ".sln") || strings.HasSuffix(l, ".csproj") || strings.HasSuffix(l, ".fsproj") {
+	if _, ok := markers.MarkerKind(l); ok {
 		fr.MarkerFiles[l] = true
 	}
 }
