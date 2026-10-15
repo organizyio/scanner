@@ -1,0 +1,20 @@
+{
+  "device": "<fixture>/input",
+  "directory": "<fixture>/input",
+  "extension": ".txt",
+  "hashes": {
+    "mode": "off"
+  },
+  "identity": {
+    "accessed_at": "<timestamp>",
+    "created_at": "<timestamp>",
+    "device_id": 0,
+    "inode": 0,
+    "modified_at": "<timestamp>",
+    "path": "<fixture>/input/hello.txt",
+    "size": 3
+  },
+  "name": "hello.txt",
+  "schema_version": 1,
+  "source": "synthetic-contract-fixture"
+}

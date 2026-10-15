@@ -3,7 +3,6 @@ package analysis
 
 import (
 	"sort"
-	"strings"
 
 	"scan-projects/internal/markers"
 	"scan-projects/internal/scan"
@@ -25,25 +24,27 @@ func inferProjectKind(fr *scan.FolderRecord) {
 	if len(fr.MarkerFiles) == 0 {
 		return
 	}
-	keys := make([]string, 0, len(fr.MarkerFiles))
-	for k, v := range fr.MarkerFiles {
-		if v {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	for _, l := range keys {
-		if kind, ok := markers.DeepFileKind[l]; ok {
-			if fr.ProjectKind == "" || fr.ProjectKind == "unknown" {
-				fr.ProjectKind = kind
-			}
-		}
-		if strings.HasSuffix(l, ".sln") || strings.HasSuffix(l, ".csproj") || strings.HasSuffix(l, ".fsproj") {
-			if fr.ProjectKind == "" || fr.ProjectKind == "unknown" {
-				fr.ProjectKind = "dotnet"
+	kinds := map[string]bool{}
+	for name, present := range fr.MarkerFiles {
+		if present {
+			if kind, ok := markers.MarkerKind(name); ok {
+				kinds[kind] = true
 			}
 		}
 	}
+	var stacks []string
+	for kind := range kinds {
+		if kind != "git" && kind != "unknown" {
+			stacks = append(stacks, kind)
+		}
+	}
+	sort.Strings(stacks)
+	if len(stacks) > 0 {
+		fr.ProjectKind = stacks[0]
+	} else if kinds["git"] {
+		fr.ProjectKind = "git"
+	}
+
 }
 
 // FinalizeProjectRoot sets IsProjectRoot and ProjectKind from marker files and heuristics.

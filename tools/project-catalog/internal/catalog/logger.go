@@ -17,14 +17,14 @@ func NewLogger(verbose bool) *Logger {
 
 // Debugf logs a formatted debug message if verbose mode is enabled.
 func (l *Logger) Debugf(format string, args ...interface{}) {
-	if l.verbose {
+	if l != nil && l.verbose {
 		fmt.Fprintf(os.Stderr, "[DEBUG] "+format+"\n", args...)
 	}
 }
 
 // Debug logs a debug message if verbose mode is enabled.
 func (l *Logger) Debug(msg string) {
-	if l.verbose {
+	if l != nil && l.verbose {
 		fmt.Fprintf(os.Stderr, "[DEBUG] %s\n", msg)
 	}
 }

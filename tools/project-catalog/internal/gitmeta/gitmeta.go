@@ -3,10 +3,14 @@ package gitmeta
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
+	"time"
 
 	"scan-projects/internal/model"
 )
@@ -16,14 +20,21 @@ type Logger interface {
 	Debugf(format string, args ...interface{})
 }
 
-func runGit(dir string, args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
+func runGit(ctx context.Context, dir string, args ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	args = append([]string{"-c", "core.fsmonitor=false"}, args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.WaitDelay = 100 * time.Millisecond
 	cmd.Dir = dir
 	// Discovery must not refresh repository index caches while reading status.
 	cmd.Env = append(os.Environ(), "GIT_OPTIONAL_LOCKS=0")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("git %v: %w", args, err)
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+		return "", fmt.Errorf("git inspection failed: %w", err)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
@@ -96,6 +107,19 @@ func parseRemoteURL(url string) (host, owner, repoSlug *string) {
 
 // Enrich populates Git-related fields on info for a repository at path.
 func Enrich(path string, info *model.ProjectInfo, logger Logger) {
+	EnrichContext(context.Background(), path, info, logger)
+}
+
+func EnrichContext(ctx context.Context, path string, info *model.ProjectInfo, logger Logger) {
+	if logger != nil {
+		v := reflect.ValueOf(logger)
+		switch v.Kind() {
+		case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+			if v.IsNil() {
+				logger = nil
+			}
+		}
+	}
 	info.IsGit = true
 	info.HasOrigin = false
 	info.Remotes = []model.RemoteInfo{}
@@ -107,9 +131,12 @@ func Enrich(path string, info *model.ProjectInfo, logger Logger) {
 	info.TrackingBranch = ""
 	info.Dirty = nil
 
-	remotesOut, err := runGit(path, "remote", "-v")
-	if err != nil && logger != nil {
-		logger.Debugf("Failed to get remotes for %s: %v", path, err)
+	remotesOut, err := runGit(ctx, path, "remote", "-v")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] Partial Git inspection (remotes): %s: %v\n", path, err)
+		if logger != nil {
+			logger.Debugf("Failed to get remotes for %s: %v", path, err)
+		}
 	}
 	if err == nil && remotesOut != "" {
 		lines := strings.Split(remotesOut, "\n")
@@ -121,7 +148,7 @@ func Enrich(path string, info *model.ProjectInfo, logger Logger) {
 				continue
 			}
 			name := fields[0]
-			url := fields[1]
+			url := SanitizeRemoteURL(fields[1])
 			key := name + "|" + url
 			if _, ok := seen[key]; ok {
 				continue
@@ -145,17 +172,23 @@ func Enrich(path string, info *model.ProjectInfo, logger Logger) {
 		}
 	}
 
-	cur, err := runGit(path, "rev-parse", "--abbrev-ref", "HEAD")
-	if err != nil && logger != nil {
-		logger.Debugf("Failed to get current branch for %s: %v", path, err)
+	cur, err := runGit(ctx, path, "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] Partial Git inspection (current branch): %s: %v\n", path, err)
+		if logger != nil {
+			logger.Debugf("Failed to get current branch for %s: %v", path, err)
+		}
 	}
 	if err == nil && cur != "" {
 		info.CurrentBranch = cur
 	}
 
-	branchesOut, err := runGit(path, "branch", "--format", "%(refname:short)")
-	if err != nil && logger != nil {
-		logger.Debugf("Failed to get branches for %s: %v", path, err)
+	branchesOut, err := runGit(ctx, path, "branch", "--format", "%(refname:short)")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] Partial Git inspection (branches): %s: %v\n", path, err)
+		if logger != nil {
+			logger.Debugf("Failed to get branches for %s: %v", path, err)
+		}
 	}
 	if err == nil && branchesOut != "" {
 		lineScan := bufio.NewScanner(strings.NewReader(branchesOut))
@@ -168,7 +201,7 @@ func Enrich(path string, info *model.ProjectInfo, logger Logger) {
 	}
 
 	if info.CurrentBranch != "" {
-		tracking, err := runGit(path, "rev-parse", "--abbrev-ref", info.CurrentBranch+"@{upstream}")
+		tracking, err := runGit(ctx, path, "rev-parse", "--abbrev-ref", info.CurrentBranch+"@{upstream}")
 		if err != nil && logger != nil {
 			logger.Debugf("Failed to get tracking branch for %s: %v", path, err)
 		}
@@ -177,10 +210,74 @@ func Enrich(path string, info *model.ProjectInfo, logger Logger) {
 		}
 	}
 
-	statusOut, err := runGit(path, "status", "--porcelain")
-	if err != nil && logger != nil {
-		logger.Debugf("Failed to get status for %s: %v", path, err)
+	statusOut, err := runGit(ctx, path, "status", "--porcelain")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[WARN] Partial Git inspection: %s: %v\n", path, err)
+		if logger != nil {
+			logger.Debugf("Failed to get status for %s: %v", path, err)
+		}
 	}
-	d := strings.TrimSpace(statusOut) != ""
-	info.Dirty = &d
+	if err == nil {
+		d := strings.TrimSpace(statusOut) != ""
+		info.Dirty = &d
+	}
+}
+
+// IsRepository validates gitdir files without changing repository configuration.
+func IsRepository(ctx context.Context, path string) bool {
+	st, err := os.Stat(path + string(os.PathSeparator) + ".git")
+	if err != nil {
+		return false
+	}
+	if st.IsDir() {
+		return true
+	}
+	if !st.Mode().IsRegular() {
+		return false
+	}
+	out, err := runGit(ctx, path, "rev-parse", "--is-inside-work-tree")
+	return err == nil && out == "true"
+}
+
+// SanitizeRemoteURL removes secrets without echoing malformed URL input.
+func SanitizeRemoteURL(raw string) string {
+	if !strings.Contains(raw, "://") {
+		// Windows drive paths are local paths, not a host/password separator.
+		if len(raw) >= 3 && ((raw[0] >= 'a' && raw[0] <= 'z') || (raw[0] >= 'A' && raw[0] <= 'Z')) && raw[1] == ':' && (raw[2] == '\\' || raw[2] == '/') && !strings.ContainsAny(raw, "@?#") {
+			return raw
+		}
+		clean := raw
+		if i := strings.IndexAny(clean, "?#"); i >= 0 {
+			clean = clean[:i]
+		}
+		if colon := strings.IndexByte(clean, ':'); colon > 0 && colon < len(clean)-1 {
+			left, right := clean[:colon], clean[colon+1:]
+			// SCP forms support optional SSH usernames, never user:password@host.
+			if !strings.Contains(right, "@") && !strings.ContainsAny(left, "/\\") && strings.Count(left, "@") <= 1 && !strings.ContainsAny(right, "\r\n") {
+				switch strings.ToLower(left) {
+				case "http", "https", "ssh", "file", "ftp":
+					return "[redacted remote]"
+				}
+				return clean
+			}
+		}
+		if !strings.ContainsAny(raw, "@?#:") {
+			return raw
+		}
+		return "[redacted remote]"
+	}
+	u, err := url.Parse(raw)
+	if err != nil || (u.Host == "" && !(strings.EqualFold(u.Scheme, "file") && u.Path != "" && strings.HasPrefix(u.Path, "/"))) {
+		return "[redacted remote]"
+	}
+	u.RawQuery = ""
+	u.ForceQuery = false
+	u.Fragment = ""
+	u.RawFragment = ""
+	if strings.EqualFold(u.Scheme, "http") || strings.EqualFold(u.Scheme, "https") {
+		u.User = nil
+	} else if u.User != nil {
+		u.User = url.User(u.User.Username())
+	}
+	return u.String()
 }

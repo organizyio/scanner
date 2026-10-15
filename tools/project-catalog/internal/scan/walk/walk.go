@@ -24,6 +24,7 @@ type Config struct {
 	Pause      <-chan bool
 	OnPaused   func()
 	OnResumed  func()
+	OnError    func(path string, err error)
 }
 
 // Walk visits every root in sorted order. Excluded directory names skip the subtree.
@@ -36,7 +37,13 @@ func Walk(cfg Config, h *Handler) error {
 
 	for _, root := range cfg.Roots {
 		err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+			if cfg.Ctx.Err() != nil {
+				return cfg.Ctx.Err()
+			}
 			if err != nil {
+				if cfg.OnError != nil {
+					cfg.OnError(path, err)
+				}
 				return nil
 			}
 
@@ -91,6 +98,9 @@ func Walk(cfg Config, h *Handler) error {
 
 			info, e := d.Info()
 			if e != nil {
+				if cfg.OnError != nil {
+					cfg.OnError(path, e)
+				}
 				return nil
 			}
 			if h.HandleFile != nil {

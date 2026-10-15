@@ -51,6 +51,7 @@ func Scan(ctx context.Context, roots []string, excludeDirs []string, opts ScanOp
 		Pause:      opts.Pause,
 		OnPaused:   onPaused,
 		OnResumed:  onResumed,
+		OnError:    warningReporter(opts),
 	}, h)
 
 	if err != nil {
