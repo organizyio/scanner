@@ -15,18 +15,32 @@ The flat and nested schemas are not interchangeable. The facade exports, origina
 
 `SCAN_ENGINE_PATH` overrides the wrapper engine. `SCAN_FS_SOURCE` is preserved: the Go wrapper uses whitespace literally; Rust treats blank source as absent. Both normalized CLIs use the literal first root for `device`. Go filepath extension handling of dotfiles differs from Rust. The wrapper table buffers until completion. The Go flag parser, engine clap parser and Rust scanfs parser retain their individual help/error semantics.
 
-## Preserved limitations
+## Migration baseline and subsequent discovery corrections
 
-- Scanner and the earlier engine enqueue records without a bound during synchronous traversal and consume them afterwards. Callback progress/cancellation is not bounded live streaming. This move makes no throughput, memory or cancellation improvement claim.
-- Catalog Git discovery recognizes `.git` directories, not `.git` files used by worktrees/submodules.
-- Failed Git status commands can report clean (`dirty=false`); missing Git does not establish a clean repository. Failed lookups can panic if callers supply a typed nil catalog logger; existing CLI supplies a logger.
-- Catalog and deep scan have inconsistent stack markers (notably Go/Rust/Java). Primary stack is alphabetic, not measured dominance.
-- Some platform creation times in the Go catalog fall back to modification times. They are not reliable birth-time evidence.
-- Legacy traversal skips inaccessible entries and can return success/partial results. Symlink, exclusion and error semantics are not replaced with managed Organizy traversal.
-- Git subprocesses are read-only but lack timeouts; remote URL fields retain their original raw values. Treat exported local inventory as potentially sensitive when remotes contain credentials.
+The consolidation preserved the original Go catalog behavior at its immutable
+migration baseline. The separately reviewed [phase 2 implementation](../follow-up/README.md)
+corrects discovery without rewriting import evidence or changing JSON shapes,
+settings locations, profiles or checkpoints:
+
+- Valid `.git` files for linked worktrees/submodules are recognized through read-only Git inspection.
+- Failed status inspection leaves `dirty` null; nil and typed-nil optional loggers are safe.
+- Git commands disable optional locks and filesystem-monitor hooks, honor cancellation and have a ten-second timeout.
+- Exported remotes remove HTTP credentials and URL query/fragment values, redact malformed credential-bearing forms, and remove SSH passwords. Ordinary SSH, SCP and local paths are retained.
+- Catalog and deep scan share the union of markers, including Go/Rust/Java. Existing catalog labels win conflicts: Gradle remains Kotlin. Alphabetical primary labels do not represent language dominance.
+- Unavailable creation times are empty strings rather than modification-time substitutes.
+- Skipped/inaccessible paths, hashing failures and incomplete inspection produce stderr or GUI diagnostics. Successful completion can still contain partial results. Catalog SIGINT writes partial JSON and returns 130; SIGTERM retains its OS default. Deep-scan exit conventions remain unchanged.
+- GUI refreshes use the UI dispatcher with coalescing and lifecycle cancellation; hiding to the tray preserves the running application. Compilation and automated lifecycle tests do not qualify interactive GUI operation.
+
+## Remaining limitations
+
+- Preferred Scanner and the earlier engine still enqueue records without a bound during synchronous traversal and consume them afterwards at this phase-2 baseline. The separately scoped preferred execution work does not change compatibility-engine behavior.
+- Symlink, exclusion and partial-result behavior is not replaced with managed Organizy traversal.
 - Resume is lexical and inclusive of the checkpoint path. It is not a filesystem snapshot or transactional restart. Deep scan retains collected results in memory.
+- Native GUI operation, keyboard/accessibility support and real Windows ACL denial require separate evidence. Compilation alone does not qualify those claims.
 
-Corrections and convergence need independent specs, tests and consumer qualification.
+Runtime convergence, consumer dependency adoption and release acceptance remain
+separate decisions. Existing released component artifacts retain their original
+behavior; these source corrections do not replace or republish those artifacts.
 
 The wrapper currently can exit 1 when interrupted while its child is blocked, despite a separate code path for 130. Original and relocated binaries both returned 1 in the characterized blocked-child case. No stronger interruption guarantee is claimed.
 
@@ -36,4 +50,4 @@ Before distribution, root and compatibility builds use lopdf 0.45.0 (with Rust 1
 
 ## Read-only discovery enforcement
 
-A pre-fix regression reproduced `git status` refreshing a tracked repository's index cache during catalog discovery. Discovery now sets `GIT_OPTIONAL_LOCKS=0`, which [Git documents](https://git-scm.com/docs/git#Documentation/git.txt-codeGITOPTIONALLOCKScode) as preventing that side effect. The tracked-index, configuration and worktree characterization tests verify this behavior. This is the explicit read-only migration constraint, not a project-discovery rewrite; worktree detection, Git-error reporting and marker rules retain their documented limitations. Unix inaccessible-directory behavior is characterized with actual denied access; Windows ACL qualification remains separate from the CLI build/integration matrix.
+A pre-fix regression reproduced `git status` refreshing a tracked repository's index cache during catalog discovery. Discovery now sets `GIT_OPTIONAL_LOCKS=0`, which [Git documents](https://git-scm.com/docs/git#Documentation/git.txt-codeGITOPTIONALLOCKScode) as preventing that side effect. The tracked-index, configuration and worktree characterization tests verify this behavior. This was the explicit read-only migration constraint. The subsequent phase 2 corrections described above add gitdir-file recognition, truthful error reporting and shared marker rules without rewriting that historical evidence. Unix inaccessible-directory behavior is characterized with actual denied access; Windows ACL qualification remains separate from the CLI build/integration matrix.

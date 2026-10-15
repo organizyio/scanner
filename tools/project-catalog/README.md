@@ -3,7 +3,7 @@
 Monorepo with three ways to inspect disks:
 
 | Component | Command | Role |
-|-----------|---------|------|
+| --------- | ------- | ---- |
 | **Unified CLI** | `scan-cli` | Subcommands: `catalog` (project inventory) and `fs` (deep walk) → JSON |
 | **Catalog (shim)** | `scan-git` | Same as `scan-cli catalog` (legacy name `scan-projects`) |
 | **Deep scan (shim)** | `scan-fs` | Same as `scan-cli fs` (legacy name `scan-export`) |
