@@ -1,7 +1,7 @@
 # Scanning repository consolidation
 
 Owner-approved execution packet, 2026-10-15. Sole owner: @ArmanAvanesyan.
-Status: implementation candidate; original repositories remain authoritative until cutover gates pass.
+This record defines the migration boundary and baseline. Original repositories remain authoritative until cutover gates pass; [migration PR #3](https://github.com/organizyio/scanner/pull/3) records the validated revisions, consumer acceptance, immutable artifact tags and archival outcome.
 Repository consolidation does not establish runtime convergence or product release acceptance.
 
 ## Repository layout and disposition

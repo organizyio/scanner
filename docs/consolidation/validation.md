@@ -1,6 +1,6 @@
 # Validation, cutover and rollback
 
-Status: pending complete execution evidence. A merged repository change alone does not satisfy these gates.
+This checklist defines acceptance. [Migration PR #3](https://github.com/organizyio/scanner/pull/3) records actual execution evidence. A merged repository change alone does not satisfy these gates.
 
 ## Required checks
 

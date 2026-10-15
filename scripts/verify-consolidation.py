@@ -17,6 +17,14 @@ assert git('rev-parse', source['import_commit'] + ':tools/project-catalog') == s
 assert git('rev-parse', source['head'] + '^{tree}') == source['tree']
 for f, expected in manifest['retained_contract_files'].items():
     assert hashlib.sha256((ROOT / f).read_bytes().replace(b'\r\n', b'\n')).hexdigest() == expected, f
+for path in git('ls-tree', '-r', '--name-only', source['head']).splitlines():
+    if path.endswith('.go') or path in ('go.mod', 'go.sum', 'Makefile', 'build.sh'):
+        expected = subprocess.check_output(['git', 'show', source['head'] + ':' + path], cwd=ROOT)
+        actual = (ROOT / 'tools/project-catalog' / path).read_bytes()
+        assert actual.replace(b'\r\n', b'\n') == expected.replace(b'\r\n', b'\n'), path
+notices = json.loads((ROOT / 'licenses/upstream/manifest.json').read_text())
+for notice in notices:
+    assert hashlib.sha256((ROOT / notice['path']).read_bytes()).hexdigest() == notice['sha256'], notice['path']
 for component in ('scan-engine', 'scan-fs'):
     assert not (ROOT / 'compat' / component / '.git').exists()
     assert not (ROOT / 'compat' / component / '.cursor').exists()

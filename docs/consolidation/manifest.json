@@ -1,5 +1,5 @@
 {
-  "status": "implementation candidate; originals remain authoritative until all cutover gates pass",
+  "status": "Immutable migration baseline and transformations; execution evidence is recorded in Scanner PR #3",
   "destination": "https://github.com/organizyio/scanner",
   "owner": "@ArmanAvanesyan",
   "public_project_import": {
@@ -7,7 +7,8 @@
     "head": "a51075a6c6f389bc906a2f71ede75cc2c00eb04d",
     "tree": "30ffa11fac5f199e21fbc673428c335a0112c461",
     "prefix": "tools/project-catalog",
-    "import_commit": "b5463783a492e017f4499932991e730b1e8d8723"
+    "import_commit": "b5463783a492e017f4499932991e730b1e8d8723",
+    "preserved_ref": "refs/tags/archive/scan-projects/main-2026-10-15"
   },
   "private_sources": {
     "compat/scan-engine": "reviewed source-only snapshot; exact source refs and recovery locations remain private",

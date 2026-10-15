@@ -10,3 +10,7 @@ walkdir = "walkdir"
 kamadak = "kamadak"
 lopdf = "lopdf"
 roxmltree = "roxmltree"
+
+# Preserve exact upstream license/notice bytes; hashes are checked separately.
+[files]
+extend-exclude = ["licenses/upstream/**"]

@@ -35,6 +35,8 @@ jobs:
           cargo +1.88 fmt --all -- --check
           cargo +1.88 clippy --workspace --all-targets --locked -- -D warnings
           cargo +1.88 test --workspace --locked
+      - name: Component archive regressions
+        run: python -m unittest discover -s scripts -p "test_*.py"
       - name: Build local engine and embedded wrapper
         run: |
           python scripts/build-components.py engine --archive

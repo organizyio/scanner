@@ -1,0 +1,72 @@
+[
+  {
+    "package": "alloc-stdlib-0.2.4",
+    "source": "https://github.com/dropbox/rust-alloc-no-stdlib/blob/ae42d22078b98549e987d2f03d12df7b984fde47/LICENSE",
+    "path": "licenses/upstream/alloc-stdlib-0.2.4/LICENSE",
+    "sha256": "c0c56f26d9c051cac4d200c34c84e7ae9aaa853e01a982a1df08b09931e518ae"
+  },
+  {
+    "package": "kamadak-exif-0.5.5",
+    "source": "https://docs.rs/crate/kamadak-exif/0.5.5/source/src/lib.rs",
+    "extraction": "Complete verbatim BSD header from the published crate source, before module documentation",
+    "path": "licenses/upstream/kamadak-exif-0.5.5/NOTICE-from-src-lib.txt",
+    "sha256": "4f9213fe3fa39ca3556324c4155aea96a50cca3216b6e3bb0ed9fc6f5858d147"
+  },
+  {
+    "package": "lofty-0.22.4",
+    "source": "https://github.com/Serial-ATA/lofty-rs/blob/d9eb83ba614001973f9ba3663c9f3e10dd27a702/LICENSE-APACHE",
+    "path": "licenses/upstream/lofty-0.22.4/LICENSE-APACHE",
+    "sha256": "33ee463a651c2dd0417e68e97d97c811c7bb19280c2116bff9906fe8d2718551"
+  },
+  {
+    "package": "lofty-0.22.4",
+    "source": "https://github.com/Serial-ATA/lofty-rs/blob/d9eb83ba614001973f9ba3663c9f3e10dd27a702/LICENSE-MIT",
+    "path": "licenses/upstream/lofty-0.22.4/LICENSE-MIT",
+    "sha256": "0884e92e74c08412d08bb7cbd121e3c09cbf2ae357972440b06f81b3305b0176"
+  },
+  {
+    "package": "lofty_attr-0.11.1",
+    "source": "https://github.com/Serial-ATA/lofty-rs/blob/0d42d626b8a1bf40cce0d47a49ce65076dcf9db1/LICENSE-APACHE",
+    "path": "licenses/upstream/lofty_attr-0.11.1/LICENSE-APACHE",
+    "sha256": "33ee463a651c2dd0417e68e97d97c811c7bb19280c2116bff9906fe8d2718551"
+  },
+  {
+    "package": "lofty_attr-0.11.1",
+    "source": "https://github.com/Serial-ATA/lofty-rs/blob/0d42d626b8a1bf40cce0d47a49ce65076dcf9db1/LICENSE-MIT",
+    "path": "licenses/upstream/lofty_attr-0.11.1/LICENSE-MIT",
+    "sha256": "0884e92e74c08412d08bb7cbd121e3c09cbf2ae357972440b06f81b3305b0176"
+  },
+  {
+    "package": "ogg_pager-0.7.1",
+    "source": "https://github.com/Serial-ATA/lofty-rs/blob/1fa48f426dac605bf8fa08405e3f5019fe3d692c/LICENSE-APACHE",
+    "path": "licenses/upstream/ogg_pager-0.7.1/LICENSE-APACHE",
+    "sha256": "33ee463a651c2dd0417e68e97d97c811c7bb19280c2116bff9906fe8d2718551"
+  },
+  {
+    "package": "ogg_pager-0.7.1",
+    "source": "https://github.com/Serial-ATA/lofty-rs/blob/1fa48f426dac605bf8fa08405e3f5019fe3d692c/LICENSE-MIT",
+    "path": "licenses/upstream/ogg_pager-0.7.1/LICENSE-MIT",
+    "sha256": "0884e92e74c08412d08bb7cbd121e3c09cbf2ae357972440b06f81b3305b0176"
+  },
+  {
+    "package": "transpose-0.1.0",
+    "source": "https://docs.rs/crate/transpose/0.1.0/source/README.md",
+    "selection": "Apache-2.0 option explicitly granted by the published package; retain original README and author metadata",
+    "path": "licenses/upstream/transpose-0.1.0/README.md",
+    "sha256": "a2ffed3bc68b7e0710276f100243cfee560c76794b8463ff1040b3e38060de33"
+  },
+  {
+    "package": "transpose-0.1.0",
+    "source": "https://docs.rs/crate/transpose/0.1.0/source/Cargo.toml.orig",
+    "selection": "Apache-2.0 option explicitly granted by the published package; retain original README and author metadata",
+    "path": "licenses/upstream/transpose-0.1.0/Cargo.toml.orig",
+    "sha256": "acde3963e0cce1fc22256e923ea7b4c8c2b057c39f9d54df9490a90a01bb19cd"
+  },
+  {
+    "package": "transpose-0.1.0",
+    "source": "https://www.apache.org/licenses/LICENSE-2.0",
+    "selection": "Apache-2.0 option explicitly granted by the published package; retain original README and author metadata",
+    "path": "licenses/upstream/transpose-0.1.0/LICENSE-APACHE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+]

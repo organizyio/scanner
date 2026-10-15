@@ -20,6 +20,14 @@ def run(args, cwd=ROOT, env=None):
     subprocess.run(args, cwd=cwd, env=env, check=True)
 
 
+def copy_notice(source, destination):
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        destination.chmod(0o644)
+    shutil.copyfile(source, destination)
+    destination.chmod(0o644)
+
+
 def dependency_notices(out, component, gui=False):
     """Retain license/notice texts from the exact public dependency sources."""
     packages = []
@@ -27,15 +35,19 @@ def dependency_notices(out, component, gui=False):
         metadata = json.loads(subprocess.check_output([
             'cargo', '+1.88', 'metadata', '--locked', '--format-version', '1',
             '--manifest-path', str(ROOT / 'compat/scan-engine/Cargo.toml')], cwd=ROOT))
+        host = subprocess.check_output(['rustc', '+1.88', '-vV'], text=True, encoding='utf-8').split('host: ')[1].splitlines()[0]
+        tree = subprocess.check_output(['cargo', '+1.88', 'tree', '--locked', '--prefix', 'none', '--edges', 'normal',
+                                        '--target', host, '-p', 'scan', '--format', '{p}'], cwd=ROOT / 'compat/scan-engine', text=True, encoding='utf-8')
+        used = {tuple(line.split()[:2]) for line in tree.splitlines()}
         packages += [(p['name'] + '-' + p['version'], Path(p['manifest_path']).parent)
-                     for p in metadata['packages'] if p['source'] is not None]
+                     for p in metadata['packages'] if p['source'] is not None and (p['name'], 'v' + p['version']) in used]
     if component in ('wrapper', 'catalog'):
         module = ROOT / ('compat/scan-fs' if component == 'wrapper' else 'tools/project-catalog')
         commands = ['./cmd/scan-fs'] if component == 'wrapper' else ['./cmd/scan-cli', './cmd/scan-git', './cmd/scan-fs']
         if gui and component == 'catalog':
             commands.append('./cmd/scan-gui')
         raw = subprocess.check_output(['go', 'list', '-mod=readonly', '-deps', '-json', *commands], cwd=module,
-                                      env=dict(os.environ, CGO_ENABLED='1' if gui else '0'), text=True)
+                                      env=dict(os.environ, CGO_ENABLED='1' if gui else '0'), text=True, encoding='utf-8')
         decoder = json.JSONDecoder()
         modules = {}
         while raw.strip():
@@ -45,15 +57,15 @@ def dependency_notices(out, component, gui=False):
             if not mod.get('Main') and mod.get('Dir'):
                 modules[mod['Path']] = mod
         packages += [(m['Path'].replace('/', '_') + '-' + m['Version'], Path(m['Dir'])) for m in modules.values()]
-        goroot = Path(subprocess.check_output(['go', 'env', 'GOROOT'], text=True).strip())
+        goroot = Path(subprocess.check_output(['go', 'env', 'GOROOT'], text=True, encoding='utf-8').strip())
         notices = out / 'third-party/golang'
         notices.mkdir(parents=True, exist_ok=True)
         go_license = goroot / 'LICENSE'
         if not go_license.exists():
             go_license = goroot.parent / 'LICENSE'  # Homebrew separates licenses from libexec.
-        shutil.copy2(go_license, notices / 'LICENSE')
+        copy_notice(go_license, notices / 'LICENSE')
     if component in ('engine', 'wrapper'):
-        sysroot = Path(subprocess.check_output(['rustc', '+1.88', '--print', 'sysroot'], text=True).strip())
+        sysroot = Path(subprocess.check_output(['rustc', '+1.88', '--print', 'sysroot'], text=True, encoding='utf-8').strip())
         rust_notices = sysroot / 'share/doc/rust'
         shutil.copytree(rust_notices / 'licenses', out / 'third-party/rust/licenses', dirs_exist_ok=True)
         shutil.copy2(rust_notices / 'COPYRIGHT-library.html', out / 'third-party/rust/COPYRIGHT-library.html')
@@ -63,7 +75,8 @@ def dependency_notices(out, component, gui=False):
         for path in sorted(source.rglob('*')):
             if not path.is_file() or path.is_symlink():
                 continue
-            if not path.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'COPYRIGHT')):
+            if not (path.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'COPYRIGHT')) or
+                    any(part.upper() in ('LICENSES', 'LICENCES') for part in path.relative_to(source).parts[:-1])):
                 continue
             if path.suffix.lower() in ('.go', '.rs', '.png', '.jpg'):
                 continue
@@ -72,12 +85,22 @@ def dependency_notices(out, component, gui=False):
             relative = path.relative_to(source)
             target = out / 'third-party' / name / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(path, target)
+            copy_notice(path, target)
             retained.append(str(relative))
+        fallback = ROOT / 'licenses/upstream' / name
+        if not retained and fallback.exists():
+            for path in sorted(fallback.iterdir()):
+                target = out / 'third-party' / name / path.name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                copy_notice(path, target)
+                retained.append(path.name)
+        if not retained:
+            raise RuntimeError('Required upstream notice missing for ' + name)
         index.append({'package': name, 'license_notice_files': retained})
     if packages:
         (out / 'third-party').mkdir(exist_ok=True)
         (out / 'third-party/index.json').write_text(json.dumps(index, indent=2) + '\n')
+        shutil.copy2(ROOT / 'licenses/upstream/manifest.json', out / 'third-party/UPSTREAM-NOTICES.json')
 
 
 def build(component, gui=False):
@@ -112,6 +135,9 @@ def build(component, gui=False):
         shutil.copy2(ROOT / license_name, out / license_name)
     shutil.copy2(ROOT / 'docs/consolidation/NOTICE.md', out / 'NOTICE.md')
     dependency_notices(out, component, gui)
+    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True, encoding='utf-8').strip()
+    (out / 'BUILD.json').write_text(json.dumps({'component': component, 'scanner_commit': commit,
+        'platform': goos + '-' + arch, 'gui_compiled': gui, 'release_acceptance': False}, indent=2) + '\n')
     return out
 
 
@@ -119,7 +145,7 @@ def package(out):
     name = out.parent.name + '-' + out.name
     archive = ROOT / 'dist' / (name + ('.zip' if platform.system() == 'Windows' else '.tar.gz'))
     if archive.suffix == '.zip':
-        with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
+        with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as z:
             for p in sorted(out.rglob('*')):
                 if p.is_file():
                     z.write(p, name + '/' + str(p.relative_to(out)))
