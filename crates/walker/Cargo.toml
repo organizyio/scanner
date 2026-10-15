@@ -2,7 +2,7 @@
 name = "scanner-walker"
 version = "0.2.3"
 edition = "2021"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 description = "Filesystem walking and filtering used by scanner-core."
 repository = "https://github.com/organizyio/scanner"
 

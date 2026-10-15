@@ -1,0 +1,86 @@
+{
+  "migration_baseline": "f5f6e2995dba043508a61e2945179a7cf94dcff0",
+  "changes": {
+    "crates/hash/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "7b1b1754bec59dbd9c8123401d322bf3fc2c46f5041e0e7b16ecdee6f72e51dd"
+    },
+    "crates/output/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "60411b59b21391d02ffb37507c3b1156bbcca2e5b27561b42858ce30302d4602"
+    },
+    "crates/phash/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "0687fa05918c275c4ae81efd3a0da4c3fc259234c7d0c21574e477f9bd3862cf"
+    },
+    "crates/format/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "4cd9091131ae058827a0cfe1ff9da0b9fc0732c0838c7079d39c353bb0bd2010"
+    },
+    "crates/engine/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "0bddab8177f1ecd693ab1b1c55251200d487df33cf921a42aeb943b08f41d5e7"
+    },
+    "crates/metadata/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "4c01e9a171f7bb7f866b69463c6c9cfc17548a7a68acf15622f5e9848d4feadd"
+    },
+    "crates/walker/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "2644a34252e549a86d912d3bb331ad14a054bf7b2682ae3a5fa0dadfd680e8ec"
+    },
+    "scanner/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "f90cbc143e5ad863012fbca3f129429c2ea1368f7d96559151937a578e732c99"
+    },
+    "scanfs/Cargo.toml": {
+      "phase": 1,
+      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "tests": [
+        "cargo metadata --locked",
+        "make check"
+      ],
+      "current_sha256": "a9968ee3c310188f320dceecbe5fa1939f2382aa2a2d73dfeb5fdb1de5d1ba3f"
+    }
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "catalog": [
+    {
+      "current_branch": "",
+      "dirty": null,
+      "has_origin": false,
+      "host": null,
+      "is_git": false,
+      "local_branches": [],
+      "name": "node",
+      "owner": null,
+      "path": "<fixture>/input/node",
+      "primary_stack": "node",
+      "remotes": [],
+      "repo_slug": null,
+      "stacks": [
+        "node"
+      ],
+      "tracking_branch": ""
+    }
+  ],
+  "cli": {
+    "catalog_help": {
+      "exit": 0,
+      "stderr": "Usage: scan-cli catalog [options]\n\n  -exclude value\n    \tDirectory name to exclude from scanning (can be specified multiple times)\n  -o string\n    \tOutput JSON file path (shorthand)\n  -output string\n    \tOutput JSON file path (required)\n  -root value\n    \tRoot directory to scan (can be specified multiple times)\n  -v\tEnable verbose/debug output (shorthand)\n  -verbose\n    \tEnable verbose/debug output\n",
+      "stdout": ""
+    },
+    "catalog_invalid": {
+      "exit": 2,
+      "stderr": "flag provided but not defined: -invalid-flag\nUsage: scan-cli catalog [options]\n\n  -exclude value\n    \tDirectory name to exclude from scanning (can be specified multiple times)\n  -o string\n    \tOutput JSON file path (shorthand)\n  -output string\n    \tOutput JSON file path (required)\n  -root value\n    \tRoot directory to scan (can be specified multiple times)\n  -v\tEnable verbose/debug output (shorthand)\n  -verbose\n    \tEnable verbose/debug output\n",
+      "stdout": ""
+    },
+    "deep_help": {
+      "exit": 0,
+      "stderr": "Usage: scan-cli fs [options]\n\n  -exclude value\n    \tDirectory name to exclude (repeatable)\n  -max-file-mb int\n    \tSkip files larger than this size in MB (0 = no limit)\n  -no-default-excludes\n    \tDo not apply built-in exclude dir names (e.g. node_modules, .git)\n  -no-hash\n    \tDisable SHA-256 hashing\n  -no-projects\n    \tDisable project root detection\n  -o string\n    \tOutput JSON path (shorthand)\n  -output string\n    \tOutput JSON path (required)\n  -root value\n    \tRoot directory (repeatable)\n",
+      "stdout": ""
+    },
+    "preferred_help": {
+      "exit": 0,
+      "stderr": "",
+      "stdout": "Filesystem scanner: paths, JSON lines, or table output (Archivist scanfs).\n\nUsage: scanfs [OPTIONS] --root <PATH>\n\nOptions:\n      --root <PATH>        Root directories to scan (at least one required)\n      --exclude <GLOB>     Extra ignore-style glob (repeatable); passed to `ignore` overrides\n      --hash               Compute full-file xxHash64 (hex)\n      --hash-partial       Use head/tail xxHash64 instead of full file (tiered large files)\n      --sha256             Compute SHA-256 (hex)\n      --md5                Compute MD5 (hex) for compatibility with external dedup tools\n      --profile <PROFILE>  Extraction profile controlling default depth [default: standard] [possible values: fast, standard, deep]\n      --sniff-format       Sniff magic bytes / MIME\n      --metadata           Read EXIF / audio tags / PDF page count / DOCX core props\n      --video              Run `ffprobe` on video extensions (requires binary on PATH; 30s timeout)\n      --phash              Perceptual hash (images only)\n      --format <FORMAT>    Output format for normalized Item records [default: plain] [possible values: plain, json, table]\n      --workers <WORKERS>  Worker threads for parallel traversal. If > 0, sets `RAYON_NUM_THREADS` [default: 0]\n  -h, --help               Print help\n"
+    },
+    "preferred_invalid": {
+      "exit": 2,
+      "stderr": "error: unexpected argument '--invalid-flag' found\n\nUsage: scanfs [OPTIONS] --root <PATH>\n\nFor more information, try '--help'.\n",
+      "stdout": ""
+    }
+  },
+  "deep": {
+    "files": [
+      {
+        "accessed_at": "<timestamp>",
+        "created_at": "<timestamp>",
+        "directory": "<fixture>/input",
+        "extension": ".txt",
+        "hash_status": "skipped",
+        "hidden": false,
+        "modified_at": "<timestamp>",
+        "name": "hello.txt",
+        "path": "<fixture>/input/hello.txt",
+        "read_only": false,
+        "sha256": "",
+        "size_bytes": 3,
+        "size_mb": 2.86102294921875e-06,
+        "system_file": false,
+        "type": "file"
+      },
+      {
+        "accessed_at": "<timestamp>",
+        "created_at": "<timestamp>",
+        "directory": "<fixture>/input/node",
+        "extension": ".json",
+        "hash_status": "skipped",
+        "hidden": false,
+        "modified_at": "<timestamp>",
+        "name": "package.json",
+        "path": "<fixture>/input/node/package.json",
+        "read_only": false,
+        "sha256": "",
+        "size_bytes": 2,
+        "size_mb": 1.9073486328125e-06,
+        "system_file": false,
+        "type": "file"
+      }
+    ],
+    "folders": {
+      "<fixture>/input": {
+        "depth": 0,
+        "dominant_extension": ".txt",
+        "extension_entropy": 0,
+        "extensions": {
+          ".txt": 1
+        },
+        "file_count": 1,
+        "is_project_root": false,
+        "newest_modified_at": "<timestamp>",
+        "oldest_modified_at": "<timestamp>",
+        "path": "<fixture>/input",
+        "project_kind": "unknown",
+        "subfolder_count": 1,
+        "total_size_bytes": 3,
+        "unique_extensions": 1
+      },
+      "<fixture>/input/node": {
+        "depth": 0,
+        "dominant_extension": ".json",
+        "extension_entropy": 0,
+        "extensions": {
+          ".json": 1
+        },
+        "file_count": 1,
+        "is_project_root": true,
+        "newest_modified_at": "<timestamp>",
+        "oldest_modified_at": "<timestamp>",
+        "path": "<fixture>/input/node",
+        "project_kind": "node",
+        "subfolder_count": 0,
+        "total_size_bytes": 2,
+        "unique_extensions": 1
+      }
+    }
+  },
+  "preferred": [
+    {
+      "device": "<fixture>/input",
+      "directory": "<fixture>/input",
+      "extension": ".txt",
+      "hashes": {
+        "mode": "off"
+      },
+      "identity": {
+        "accessed_at": "<timestamp>",
+        "created_at": "<timestamp>",
+        "device_id": 0,
+        "inode": 0,
+        "modified_at": "<timestamp>",
+        "path": "<fixture>/input/hello.txt",
+        "size": 3
+      },
+      "name": "hello.txt",
+      "schema_version": 1,
+      "source": "synthetic-contract-fixture"
+    },
+    {
+      "device": "<fixture>/input",
+      "directory": "<fixture>/input/node",
+      "extension": ".json",
+      "hashes": {
+        "mode": "off"
+      },
+      "identity": {
+        "accessed_at": "<timestamp>",
+        "created_at": "<timestamp>",
+        "device_id": 0,
+        "inode": 0,
+        "modified_at": "<timestamp>",
+        "path": "<fixture>/input/node/package.json",
+        "size": 2
+      },
+      "name": "package.json",
+      "schema_version": 1,
+      "source": "synthetic-contract-fixture"
+    }
+  ]
+}
