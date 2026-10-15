@@ -17,7 +17,7 @@ The flat and nested schemas are not interchangeable. The facade exports, origina
 
 ## Preserved limitations
 
-- Scanner and the earlier engine enqueue records without a bound during synchronous traversal and consume them afterwards. Callback progress/cancellation is not bounded live streaming. This move makes no throughput, memory or cancellation improvement claim.
+- Preferred Scanner now uses a bounded 256-record queue with caller-thread callbacks and cooperative cancellation. All workers join before return. Active extraction, OS calls and callbacks are not preemptible. The earlier compatibility engine still enqueues without a bound during synchronous traversal; its execution behavior is unchanged. See the [execution specification and measurements](../follow-up/README.md).
 - Catalog Git discovery recognizes `.git` directories, not `.git` files used by worktrees/submodules.
 - Failed Git status commands can report clean (`dirty=false`); missing Git does not establish a clean repository. Failed lookups can panic if callers supply a typed nil catalog logger; existing CLI supplies a logger.
 - Catalog and deep scan have inconsistent stack markers (notably Go/Rust/Java). Primary stack is alphabetic, not measured dominance.

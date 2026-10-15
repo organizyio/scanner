@@ -81,6 +81,36 @@
         "make check"
       ],
       "current_sha256": "a9968ee3c310188f320dceecbe5fa1939f2382aa2a2d73dfeb5fdb1de5d1ba3f"
+    },
+    "crates/engine/src/scanner.rs": {
+      "phase": 3,
+      "reason": "Reviewed bounded caller-thread delivery, cooperative traversal/extraction cancellation and scoped worker cleanup; facade and record contracts preserved.",
+      "tests": [
+        "make check",
+        "deterministic bounded queue, cancellation, callback failure and unwind tests",
+        "normalized CLI golden comparison"
+      ],
+      "current_sha256": "5f3a035a96e442acc0a08043cca713623978d886fda2055154d0956ddb045c3b"
+    },
+    "crates/walker/src/lib.rs": {
+      "phase": 3,
+      "reason": "Reviewed bounded caller-thread delivery, cooperative traversal/extraction cancellation and scoped worker cleanup; facade and record contracts preserved.",
+      "tests": [
+        "make check",
+        "deterministic bounded queue, cancellation, callback failure and unwind tests",
+        "normalized CLI golden comparison"
+      ],
+      "current_sha256": "71e5f7159a4d77b7f207682dc9c3a3c32cf0ee6f6276822cbca30a1d41785410"
+    },
+    "crates/walker/src/walk.rs": {
+      "phase": 3,
+      "reason": "Reviewed bounded caller-thread delivery, cooperative traversal/extraction cancellation and scoped worker cleanup; facade and record contracts preserved.",
+      "tests": [
+        "make check",
+        "deterministic bounded queue, cancellation, callback failure and unwind tests",
+        "normalized CLI golden comparison"
+      ],
+      "current_sha256": "47162705eeb33d5cfb293ed3064ae6cab825b789c9342289327ed59629eb1334"
     }
   }
 }
