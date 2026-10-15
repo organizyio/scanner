@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "release_acceptance": false,
+  "runtime_convergence": false,
+  "qualification_status": "in-progress",
+  "baseline_revision": "556174a4045ee3f1bdf81518ffd5f7fe68de0595",
+  "platforms": {
+    "macos-x86_64": {
+      "tested_source": "5d10665afa60f1ced3386898e228f71ae0a17eec",
+      "gui_compile": "passed",
+      "native_window_launch": "passed",
+      "start_progress_checkpoint": "passed",
+      "pause_resume": "passed",
+      "cancel": "pending final snapshot review",
+      "settings_root_keyboard_edit": "passed on earlier GUI-equivalent candidate",
+      "restart_resume": "pending",
+      "cli_unicode": "passed",
+      "cli_actual_denial": "passed",
+      "native_accessibility": "failed: application content controls absent from AX tree"
+    },
+    "macos-arm64": {
+      "interactive_gui": "pending; local x86_64 evidence does not qualify arm64"
+    },
+    "linux-x86_64": {
+      "tested_source": "9cb145b1dfb75e95cab4b3b926f6362d94c8602f",
+      "gui_compile": "passed",
+      "window_backend": "Xwayland in an existing Wayland desktop",
+      "start_progress_checkpoint": "passed",
+      "pause_resume_cancel": "passed: native clicks and reviewed state screenshots",
+      "settings_root_keyboard_edit": "passed: actual Ctrl+A typing persisted synthetic root",
+      "restart_resume": "passed: process restart restores profile and Start (Resume) completes",
+      "cli_unicode": "passed",
+      "cli_actual_denial": "passed",
+      "native_accessibility": "failed: no application content in AT-SPI tree"
+    },
+    "windows-x86_64": {
+      "tested_source": "9cb145b1dfb75e95cab4b3b926f6362d94c8602f",
+      "gui_compile": "passed",
+      "native_window_launch": "passed in existing interactive console",
+      "start_progress_checkpoint": "passed",
+      "pause_resume_cancel": "pending bounded console lifecycle run",
+      "settings_root_keyboard_edit": "pending",
+      "restart_resume": "pending",
+      "cli_unicode": "passed",
+      "actual_acl_and_sharing_denial": "passed in interactive console; actual denial and diagnostic verified",
+      "ssh_token_denial": "not qualified: Go could read where Python denied; console evidence is authoritative for this test",
+      "native_accessibility": "failed: UIAutomation exposes only top-level window"
+    }
+  },
+  "candidate_revision": "9cb145b1dfb75e95cab4b3b926f6362d94c8602f",
+  "reviewed_main": "baca0cc43880b2396c128fc168ad52b8e6336b8f",
+  "candidate_production_equivalence": "Candidate catalog production files match reviewed main; only README and visit_test.go differ.",
+  "open_cases": {
+    "UI-A11Y-001": "All three Fyne hosts fail native content-control exposure; requires a reviewed native accessibility bridge or framework solution. Widget labels alone do not satisfy this gate.",
+    "UI-MAC-ARM64-001": "Interactive ARM64 host not available; x86_64 operation and ARM64 CI compilation are distinct.",
+    "UI-WIN-LIFECYCLE-001": "Complete bounded pause/resume/cancel, root edit and restart evidence; do not infer from Start.",
+    "UI-RESUME-001": "Checkpoint load/continuation exercised; complete inventory equivalence across interrupted runs remains separately required."
+  }
+}
