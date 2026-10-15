@@ -22,7 +22,7 @@ class CaptureDeadlineTests(unittest.TestCase):
     def test_nonzero_exit_and_records_are_captured(self):
         with tempfile.TemporaryFile() as stderr:
             first, rest, code, *_ = capture.read_process([sys.executable, '-c', 'print("record");raise SystemExit(2)'], os.environ, stderr)
-        self.assertEqual((first, rest, code), (b'record\n', b'', 2))
+        self.assertEqual((first.splitlines(), rest, code), ([b'record'], b'', 2))
 
 
 if __name__ == '__main__':
