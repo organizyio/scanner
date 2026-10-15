@@ -52,7 +52,9 @@ jobs:
       - name: taplo
         run: taplo fmt --check
       - name: cargo deny
-        run: cargo deny check
+        run: |
+          cargo deny check
+          cargo deny --manifest-path compat/scan-engine/Cargo.toml check --config deny.toml
 
   validate:
     name: Rust validation (MSRV, minimal-versions, benches)

@@ -19,7 +19,7 @@ Public catalog baseline: `a51075a6c6f389bc906a2f71ede75cc2c00eb04d` from [scan-p
 
 ## Build and distribution
 
-The root `make check` validates the preferred Rust implementation. Compatibility workspaces are isolated and cannot publish crates. From the repository root:
+The separately reviewed [security prerequisite](https://github.com/organizyio/scanner/pull/2) qualifies parser/dependency patches without changing consumer pins. The root `make check` validates the preferred Rust implementation. Compatibility workspaces are isolated and cannot publish crates. From the repository root:
 
 ```sh
 python3 scripts/build-components.py engine --archive

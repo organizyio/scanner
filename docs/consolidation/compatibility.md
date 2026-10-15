@@ -29,3 +29,7 @@ The flat and nested schemas are not interchangeable. The facade exports, origina
 Corrections and convergence need independent specs, tests and consumer qualification.
 
 The wrapper currently can exit 1 when interrupted while its child is blocked, despite a separate code path for 130. Original and relocated binaries both returned 1 in the characterized blocked-child case. No stronger interruption guarantee is claimed.
+
+## Independently qualified security adaptation
+
+Before distribution, root and compatibility builds use lopdf 0.42.0 and crossbeam-epoch 0.9.20 to satisfy existing security checks ([prerequisite PR](https://github.com/organizyio/scanner/pull/2)). Original-versus-relocated behavior was characterized before this adaptation and is rechecked afterwards. A valid one-page PDF retains its count; deeply nested hostile PDFs are now rejected without aborting the process. This intentional correction addresses [RUSTSEC-2026-0187](https://rustsec.org/advisories/RUSTSEC-2026-0187) and [RUSTSEC-2026-0204](https://rustsec.org/advisories/RUSTSEC-2026-0204). It is not runtime convergence, an Organizy dependency upgrade, or release acceptance.

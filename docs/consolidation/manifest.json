@@ -19,7 +19,10 @@
     "Isolated compatibility engine workspace; publish=false for compatibility crates",
     "Replaced wrapper default build with local target-matched engine embedding",
     "Required integration tests fail instead of skipping absent engines",
-    "Added project characterization tests; no project traversal/storage changes"
+    "Added project characterization tests; no project traversal/storage changes",
+    "Separately qualified RUSTSEC-2026-0187 and RUSTSEC-2026-0204 dependency fixes before artifact publication",
+    "Updated catalog build-directory example; retained implementation files unchanged",
+    "Portable contract hashes normalize checkout CRLF to Git LF"
   ],
   "retained_contract_files": {
     "crates/engine/Cargo.toml": "f0a79a6a83dab055cf485467bb505a6029852be8fcd8781613bb23aa6ebc0932",
@@ -38,7 +41,7 @@
     "crates/hash/src/partial.rs": "2ed38b25bed19afeed1beca64b6c6f3ec9b165b0213978bc69ace876805d3df7",
     "crates/hash/src/sha256.rs": "cce45e7893b2c4270b023a961e88a6198e37012963b2915b42332dcc967f3c50",
     "crates/hash/src/xxhash.rs": "7e45ee7aa5187a1ae3ce441cb5c73843f709f6f1be79770c97c83f66a2953ee3",
-    "crates/metadata/Cargo.toml": "370788176d7965f82db5528b7c094438bbd9a2c8921af56b7403ab8d21d0af63",
+    "crates/metadata/Cargo.toml": "f45f44785127beeca8130e9d3235b086297c11d3fa9aa0550735766e49ee65d5",
     "crates/metadata/src/audio.rs": "e446819a936f6763d9f9689a4acb2a812835aeb2046ce520e9378b7d2a723c2f",
     "crates/metadata/src/document.rs": "9bbabeda3d64104eb43fa012a21e18ba2e48dd8fc68c796ca94274123754c80d",
     "crates/metadata/src/exif.rs": "7f54a2c99720f2439561e1bb7f6235996824aaa748934cc2c90ad1d830d52ce2",
@@ -68,5 +71,12 @@
     "scanner/Cargo.toml": "bfb6c4eecb0d23cc04a77e9b61cc472b2f4c7bf749ddde18d5070eab59c47f16",
     "scanner/src/lib.rs": "d0f8b42dca2bf568649f8058dfe18e5bc85b60e34d87f072bd20e475a9cc339a",
     "schema/file_record_v1.schema.json": "5927e15bcb788e7b50fc331f732397587474e1cd10b5b4967635e768478736ed"
+  },
+  "security_prerequisite": {
+    "review": "https://github.com/organizyio/scanner/pull/2",
+    "lopdf": "0.42.0",
+    "crossbeam-epoch": "0.9.20",
+    "scope": "Root and compatibility parser dependencies; public package versions, API/schema and Organizy pins unchanged; malicious nested PDFs now rejected",
+    "previous_metadata_manifest_sha256": "370788176d7965f82db5528b7c094438bbd9a2c8921af56b7403ab8d21d0af63"
   }
 }
