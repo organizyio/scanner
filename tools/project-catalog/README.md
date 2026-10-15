@@ -43,8 +43,11 @@ go build -o scan-fs ./cmd/scan-fs
 ### GUI (native toolchain required)
 
 ```bash
+python3 ../../scripts/build-native-a11y.py --check
 go build -o scan-gui ./cmd/scan-gui
 ```
+
+The GUI also requires Rust 1.88 to build its isolated, non-publishing [native accessibility bridge](native-a11y/README.md) from reviewed source. The helper selects the Windows GNU target for CGO and places the static library at the target-local link location. CLI-only builds remain Go-only.
 
 The Fyne app needs a working OpenGL/driver stack on your OS. Cross-compiling the GUI is not covered here; build on the target platform or follow [Fyne](https://developer.fyne.io/) cross-compile docs.
 
@@ -54,7 +57,7 @@ The Fyne app needs a working OpenGL/driver stack on your OS. Cross-compiling the
 sudo apt update
 sudo apt install -y build-essential pkg-config \
   libgl1-mesa-dev libegl1-mesa-dev \
-  libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev xorg-dev
+  libx11-dev libxcb1-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev xorg-dev
 ```
 
 Then ensure CGO is on (`export CGO_ENABLED=1`) and rebuild. To **run** the GUI on WSL2 you need a display (e.g. [WSLg](https://github.com/microsoft/wslg) on recent Windows 11, or an X server).
@@ -122,6 +125,7 @@ Run `scan-cli -h` for top-level help and `scan-cli fs -h` / `scan-cli catalog -h
 ## Usage: GUI (`scan-gui`)
 
 ```bash
+python3 ../../scripts/build-native-a11y.py --check
 go build -o scan-gui ./cmd/scan-gui
 ./scan-gui
 ```

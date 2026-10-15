@@ -125,5 +125,47 @@
     "python platform-qualification.py cli --fixture <synthetic-fixture> --binary <native-cli>",
     "native Mac AX/CGEvent, Linux X11/XTest+AT-SPI, Windows console task+UIAutomation runners; screenshot states reviewed individually"
   ],
-  "cleanup": "Owned GUI processes stopped, temporary same-user tasks absent, fixture ACLs restored and sharing handles released; regenerable large workloads removed. Raw evidence retained privately."
+  "cleanup": "Owned GUI processes stopped, temporary same-user tasks absent, fixture ACLs restored and sharing handles released; regenerable large workloads removed. Raw evidence retained privately.",
+  "completion_development_run": {
+    "status": "development evidence; final candidate replay required",
+    "formal_phase_completion": false,
+    "filesystem_source": "a572cb28dc1e0a30da991c046171023a986cd31e",
+    "gui_source": "uncommitted development snapshots; no final-revision qualification claim",
+    "filesystem": {
+      "macos-x86_64": "passed four deterministic native probes",
+      "linux-x86_64": "passed four deterministic native probes",
+      "windows-x86_64": "passed four deterministic native probes",
+      "scope": "Actual disappearance warnings, symlink target hashing with legacy lstat size, checkpoint cancellation, saved-prefix plus inclusive resumed-suffix inventory equivalence. Folder aggregates remain partial on suffix resume."
+    },
+    "cli_signals": {
+      "macos-x86_64": "scan-cli fs SIGINT/SIGTERM passed: exit 0, valid partial inventory after active FIFO read released",
+      "linux-x86_64": "scan-cli fs SIGINT/SIGTERM passed: exit 0, valid partial inventory after active FIFO read released",
+      "windows-x86_64": "scan-cli fs CTRL_C_EVENT passed in exclusively owned new console: exit 0, valid partial inventory",
+      "scope": "Existing fs command interruption conventions; not catalog or preferred Rust CLI evidence. No active extraction preemption claim."
+    },
+    "gui": {
+      "macos-x86_64": "Native AX press/focus/value edits, exposed error/recovery, visible tree selection, pause/resume/cancel and actual restart/partial resume exercised; final replay pending",
+      "windows-x86_64": "Native UIA Invoke Start/Settings exercised; extended picker/lifecycle replay pending corrected backend and harness focus stabilization",
+      "linux-x86_64": "Native AT-SPI button actions/focus and real keyboard editing exercised on private memory-only bus; native text/status interface gap found and correction pending",
+      "macos-arm64": "pending: no interactive host available",
+      "macos-retina-2x": "pending: available Intel host exposes only a 1x external display"
+    },
+    "evidence_sha256": {
+      "macos-native-filesystem": "f058e815eb13fc1fa4c765061ea2526788f165e14efc905be7ad4405d7131e24",
+      "linux-native-filesystem": "02bd47c7d45060053a7bd49331344ae14825c4e3672fbee1cbf629cec5fdbac3",
+      "windows-native-filesystem": "37233bdf2a949e07142cc57706083fbfe26f4b89cb186933f83c170e298f8a13",
+      "macos-native-signals": "2ec4339bf6f7fdd557bddd4c9d12834b2d7f13af8bdc3562eb6f7a920926c0ae",
+      "linux-native-signals": "d44a90e1c5dd2d5121277f1837c712073a87389d8f3ea92e85edcdefe1d11060",
+      "windows-native-control-event": "a1b2050094c4f130315894d4321d201414b4cb4375206b2977a66c4476076e33",
+      "macos-native-edit-error": "7e80b1b559473ca300fac64819c3100fdaa95c8b33a64b5e14b7c7a437a80cca",
+      "macos-visible-tree-focus": "c53142abbd2ba6dd07c06667ef4b709da6468c3d9005126ba699de2b1bcccecb",
+      "macos-native-canceled": "e7e0c15a9d0a1da12d6649a0ead033580190e96ce91a2ee603aae1b231f3313a",
+      "macos-native-restart-partial": "751df0f5fa5a4c21f8da7bb99e8291e60c2df38c777cab53cf6504c7944bebb2",
+      "linux-native-text-gap": "fa198b3543aec98a73a7bd5dce97295b3d445e0359171fe0ff7fe713baa5d205",
+      "linux-host-settings-unchanged": "39a7df3ed92b327d59888bf28822f0267fbe5acb258ee91ffa1e9e5639f9a6bf",
+      "windows-native-lifetime": "bb6898674e25f5ba7cf9dfc72f0ff2f37b14264889682a8933d7fe1711d83f59"
+    },
+    "release_acceptance": false,
+    "runtime_convergence": false
+  }
 }

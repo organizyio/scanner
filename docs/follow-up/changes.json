@@ -119,13 +119,14 @@
       "current_sha256": "aceed3dd0c93659a8e931722f1f83e800ab90cec9454c1dc405927ba3258281a"
     },
     "tools/project-catalog/internal/controller/controller.go": {
-      "phase": 2,
-      "reason": "Count and retain partial-scan warnings in existing GUI status without changing profiles or checkpoints.",
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Count and retain partial-scan warnings in existing GUI status without changing profiles or checkpoints.",
       "tests": [
-        "CGO_ENABLED=0 go test -mod=readonly ./...",
-        "CGO_ENABLED=0 go vet -mod=readonly ./..."
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
       ],
-      "current_sha256": "8f19441a941da9f3824886376bf9811398719e5ef6e74c7098365be2d3236290"
+      "current_sha256": "0ddb380ae160aea511f15ca646853e8a4681718f9b6118a2b5198f1253c26eb8"
     },
     "tools/project-catalog/internal/gitmeta/gitmeta.go": {
       "phase": 2,
@@ -138,26 +139,24 @@
       "current_sha256": "42de619c688b98de7d0305d71ec02814ffaf23d92f360227535fb4da27f0a724"
     },
     "tools/project-catalog/internal/gui/folder_tree.go": {
-      "phase": 2,
-      "reason": "Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
       "tests": [
-        "CGO_ENABLED=0 go test -mod=readonly ./...",
-        "CGO_ENABLED=0 go vet -mod=readonly ./...",
-        "go test -mod=readonly -race ./internal/gui",
-        "go build -mod=readonly ./cmd/scan-gui"
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
       ],
-      "current_sha256": "d10de4dcf503bdfcafa58da987632666006465f4de90605d85e6c32b299b74ad"
+      "current_sha256": "9a8a6ddf3eb59664d31ff8c8089b94a0fb5609f877ad947477be85512a83b3f5"
     },
     "tools/project-catalog/internal/gui/progress_panel.go": {
-      "phase": 2,
-      "reason": "Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
       "tests": [
-        "CGO_ENABLED=0 go test -mod=readonly ./...",
-        "CGO_ENABLED=0 go vet -mod=readonly ./...",
-        "go test -mod=readonly -race ./internal/gui",
-        "go build -mod=readonly ./cmd/scan-gui"
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
       ],
-      "current_sha256": "0b03006d56ff00f1d45ad5e0fd9c9db0afd6622d18f11e944a90d227b530ba6a"
+      "current_sha256": "06d0c43aeb40ecd8f08bb5ddd3913cf2b4b03f93359fbe84f766896daeb64376"
     },
     "tools/project-catalog/internal/gui/tray.go": {
       "phase": 2,
@@ -171,15 +170,14 @@
       "current_sha256": "ede28acc35ef60279bc9e0a623d843646515bfbdd307a780a8524eb1eb39e759"
     },
     "tools/project-catalog/internal/gui/window.go": {
-      "phase": 2,
-      "reason": "Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
       "tests": [
-        "CGO_ENABLED=0 go test -mod=readonly ./...",
-        "CGO_ENABLED=0 go vet -mod=readonly ./...",
-        "go test -mod=readonly -race ./internal/gui",
-        "go build -mod=readonly ./cmd/scan-gui"
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
       ],
-      "current_sha256": "18753f8d3a9c535a1db93cd437d70725b934b26b6088b61f9760b92829a5cec2"
+      "current_sha256": "7c5b1318861810c7a823553cc9534749886ecb4e9241bdcfdd12b4c95dbf2ee1"
     },
     "tools/project-catalog/internal/markers/deep.go": {
       "phase": 2,
@@ -281,13 +279,14 @@
       "current_sha256": "10b6985826bf0c4d848661cb3ae5836e13be20fa37795e6ee74c010ecd63f827"
     },
     "tools/project-catalog/internal/scan/visit.go": {
-      "phase": 2,
-      "reason": "Plumb warnings through buffered and streaming scans to stderr or GUI handlers; hashing failures are visible without changing JSON records.",
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Plumb warnings through buffered and streaming scans to stderr or GUI handlers; hashing failures are visible without changing JSON records.",
       "tests": [
-        "CGO_ENABLED=0 go test -mod=readonly ./...",
-        "CGO_ENABLED=0 go vet -mod=readonly ./..."
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
       ],
-      "current_sha256": "716d1771cf2759457942b6fd1998a3f0e162574e37a1b1f57124bac64d9be631"
+      "current_sha256": "bc817f8141cfe61797597f0aa658e6d3753b4a8d5bb5dd0b29cdd349094d73b9"
     },
     "tools/project-catalog/internal/scan/walk/walk.go": {
       "phase": 2,
@@ -327,6 +326,46 @@
         "normalized CLI golden comparison"
       ],
       "current_sha256": "47162705eeb33d5cfb293ed3064ae6cab825b789c9342289327ed59629eb1334"
+    },
+    "tools/project-catalog/internal/controller/profiles.go": {
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved.",
+      "tests": [
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
+      ],
+      "current_sha256": "c426c83d7a81d4f1c5f22c6559c74e4f0f8152e2f39b139e5bf04c1a0f38b515"
+    },
+    "tools/project-catalog/internal/controller/validation.go": {
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved.",
+      "tests": [
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
+      ],
+      "current_sha256": "9aaea050da8103011311e92db9631adf7cee60488568156e37c5f99c9e5b66c7"
+    },
+    "tools/project-catalog/internal/gui/config_editor.go": {
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved.",
+      "tests": [
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
+      ],
+      "current_sha256": "bbe1ef7a199c9005028f6f3eb03a022af67b22bd86d0cdc92fce4baed4a04ee5"
+    },
+    "tools/project-catalog/internal/pipeline/deep.go": {
+      "phase": 4,
+      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved.",
+      "tests": [
+        "native GUI/controller race regressions",
+        "headless Go characterization and vet",
+        "native platform qualification recorded separately"
+      ],
+      "current_sha256": "aa946c0f2353c647d891b41c6467a2471e34a8f2e362783714dea0f1ac7ceac8"
     }
   }
 }

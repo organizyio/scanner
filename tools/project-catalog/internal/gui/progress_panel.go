@@ -17,6 +17,7 @@ import (
 func NewProgressPanel(ctx context.Context, ctrl *controller.Controller) *widget.Label {
 	text := binding.NewString()
 	label := widget.NewLabelWithData(text)
+	label.Wrapping = fyne.TextWrapWord
 
 	startUIPoller(ctx, time.Second, fyne.Do, func() {
 		snap := ctrl.Progress().Snapshot()
@@ -28,6 +29,12 @@ func NewProgressPanel(ctx context.Context, ctrl *controller.Controller) *widget.
 			snap.MBProcessed,
 			snap.FilesPerSecond,
 		)
+		if ctrl.ResumeFrom() != "" {
+			msg += " | Resumed partial inventory (inclusive checkpoint cursor)"
+		}
+		if saveErr := ctrl.Profiles().LastError(); saveErr != nil {
+			msg += " | Settings not saved: " + saveErr.Error()
+		}
 		if warning := ctrl.LastError(); warning != "" {
 			msg += " | " + warning
 		}

@@ -10,6 +10,15 @@ import (
 func ValidateProfile(p storage.ScanProfile) []error {
 	var errs []error
 	enabledRoots := 0
+	if p.MaxFileSizeMB < 0 {
+		errs = append(errs, fmt.Errorf("max file size must be nonnegative"))
+	}
+	if p.HashMaxFileSizeMB < 0 {
+		errs = append(errs, fmt.Errorf("hash file size must be nonnegative"))
+	}
+	if p.CheckpointEnabled && p.CheckpointPath == "" {
+		errs = append(errs, fmt.Errorf("checkpoint path is required when checkpointing is enabled"))
+	}
 
 	for _, r := range p.ScanRoots {
 		if !r.Enabled {

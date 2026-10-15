@@ -41,6 +41,21 @@ def dependency_notices(out, component, gui=False):
         used = {tuple(line.split()[:2]) for line in tree.splitlines()}
         packages += [(p['name'] + '-' + p['version'], Path(p['manifest_path']).parent)
                      for p in metadata['packages'] if p['source'] is not None and (p['name'], 'v' + p['version']) in used]
+    if component == 'catalog' and gui:
+        native = ROOT / 'tools/project-catalog/native-a11y'
+        metadata = json.loads(subprocess.check_output([
+            'cargo', '+1.88', 'metadata', '--locked', '--format-version', '1',
+            '--manifest-path', str(native / 'Cargo.toml')], cwd=ROOT))
+        host = ('x86_64-pc-windows-gnu' if platform.system() == 'Windows' else
+                subprocess.check_output(['rustc', '+1.88', '-vV'], text=True, encoding='utf-8').split('host: ')[1].splitlines()[0])
+        tree = subprocess.check_output([
+            'cargo', '+1.88', 'tree', '--locked', '--prefix', 'none', '--edges', 'normal',
+            '--target', host, '-p', 'scanner-native-a11y', '--format', '{p}'],
+            cwd=native, text=True, encoding='utf-8')
+        used = {tuple(line.split()[:2]) for line in tree.splitlines()}
+        packages += [(p['name'] + '-' + p['version'], Path(p['manifest_path']).parent)
+                     for p in metadata['packages'] if p['source'] is not None and
+                     (p['name'], 'v' + p['version']) in used]
     if component in ('wrapper', 'catalog'):
         module = ROOT / ('compat/scan-fs' if component == 'wrapper' else 'tools/project-catalog')
         commands = ['./cmd/scan-fs'] if component == 'wrapper' else ['./cmd/scan-cli', './cmd/scan-git', './cmd/scan-fs']
@@ -64,7 +79,7 @@ def dependency_notices(out, component, gui=False):
         if not go_license.exists():
             go_license = goroot.parent / 'LICENSE'  # Homebrew separates licenses from libexec.
         copy_notice(go_license, notices / 'LICENSE')
-    if component in ('engine', 'wrapper'):
+    if component in ('engine', 'wrapper') or (component == 'catalog' and gui):
         sysroot = Path(subprocess.check_output(['rustc', '+1.88', '--print', 'sysroot'], text=True, encoding='utf-8').strip())
         rust_notices = sysroot / 'share/doc/rust'
         shutil.copytree(rust_notices / 'licenses', out / 'third-party/rust/licenses', dirs_exist_ok=True)
@@ -123,6 +138,8 @@ def build(component, gui=False):
             shutil.copy2(engine, payload)
             run(['go', 'build', '-trimpath', '-o', str(out / ('scan-fs' + suffix)), './cmd/scan-fs'], ROOT / 'compat/scan-fs', env)
     elif component == 'catalog':
+        if gui:
+            run(['python3', str(ROOT / 'scripts/build-native-a11y.py')])
         for cmd in ('scan-cli', 'scan-git', 'scan-fs') + (('scan-gui',) if gui else ()):
             run(['go', 'build', '-trimpath', '-o', str(out / (cmd + suffix)), './cmd/' + cmd], ROOT / 'tools/project-catalog', dict(env, CGO_ENABLED='1' if cmd == 'scan-gui' else '0'))
     elif component == 'launchers':

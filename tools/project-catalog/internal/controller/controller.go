@@ -44,6 +44,7 @@ type Controller struct {
 	// checkpoint throttle
 	lastCPWrite time.Time
 	lastSeen    string
+	resumeFrom  string
 }
 
 func New(a fyne.App) *Controller {
@@ -61,9 +62,10 @@ func (c *Controller) Profiles() *Profiles           { return c.profiles }
 func (c *Controller) Runtime() *scan.RuntimeOptions { return c.runtime.Opts }
 func (c *Controller) Progress() *scan.Progress      { return c.progress }
 
-func (c *Controller) IsRunning() bool   { c.mu.Lock(); defer c.mu.Unlock(); return c.running }
-func (c *Controller) IsPaused() bool    { c.mu.Lock(); defer c.mu.Unlock(); return c.paused }
-func (c *Controller) LastError() string { c.mu.Lock(); defer c.mu.Unlock(); return c.lastErr }
+func (c *Controller) IsRunning() bool    { c.mu.Lock(); defer c.mu.Unlock(); return c.running }
+func (c *Controller) IsPaused() bool     { c.mu.Lock(); defer c.mu.Unlock(); return c.paused }
+func (c *Controller) LastError() string  { c.mu.Lock(); defer c.mu.Unlock(); return c.lastErr }
+func (c *Controller) ResumeFrom() string { c.mu.Lock(); defer c.mu.Unlock(); return c.resumeFrom }
 
 func (c *Controller) SnapshotFolders() map[string]*scan.FolderRecord {
 	c.mu.Lock()
@@ -111,6 +113,14 @@ func (c *Controller) Start(resume bool) error {
 	c.runtime.Opts.ProjectDetection.Store(p.ProjectDetection)
 
 	c.mu.Lock()
+	if c.running {
+		c.mu.Unlock()
+		return nil
+	}
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.pause = make(chan bool, 1)
+	ctx := c.ctx
+	pause := c.pause
 	c.running = true
 	c.paused = false
 	c.lastErr = ""
@@ -124,9 +134,6 @@ func (c *Controller) Start(resume bool) error {
 	c.progress.Reset()
 	c.progress.SetState("running")
 
-	c.ctx, c.cancel = context.WithCancel(context.Background())
-	c.pause = make(chan bool, 1)
-
 	resumeFrom := ""
 	if resume && p.CheckpointEnabled && p.CheckpointPath != "" {
 		if cp, ok := checkpoint.Load(p.CheckpointPath); ok {
@@ -134,19 +141,19 @@ func (c *Controller) Start(resume bool) error {
 		}
 	}
 
+	c.mu.Lock()
+	c.resumeFrom = resumeFrom
+	c.mu.Unlock()
 	opts := scan.ScanOptions{
 		MaxFileSizeMB:     p.MaxFileSizeMB,
 		HashFiles:         p.HashFiles,
 		HashMaxFileSizeMB: p.HashMaxFileSizeMB,
 		ProjectDetection:  p.ProjectDetection,
-		Pause:             c.pause,
+		Pause:             pause,
 		Progress:          c.progress,
 		Runtime:           c.runtime.Opts,
 		OnWarning: func(path string, err error) {
-			c.mu.Lock()
-			c.warningCount++
-			c.lastErr = fmt.Sprintf("Partial scan (%d warnings): %s: %v", c.warningCount, path, err)
-			c.mu.Unlock()
+			c.reportWarning(path, err)
 		},
 		OnCheckpoint: func(path string) {
 			c.onCheckpoint(p, path)
@@ -154,13 +161,14 @@ func (c *Controller) Start(resume bool) error {
 	}
 
 	go func() {
-		res, err := pipeline.DeepScan(c.ctx, pipeline.DeepScanInput{
+		res, err := pipeline.DeepScan(ctx, pipeline.DeepScanInput{
 			Roots:       roots,
 			ExcludeDirs: p.ExcludeDirs,
 			ResumeFrom:  resumeFrom,
 			Options:     opts,
 		})
 
+		c.flushCheckpoint(p)
 		c.mu.Lock()
 		if err != nil && err != context.Canceled {
 			c.lastErr = err.Error()
@@ -172,8 +180,12 @@ func (c *Controller) Start(resume bool) error {
 		}
 		c.running = false
 		c.paused = false
-		if err == context.Canceled {
+		if ctx.Err() != nil {
 			c.progress.SetState("canceled")
+		} else if err != nil {
+			c.progress.SetState("error")
+		} else {
+			c.progress.SetState("finished")
 		}
 		c.mu.Unlock()
 	}()
@@ -192,51 +204,68 @@ func (c *Controller) onCheckpoint(p storage.ScanProfile, currentPath string) {
 	c.mu.Unlock()
 
 	if shouldWrite {
-		_ = checkpoint.Save(p.CheckpointPath, currentPath)
+		if err := checkpoint.Save(p.CheckpointPath, currentPath); err != nil {
+			c.reportWarning(p.CheckpointPath, err)
+		}
+	}
+}
+
+// publishPause replaces a stale queued intent; rapid Pause/Resume must not lose Resume.
+func publishPause(ch chan bool, paused bool) {
+	select {
+	case <-ch:
+	default:
+	}
+	select {
+	case ch <- paused:
+	default:
 	}
 }
 
 func (c *Controller) Pause() {
 	c.mu.Lock()
-	if !c.running || c.paused {
-		c.mu.Unlock()
+	defer c.mu.Unlock()
+	if !c.running || c.paused || (c.ctx != nil && c.ctx.Err() != nil) {
 		return
 	}
 	c.paused = true
-	c.mu.Unlock()
 	c.progress.SetState("paused")
-	select {
-	case c.pause <- true:
-	default:
-	}
+	publishPause(c.pause, true)
 }
-
 func (c *Controller) Resume() {
 	c.mu.Lock()
-	if !c.running || !c.paused {
-		c.mu.Unlock()
+	defer c.mu.Unlock()
+	if !c.running || !c.paused || (c.ctx != nil && c.ctx.Err() != nil) {
 		return
 	}
 	c.paused = false
-	c.mu.Unlock()
 	c.progress.SetState("running")
-	select {
-	case c.pause <- false:
-	default:
-	}
+	publishPause(c.pause, false)
 }
-
 func (c *Controller) Cancel() {
 	c.mu.Lock()
-	if !c.running {
-		c.mu.Unlock()
+	defer c.mu.Unlock()
+	if !c.running || c.cancel == nil {
 		return
 	}
-	cancel := c.cancel
+	c.paused = false
+	c.progress.SetState("canceling")
+	c.cancel()
+}
+func (c *Controller) reportWarning(path string, err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.warningCount++
+	c.lastErr = fmt.Sprintf("Partial scan (%d warnings): %s: %v", c.warningCount, path, err)
+}
+func (c *Controller) flushCheckpoint(p storage.ScanProfile) {
+	c.mu.Lock()
+	last := c.lastSeen
 	c.mu.Unlock()
-	if cancel != nil {
-		c.progress.SetState("canceled")
-		cancel()
+	if p.CheckpointEnabled && p.CheckpointPath != "" && last != "" {
+		if err := checkpoint.Save(p.CheckpointPath, last); err != nil {
+			c.reportWarning(p.CheckpointPath, err)
+		}
 	}
 }
 

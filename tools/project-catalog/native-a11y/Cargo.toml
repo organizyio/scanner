@@ -1,0 +1,26 @@
+[package]
+name = "scanner-native-a11y"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+accesskit = "=0.25.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+accesskit_macos = "=0.27.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+accesskit_windows = "=0.35.1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+accesskit_unix = "=0.24.0"

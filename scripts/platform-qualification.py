@@ -112,6 +112,9 @@ profiles:
     checkpoint_enabled: true
     checkpoint_path: %s
 """ % (json.dumps(str(scan)), json.dumps(str(root / "checkpoint.json")))
+    # A second synthetic profile qualifies actual profile switching and restore.
+    secondary = settings.split("profiles:\n", 1)[1].replace("  Qualification:\n", "  Secondary:\n", 1).replace("name: Qualification", "name: Secondary", 1)
+    settings += secondary
     (cfg / "settings.yaml").write_text(settings)
     data = {"schema": 1, "system": platform.system(), "architecture": platform.machine(),
             "files": files, "symlink": symlink, "gui_qualification": "pending",

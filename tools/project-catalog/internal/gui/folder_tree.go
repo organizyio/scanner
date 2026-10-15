@@ -13,12 +13,11 @@ import (
 	"scan-projects/internal/controller"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
-func NewFolderTree(ctx context.Context, ctrl *controller.Controller, details *widget.Label) fyne.CanvasObject {
-	const rootID = "ROOT"
+func NewFolderTree(ctx context.Context, ctrl *controller.Controller, details *widget.Label) *FolderTree {
+	const rootID = ""
 
 	tree := widget.NewTree(
 		func(uid widget.TreeNodeID) []widget.TreeNodeID {
@@ -46,24 +45,20 @@ func NewFolderTree(ctx context.Context, ctrl *controller.Controller, details *wi
 
 	startUIPoller(ctx, 2*time.Second, fyne.Do, tree.Refresh)
 
-	return container.NewBorder(
-		widget.NewLabel("Folders"),
-		nil, nil, nil,
-		tree,
-	)
+	return newFolderTree(tree)
 }
 
 func treeChildren(ctrl *controller.Controller, uid string) []string {
-	if uid == "ROOT" {
+	if uid == "" {
 		p := ctrl.Profiles().Active()
 		out := make([]string, 0, len(p.ScanRoots))
 		for _, r := range p.ScanRoots {
-			out = append(out, fmt.Sprintf("%s [%v]", r.Path, r.Enabled))
+			out = append(out, r.Path)
 		}
 		return out
 	}
 
-	path := stripRootLabel(uid)
+	path := uid
 	folders := ctrl.SnapshotFolders()
 	if folders == nil {
 		return nil
@@ -86,12 +81,13 @@ func treeChildren(ctrl *controller.Controller, uid string) []string {
 }
 
 func nodeLabel(ctrl *controller.Controller, uid string) string {
-	if uid == "ROOT" {
-		return "Scan Roots"
-	}
-
-	if strings.Contains(uid, " [true]") || strings.Contains(uid, " [false]") {
-		return uid
+	for _, root := range ctrl.Profiles().Active().ScanRoots {
+		if root.Path == uid {
+			if root.Enabled {
+				return uid + " (enabled)"
+			}
+			return uid + " (disabled)"
+		}
 	}
 
 	folders := ctrl.SnapshotFolders()
@@ -113,7 +109,6 @@ func nodeLabel(ctrl *controller.Controller, uid string) string {
 }
 
 func showFolderDetails(ctrl *controller.Controller, path string, details *widget.Label) {
-	path = stripRootLabel(path)
 
 	folders := ctrl.SnapshotFolders()
 	fr := folders[path]
@@ -132,13 +127,6 @@ func showFolderDetails(ctrl *controller.Controller, path string, details *widget
 		fr.IsProjectRoot,
 		fr.ProjectKind,
 	))
-}
-
-func stripRootLabel(s string) string {
-	if i := strings.LastIndex(s, " ["); i > 0 {
-		return s[:i]
-	}
-	return s
 }
 
 func ensureTrailingSep(p string) string {

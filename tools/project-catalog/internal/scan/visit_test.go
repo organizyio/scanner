@@ -73,3 +73,47 @@ func TestHashOpenFailureReportsPartialResultWarning(t *testing.T) {
 		})
 	}
 }
+
+func TestLiveZeroHashLimitMeansUnlimitedInsteadOfInitialLimit(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "large.txt")
+	content := strings.Repeat("x", 1024*1024+1)
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := entries[0].Info()
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime := NewRuntimeOptions()
+	runtime.HashFiles.Store(true)
+	runtime.HashMaxSizeBytes.Store(1024 * 1024)
+	opts := ScanOptions{HashFiles: true, HashMaxFileSizeMB: 1, Runtime: runtime}
+	ingest := func() FileRecord {
+		rec, ok := ingestFile(path, entries[0], info, map[string]*FolderRecord{}, opts)
+		if !ok {
+			t.Fatal("file unexpectedly excluded")
+		}
+		return rec
+	}
+	if rec := ingest(); rec.HashStatus != "skipped" {
+		t.Fatalf("initial limit ignored: %+v", rec)
+	}
+	runtime.HashMaxSizeBytes.Store(0)
+	if rec := ingest(); rec.HashStatus != "ok" || rec.Sha256 == "" {
+		t.Fatalf("live unlimited value restored initial limit: %+v", rec)
+	}
+	runtime.HashMaxSizeBytes.Store(1)
+	if rec := ingest(); rec.HashStatus != "skipped" {
+		t.Fatal("byte-valued runtime limit was rounded to unlimited")
+	}
+	runtime.HashFiles.Store(false)
+	runtime.HashMaxSizeBytes.Store(0)
+	if rec := ingest(); rec.HashStatus != "skipped" {
+		t.Fatal("unlimited limit re-enabled hashing")
+	}
+}

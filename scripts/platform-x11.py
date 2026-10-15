@@ -169,10 +169,21 @@ def main():
                     x.XFlush(display)
                     time.sleep(1)
             for key in args.keys.split(",") if args.keys else []:
-                if key == "ctrl+a":
+                if key in ["ctrl+a", "ctrl+s", "ctrl+shift+s", "ctrl+p", "ctrl+r", "ctrl+k", "ctrl+l", "ctrl+o", "ctrl+b", "ctrl+comma"]:
                     control = x.XKeysymToKeycode(display, x.XStringToKeysym(b"Control_L"))
-                    a = x.XKeysymToKeycode(display, x.XStringToKeysym(b"a"))
-                    send_keys([(control, 1), (a, 1), (a, 0), (control, 0)])
+                    shift = x.XKeysymToKeycode(display, x.XStringToKeysym(b"Shift_L"))
+                    name = key.split("+")[-1]
+                    code = x.XKeysymToKeycode(display, x.XStringToKeysym(name.encode()))
+                    if not control or not code or ("shift" in key and not shift):
+                        raise ValueError("shortcut absent from session keymap")
+                    events = [(control, 1)]
+                    if "shift" in key:
+                        events.append((shift, 1))
+                    events.extend([(code, 1), (code, 0)])
+                    if "shift" in key:
+                        events.append((shift, 0))
+                    events.append((control, 0))
+                    send_keys(events)
                     x.XFlush(display)
                     time.sleep(0.25)
                     continue
@@ -230,7 +241,14 @@ def main():
                 app = desktop.get_child_at_index(i)
                 if app.get_process_id() == args.pid:
                     def inspect(node, depth=0):
-                        record = {"name": node.get_name(), "role": node.get_role_name()}
+                        record = {"name": node.get_name(), "role": node.get_role_name(),
+                                  "focused": node.get_state_set().contains(Atspi.StateType.FOCUSED)}
+                        try:
+                            text = node.get_text_iface()
+                            if text:
+                                record["text"] = text.get_text(0, -1)
+                        except Exception:
+                            pass
                         if depth < 12:
                             record["children"] = [inspect(node.get_child_at_index(j), depth+1)
                                                   for j in range(node.get_child_count())]
