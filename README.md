@@ -32,13 +32,13 @@ This workspace follows [Checks](https://rustprojectprimer.com/checks/index.html)
 | **Concurrency** | `concurrency` + `cancel-in-progress` on PRs (not `main`) to save matrix minutes |
 | **Tool installs** | Pinned versions via `taiki-e/install-action` in CI |
 | **Thorough / periodic** | Weekly [`scheduled.yml`](.github/workflows/scheduled.yml): `cargo machete`, `cargo outdated` |
-| **Binaries & auto release** | [`release.yml`](.github/workflows/release.yml): **(1)** `workflow_dispatch` or **(2)** after successful **CI** on a **push** to `main` — patch-bump from the last `v*` tag, [`CHANGELOG.md`](CHANGELOG.md) from **conventional commits**, bot commit + tag, then **preflight** (locked tests, **MSRV 1.88**, **minimal-versions**, optional `cargo-semver-checks`), **matrix build** `scanfs`, **GitHub Release** — all in **one workflow** (no PAT; same pattern as inlined GoReleaser after prepare). **(3)** Push a **`v*`** tag yourself → only build + release. Skipped when `HEAD` is already tagged on the CI-driven path. |
-| **Crates.io** | Automated in [`release.yml`](.github/workflows/release.yml) job `publish-crate` when repository variable **`PUBLISH_TO_CRATES_IO=true`**; gated by environment **`crates-io`** and secret **`CARGO_REGISTRY_TOKEN`** ([security](https://rustprojectprimer.com/ci/index.html#security)). |
+| **Binaries & explicit release** | [`release.yml`](.github/workflows/release.yml) runs only on an explicit `workflow_dispatch` or a new `v*` tag. Successful main-branch CI does not release. Preflight, binary builds and publication require a separate release decision. |
+| **Crates.io** | Publication requires an explicit dispatch with `publish_crates=true`, repository variable `PUBLISH_TO_CRATES_IO=true`, and the `crates-io` environment/secret gates in [`release.yml`](.github/workflows/release.yml). A documentation or qualification merge does not authorize publication. |
 
 The `scanner-core` crate depends on internal `scanner-*` crates from this workspace. The release workflow publishes those internal crates first, then publishes `scanner-core`, all with locked dependency resolution.
 | **Versioning** | [CHANGELOG.md](CHANGELOG.md) (Keep a Changelog); pre-1.0 SemVer: minor bumps may be breaking for `0.x` consumers |
 
-**Branch protection and `release` (prepare step):** If `main` requires pull requests or restricts who can push, the **prepare** job must be allowed to push commits and tags (same run then builds and creates the GitHub Release). Typical options: allow **`github-actions[bot]`** to bypass rules for this workflow, or use a branch policy that permits bot pushes. Without that, **Commit, tag, and push** fails after tests.
+**Branch protection and release preparation:** Preserve existing protections. A release needs its own reviewed version/change-log preparation and the applicable workflow permissions; qualification work does not authorize policy bypasses.
 
 ### Manual release (tag-only path)
 
@@ -46,9 +46,9 @@ To ship without the automated prepare step (no bot commit on `main`):
 
 1. Bump **`version =`** across **`scanner/`**, **`scanfs/`**, and **`crates/*/`** `Cargo.toml` files (e.g. **`cargo set-version`** from [cargo-edit](https://github.com/killercup/cargo-edit)).
 2. **`cargo generate-lockfile`**, **`cargo test --workspace --locked`**, and update **[`CHANGELOG.md`](CHANGELOG.md)**.
-3. Commit and merge to **`main`**, then **`git tag v0.2.3`** and **`git push origin v0.2.3`**. That push triggers **[`release.yml`](.github/workflows/release.yml)** preflight → artifacts → GitHub Release.
+3. After separate release authorization, merge the version preparation and create a new, previously unused `v*` version tag. That push triggers [`release.yml`](.github/workflows/release.yml). Never replace an existing tag or released artifact.
 
-To disable **only** CI-driven auto bumps: remove or narrow the **`workflow_run`** trigger in [`release.yml`](.github/workflows/release.yml); you can still use **Actions → Release → Run workflow** or manual tags.
+CI-driven automatic bumps are disabled. Do not restore a `workflow_run` release trigger as part of qualification or repository maintenance.
 
 **Monorepo note:** If this tree lives inside a larger repo, GitHub only runs workflows from the repository root `.github/workflows/`. Copy or call these jobs from the root workflow if you need them on every PR.
 

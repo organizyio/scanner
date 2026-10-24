@@ -74,3 +74,7 @@ explicit accelerated Linux mode, bounded native text ranges and feedback events,
 and upstream maintenance review. Unavailable macOS gates, default Linux
 presentation, Windows observer-detach timing and broader reader behavior remain
 explicitly pending. The original evidence above remains historical and intact.
+
+[Post-PR #10 follow-up results](post-pr10-results.md) record the subsequent
+consumer refresh, explicit accelerated Linux mode, native text/event scope and
+backport maintenance review. Missing hosts and unresolved cases remain pending.

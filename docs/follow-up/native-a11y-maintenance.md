@@ -1,7 +1,9 @@
 # Native accessibility dependency maintenance
 
 Reviewed 2026-10-24. The isolated native bridge remains source-built with Rust
-1.88; production Scanner consumers and preferred crate pins are unchanged.
+1.88; production Scanner consumer pins are unchanged. AccessKit pins and the
+reviewed backport remain unchanged; separate metadata ZIP security maintenance
+is recorded in [its review](zip-security.md).
 
 ## AccessKit Unix backport
 
@@ -33,3 +35,11 @@ direction. Multiline/CRLF fields, password fields and entries over 4096 Unicode
 scalars do not advertise range actions. These remain explicit follow-ups for a
 public upstream range API and dedicated mapping tests. Native protocol evidence
 is separate from spoken-reader usability and release acceptance.
+
+## Linux type-graph maintenance
+
+The [native informational advisory review](native-advisories.md) tracks the
+zbus 5 dependencies retained by published AccessKit/AT-SPI. The isolated policy
+is version-bounded and expires before 2026-11-24; required CI rejects drift or
+expiry. This disposition does not authorize vulnerability exceptions, an
+unreviewed zbus 6 port, or release acceptance.
