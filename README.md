@@ -121,3 +121,6 @@ If you ship **`scanfs`** as a container or system package, see the Primer: [cont
 ## Consolidated scanning components
 
 See the [repository consolidation record](docs/consolidation/README.md) for the retained Go catalog/Fyne application, isolated compatibility engine/wrapper, history/privacy boundary and cutover gates. Preferred interfaces remain `scanner-core` and `scanfs`.
+
+See [ZIP dependency security maintenance](docs/follow-up/zip-security.md) for the
+reviewed metadata upgrade and its qualification boundaries.

@@ -15,7 +15,17 @@ sha2 = "0.10"
 kamadak-exif = "0.5"
 lofty = "0.22"
 lopdf = "0.45"
-zip = "2"
+# Retain legacy archive formats and the native C bzip2 backend.
+zip = { version = "=9.0.5", default-features = false, features = [
+  "aes-crypto",
+  "bzip2-rs",
+  "deflate64",
+  "deflate",
+  "lzma",
+  "time",
+  "zstd",
+  "xz",
+] }
 roxmltree = "0.20"
 file-format = "0.25"
 img_hash = "3.2"
