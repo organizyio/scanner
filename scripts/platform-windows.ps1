@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$Binary,
     [Parameter(Mandatory=$true)][string]$Fixture,
     [string]$CliBinary,
-    [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart|quit|quitshortcut)(,(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart|quit|quitshortcut))*$')]
+    [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|announcements|textselection|keyboard|lifecycle|profile|processrestart|quit|quitshortcut)(,(start|pause|resume|cancel|restart|settings|picker|announcements|textselection|keyboard|lifecycle|profile|processrestart|quit|quitshortcut))*$')]
     [string]$Actions='start',
     [switch]$Interactive,
     [string]$RunId=''
@@ -214,13 +214,114 @@ public class QualificationWindow {
             if ($action -ne $Actions.Split(',')[-1]) { throw 'Quit must be the final action' }
             Require-OwnedForeground
             $exitHandle = $process.Handle
-            if ($action -eq 'quit') { Invoke-NativeControl 'Quit' }
-            else { [System.Windows.Forms.SendKeys]::SendWait('^q') }
+            $quitTimer = [Diagnostics.Stopwatch]::StartNew()
+            @{pid=$process.Id; started_utc=[DateTime]::UtcNow.ToString('o')} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'quit-start.json')
+            $quitInvokeError = $null
+            try {
+                if ($action -eq 'quit') { Invoke-NativeControl 'Quit' }
+                else { [System.Windows.Forms.SendKeys]::SendWait('^q') }
+            } catch {
+                # UIA can disconnect while an invoked Quit is returning. Only a
+                # verified exit-zero process below can establish successful exit.
+                $quitInvokeError = $_.Exception.Message
+            }
             if (-not $process.WaitForExit(8000)) { throw 'Owned native Quit did not terminate within eight seconds' }
             [uint32]$nativeExitCode = 259
             if (-not [QualificationWindow]::GetExitCodeProcess($exitHandle, [ref]$nativeExitCode) -or $nativeExitCode -ne 0) { throw ('Owned native Quit returned ' + $nativeExitCode) }
+            if ($quitInvokeError) { throw ('Exit zero observed, but native Quit Invoke failed: ' + $quitInvokeError) }
             $quitObserved = $true
-            $qualified.quit = @{native_action=$action; exit_code=$nativeExitCode; forced=$false}
+            $qualified.quit = @{native_action=$action; exit_code=$nativeExitCode; forced=$false; elapsed_ms=$quitTimer.ElapsedMilliseconds; invoke_error=$quitInvokeError}
+        } elseif ($action -eq 'announcements') {
+            $references = @([System.Windows.Automation.AutomationElement].Assembly.Location, [System.Windows.Automation.AutomationEvent].Assembly.Location)
+            Add-Type -ReferencedAssemblies $references @'
+using System;
+using System.Collections.Concurrent;
+using System.Windows.Automation;
+public static class ScannerLiveEvents {
+    static AutomationElement root;
+    static AutomationEventHandler handler;
+    static AutomationEvent live = AutomationEvent.LookupById(20024);
+    public static ConcurrentQueue<string> Messages = new ConcurrentQueue<string>();
+    public static void Start(AutomationElement element, int pid) {
+        root = element;
+        handler = (sender,args) => {
+            try {
+                var node = sender as AutomationElement;
+                if (node != null && node.Current.ProcessId == pid) Messages.Enqueue(node.Current.Name);
+            } catch (ElementNotAvailableException) { }
+        };
+        Automation.AddAutomationEventHandler(live, root, TreeScope.Subtree, handler);
+    }
+    public static void Stop() {
+        if (handler != null) {
+            try { Automation.RemoveAutomationEventHandler(live, root, handler); }
+            catch (ElementNotAvailableException) { }
+            finally { handler = null; root = null; }
+        }
+    }
+}
+'@
+            [ScannerLiveEvents]::Start($element, $process.Id)
+            Invoke-NativeControl 'Start'
+            Wait-NativeStatus 'finished' | Out-Null
+            $deadline = (Get-Date).AddSeconds(4)
+            do {
+                $messages = [ScannerLiveEvents]::Messages.ToArray()
+                if (@($messages | Where-Object { $_ -like 'finished | files=*' }).Count) { break }
+                Start-Sleep -Milliseconds 100
+            } while ((Get-Date) -lt $deadline)
+            if (-not @($messages | Where-Object { $_ -like 'finished | files=*' }).Count) { throw 'Native finished live-region event missing' }
+            Invoke-NativeControl 'Add Folder'
+            Start-Sleep -Milliseconds 500
+            $entry = Find-NativeControl 'Folder path: type a path, then Enter or Go'
+            $value = $entry.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+            $invalid = Join-Path $Fixture 'nonexistent-folder'
+            $value.SetValue($invalid)
+            Invoke-NativeControl 'Go'
+            $deadline = (Get-Date).AddSeconds(4)
+            do {
+                $messages = [ScannerLiveEvents]::Messages.ToArray()
+                if (@($messages | Where-Object { $_ -like 'Cannot open folder:*' -and $_.Contains($invalid) }).Count) { break }
+                Start-Sleep -Milliseconds 100
+            } while ((Get-Date) -lt $deadline)
+            $messages | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'live-region-events.json')
+            if (-not @($messages | Where-Object { $_ -like 'Cannot open folder:*' -and $_.Contains($invalid) }).Count) { throw 'Native affected-folder live-region event missing' }
+            # Keep the native observer attached through app Quit, like an active reader.
+            $qualified.announcements = @{finished_event=$true; affected_folder_error_event=$true; spoken_reader=$false}
+            Invoke-NativeControl 'Cancel'
+        } elseif ($action -eq 'textselection') {
+            Invoke-NativeControl 'Add Folder'
+            Start-Sleep -Milliseconds 500
+            $entry = Find-NativeControl 'Folder path: type a path, then Enter or Go'
+            $entry.SetFocus()
+            $value = $entry.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+            $unicode = 'a' + [char]0x00E9 + [char]::ConvertFromUtf32(0x1F642) + 'z'
+            $expected = [string][char]0x00E9 + [char]::ConvertFromUtf32(0x1F642)
+            $value.SetValue($unicode)
+            Start-Sleep -Milliseconds 500
+            $text = $entry.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
+            $range = $text.DocumentRange.Clone()
+            $range.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.Text.TextUnit]::Character, 1) | Out-Null
+            $range.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::End, [System.Windows.Automation.Text.TextUnit]::Character, -1) | Out-Null
+            $range.Select()
+            $deadline = (Get-Date).AddSeconds(3)
+            do {
+                $selection = $text.GetSelection()
+                if ($selection.Count -eq 1 -and $selection[0].GetText(-1) -eq $expected) { break }
+                Start-Sleep -Milliseconds 100
+            } while ((Get-Date) -lt $deadline)
+            if ($selection.Count -ne 1 -or $selection[0].GetText(-1) -ne $expected) { throw 'Native Unicode selection did not round trip' }
+            $caret = $text.DocumentRange.Clone()
+            $caret.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.Text.TextUnit]::Character, 2) | Out-Null
+            $caret.MoveEndpointByRange([System.Windows.Automation.Text.TextPatternRangeEndpoint]::End, $caret, [System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start)
+            $caret.Select()
+            Start-Sleep -Milliseconds 500
+            $observed = $text.GetSelection()
+            if ($observed.Count -ne 1 -or $observed[0].GetText(-1) -ne '' -or $observed[0].CompareEndpoints([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, $caret, [System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start) -ne 0) { throw 'Native caret did not round trip' }
+            if ($value.Current.Value -ne $unicode) { throw 'Selection changed field contents' }
+            Save-WindowCapture 'text-selection.png'
+            $qualified.textselection = @{unicode_selection=$true; caret=$true; value_unchanged=$true; spoken_reader=$false}
+            Invoke-NativeControl 'Cancel'
         } elseif ($action -eq 'picker') {
             Invoke-NativeControl 'Add Folder'
             Start-Sleep -Milliseconds 500
@@ -328,5 +429,6 @@ public class QualificationWindow {
         ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
     throw
 } finally {
-    if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id }
+    try { if ('ScannerLiveEvents' -as [type]) { [ScannerLiveEvents]::Stop() } }
+    finally { if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id } }
 }

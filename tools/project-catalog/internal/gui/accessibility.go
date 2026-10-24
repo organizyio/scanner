@@ -132,11 +132,21 @@ func (s *semanticWindow) visit(o fyne.CanvasObject, parent uint64, label string)
 		if name == "" {
 			name = "Text"
 		}
-		n := s.add(o, parent, "entry", name, v.Text, []string{"set_value", "focus"}, func(a nativea11y.Action) {
+		actions := []string{"set_value", "focus"}
+		if entrySupportsSelection(v) {
+			actions = append(actions, "set_text_selection")
+		}
+		n := s.add(o, parent, "entry", name, v.Text, actions, func(a nativea11y.Action) {
 			if a.Kind == "set_value" {
 				v.SetText(a.Value)
 			}
+			if a.Kind == "set_text_selection" {
+				if setEntrySelection(v, a.Selection) {
+					s.window.Canvas().Focus(v)
+				}
+			}
 		})
+		n.Selection = entrySelection(v)
 		n.Placeholder = v.PlaceHolder
 		s.nodes = append(s.nodes, n)
 	case *widget.Check:
@@ -187,7 +197,7 @@ func (s *semanticWindow) visit(o fyne.CanvasObject, parent uint64, label string)
 		}
 		if name != "" {
 			n := s.add(o, parent, role, name, value, nil, nil)
-			if role == "status" {
+			if role == "status" || liveFeedback(v.Text) {
 				n.Live = "polite"
 			}
 			s.nodes = append(s.nodes, n)
@@ -241,6 +251,14 @@ func (s *semanticWindow) visit(o fyne.CanvasObject, parent uint64, label string)
 			}
 		}
 	}
+}
+
+// These are app-owned navigation/persistence messages, not arbitrary file names.
+func liveFeedback(text string) bool {
+	return strings.HasPrefix(text, "Cannot open folder:") || strings.HasPrefix(text, "Current folder:") ||
+		strings.HasPrefix(text, "Settings not saved:") || text == "Settings saved" ||
+		text == "Choose a folder" || text == "Loading folders…" || text == "Press Enter or Go to open the typed folder" ||
+		text == "Max file size must be a nonnegative integer" || text == "Hash size limit must be a nonnegative integer"
 }
 func (s *semanticWindow) visitTree(t *widget.Tree, parent uint64, focusObject fyne.Focusable) {
 	object := focusObject.(fyne.CanvasObject)

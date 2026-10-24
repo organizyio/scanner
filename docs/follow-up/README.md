@@ -66,3 +66,15 @@ also exited successfully. macOS active-I/O Quit waited for read release and
 checkpoint flush. No Fyne wrong-thread diagnostics occurred in those final
 probes. The earlier shutdown failure remains historical evidence. Interactive
 macOS arm64 remains explicitly pending; release acceptance remains separate.
+
+## Post-PR #10 follow-up
+
+[2026-10-24 qualification](post-pr10-results.md) records the consumer refresh,
+explicit accelerated Linux mode, bounded native text ranges and feedback events,
+and upstream maintenance review. Unavailable macOS gates, default Linux
+presentation, Windows observer-detach timing and broader reader behavior remain
+explicitly pending. The original evidence above remains historical and intact.
+
+[Post-PR #10 follow-up results](post-pr10-results.md) record the subsequent
+consumer refresh, explicit accelerated Linux mode, native text/event scope and
+backport maintenance review. Missing hosts and unresolved cases remain pending.

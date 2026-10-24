@@ -133,6 +133,10 @@ def worker(binary, root, use_orca=False):
                 signatures[member].append(parameters.get_type_string()[1:-1])
         subscription = native_bus.signal_subscribe(destination, "org.a11y.atspi.Cache", None,
                          "/org/a11y/atspi/cache", None, Gio.DBusSignalFlags.NONE, cache_signal, None)
+        announcements = []
+        announcement_subscription = native_bus.signal_subscribe(destination, "org.a11y.atspi.Event.Object", "Announcement",
+                         None, None, Gio.DBusSignalFlags.NONE,
+                         lambda _c, _s, _p, _i, _m, parameters, _d: announcements.append(parameters.unpack()), None)
         def pump():
             context = GLib.MainContext.default()
             for _ in range(1000):
@@ -204,6 +208,33 @@ def worker(binary, root, use_orca=False):
         (root / "editable-interface.json").write_text(json.dumps({"editable_text_available": editable is not None,
                                                                   "interfaces": entry.get_interfaces()}, indent=2))
         if editable is not None:
+            if not editable.set_text_contents("aé🙂z"):
+                raise RuntimeError("Native Unicode value edit failed")
+            text = entry.get_text_iface()
+            time.sleep(0.4)
+            if not text.set_caret_offset(2):
+                raise RuntimeError("Native caret action rejected")
+            deadline = time.monotonic() + 3
+            while text.get_caret_offset() != 2:
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Native Unicode caret did not round trip")
+                time.sleep(0.1)
+                pump()
+            if not text.add_selection(1, 3):
+                raise RuntimeError("Native Unicode selection action rejected")
+            deadline = time.monotonic() + 3
+            while True:
+                selected_range = Atspi.Text.get_selection(text, 0)
+                if selected_range.start_offset == 1 and selected_range.end_offset == 3:
+                    break
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Native Unicode selection did not round trip")
+                time.sleep(0.1)
+                pump()
+            if Atspi.Text.get_text(text, 1, 3) != "é🙂":
+                raise RuntimeError("Native selection used byte or UTF-16 indexes")
+            (root / "text-selection.json").write_text(json.dumps({"caret": 2, "selection": [1, 3],
+                    "selected": "é🙂", "unicode_scalar_offsets": True, "passed": True}, ensure_ascii=False, indent=2))
             if not editable.set_text_contents(invalid):
                 raise RuntimeError("Native folder path editing failed")
         else:
@@ -215,6 +246,13 @@ def worker(binary, root, use_orca=False):
                         "--output", str(root / "folder-error")], env=env, check=True, timeout=20)
         error_snapshot = json.dumps(json.loads((root / "folder-error/accessibility.json").read_text()))
         native_error_status = "Cannot open folder" in error_snapshot and invalid in error_snapshot
+        deadline = time.monotonic() + 3
+        while not any("Cannot open folder" in str(event) and invalid in str(event) for event in announcements):
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Native affected-folder error announcement missing")
+            time.sleep(0.1)
+            pump()
+        (root / "native-announcements.json").write_text(json.dumps(announcements, ensure_ascii=False, indent=2))
         native_text = entry.get_text_iface() is not None
         selected = root / "scan-root" / "selected-root"
         selected.mkdir()
@@ -390,8 +428,26 @@ def worker(binary, root, use_orca=False):
             launcher.wait(timeout=10)
 
 
-def run(binary, root, use_orca=False):
+def renderer_environment(parent, mode):
+    env = dict(parent)
+    if mode == "hardware-no-vsync":
+        env.pop("LIBGL_ALWAYS_SOFTWARE", None)
+        env["vblank_mode"] = "0"
+    elif mode == "software":
+        env["LIBGL_ALWAYS_SOFTWARE"] = "1"
+    elif mode != "default":
+        raise ValueError("Unknown rendering mode")
+    return env
+
+
+def run(binary, root, use_orca=False, rendering="default"):
     env = qualification.prepare(root)
+    env = renderer_environment(env, rendering)
+    if rendering == "hardware-no-vsync":
+        renderer = subprocess.check_output(["glxinfo", "-B"], env=env, text=True, timeout=10)
+        (root / "renderer.txt").write_text(renderer)
+        if "Accelerated: yes" not in renderer or re.search(r"OpenGL renderer string:.*(?:llvmpipe|softpipe|Software)", renderer, re.I):
+            raise RuntimeError("Hardware qualification requires an accelerated renderer")
     env["GSETTINGS_BACKEND"] = "memory"
     runtime = root / "runtime"
     runtime.mkdir(mode=0o700)
@@ -426,7 +482,12 @@ def run(binary, root, use_orca=False):
         raise RuntimeError("Host accessibility state changed unexpectedly")
     if session.returncode:
         raise RuntimeError("Native private-session qualification failed; inspect private logs")
-    return json.loads((root / "session-report.json").read_text())
+    report = json.loads((root / "session-report.json").read_text())
+    report["rendering"] = {"mode": rendering, "child_vblank_mode": env.get("vblank_mode"),
+                           "child_software_override": env.get("LIBGL_ALWAYS_SOFTWARE"),
+                           "host_environment_changed": False}
+    (root / "session-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
 
 
 if __name__ == "__main__":
@@ -434,6 +495,8 @@ if __name__ == "__main__":
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--fixture", type=Path, required=True)
     parser.add_argument("--orca", action="store_true", help="also exercise existing Orca silently in this isolated session")
+    parser.add_argument("--rendering", choices=("default", "software", "hardware-no-vsync"), default="default",
+                        help="explicit child-only renderer mode; hardware-no-vsync requires accelerated glxinfo")
     parser.add_argument("--private-session", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     args.binary, args.fixture = args.binary.resolve(), args.fixture.resolve()
@@ -441,4 +504,4 @@ if __name__ == "__main__":
         report = worker(args.binary, args.fixture, args.orca)
         raise SystemExit(0 if report["passed"] else 1)
     else:
-        print(json.dumps(run(args.binary, args.fixture, args.orca), indent=2))
+        print(json.dumps(run(args.binary, args.fixture, args.orca, args.rendering), indent=2))
