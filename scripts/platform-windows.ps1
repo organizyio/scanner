@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory=$true)][string]$Binary,
     [Parameter(Mandatory=$true)][string]$Fixture,
     [string]$CliBinary,
-    [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart|quit|quitshortcut)(,(start|pause|resume|cancel|restart|settings|picker|keyboard|lifecycle|profile|processrestart|quit|quitshortcut))*$')]
+    [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|textselection|keyboard|lifecycle|profile|processrestart|quit|quitshortcut)(,(start|pause|resume|cancel|restart|settings|picker|textselection|keyboard|lifecycle|profile|processrestart|quit|quitshortcut))*$')]
     [string]$Actions='start',
     [switch]$Interactive,
     [string]$RunId=''
@@ -221,6 +221,39 @@ public class QualificationWindow {
             if (-not [QualificationWindow]::GetExitCodeProcess($exitHandle, [ref]$nativeExitCode) -or $nativeExitCode -ne 0) { throw ('Owned native Quit returned ' + $nativeExitCode) }
             $quitObserved = $true
             $qualified.quit = @{native_action=$action; exit_code=$nativeExitCode; forced=$false}
+        } elseif ($action -eq 'textselection') {
+            Invoke-NativeControl 'Add Folder'
+            Start-Sleep -Milliseconds 500
+            $entry = Find-NativeControl 'Folder path: type a path, then Enter or Go'
+            $entry.SetFocus()
+            $value = $entry.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+            $unicode = 'a' + [char]0x00E9 + [char]::ConvertFromUtf32(0x1F642) + 'z'
+            $expected = [string][char]0x00E9 + [char]::ConvertFromUtf32(0x1F642)
+            $value.SetValue($unicode)
+            Start-Sleep -Milliseconds 500
+            $text = $entry.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
+            $range = $text.DocumentRange.Clone()
+            $range.MoveEndpointByUnit([System.Windows.Automation.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.TextUnit]::Character, 1) | Out-Null
+            $range.MoveEndpointByUnit([System.Windows.Automation.TextPatternRangeEndpoint]::End, [System.Windows.Automation.TextUnit]::Character, -1) | Out-Null
+            $range.Select()
+            $deadline = (Get-Date).AddSeconds(3)
+            do {
+                $selection = $text.GetSelection()
+                if ($selection.Count -eq 1 -and $selection[0].GetText(-1) -eq $expected) { break }
+                Start-Sleep -Milliseconds 100
+            } while ((Get-Date) -lt $deadline)
+            if ($selection.Count -ne 1 -or $selection[0].GetText(-1) -ne $expected) { throw 'Native Unicode selection did not round trip' }
+            $caret = $text.DocumentRange.Clone()
+            $caret.MoveEndpointByUnit([System.Windows.Automation.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.TextUnit]::Character, 2) | Out-Null
+            $caret.MoveEndpointByRange([System.Windows.Automation.TextPatternRangeEndpoint]::End, $caret, [System.Windows.Automation.TextPatternRangeEndpoint]::Start)
+            $caret.Select()
+            Start-Sleep -Milliseconds 500
+            $observed = $text.GetSelection()
+            if ($observed.Count -ne 1 -or $observed[0].GetText(-1) -ne '' -or $observed[0].CompareEndpoints([System.Windows.Automation.TextPatternRangeEndpoint]::Start, $caret, [System.Windows.Automation.TextPatternRangeEndpoint]::Start) -ne 0) { throw 'Native caret did not round trip' }
+            if ($value.Current.Value -ne $unicode) { throw 'Selection changed field contents' }
+            Save-WindowCapture 'text-selection.png'
+            $qualified.textselection = @{unicode_selection=$true; caret=$true; value_unchanged=$true; spoken_reader=$false}
+            Invoke-NativeControl 'Cancel'
         } elseif ($action -eq 'picker') {
             Invoke-NativeControl 'Add Folder'
             Start-Sleep -Milliseconds 500

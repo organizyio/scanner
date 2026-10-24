@@ -132,11 +132,20 @@ func (s *semanticWindow) visit(o fyne.CanvasObject, parent uint64, label string)
 		if name == "" {
 			name = "Text"
 		}
-		n := s.add(o, parent, "entry", name, v.Text, []string{"set_value", "focus"}, func(a nativea11y.Action) {
+		actions := []string{"set_value", "focus"}
+		if entrySupportsSelection(v) {
+			actions = append(actions, "set_text_selection")
+		}
+		n := s.add(o, parent, "entry", name, v.Text, actions, func(a nativea11y.Action) {
 			if a.Kind == "set_value" {
 				v.SetText(a.Value)
 			}
+			if a.Kind == "set_text_selection" {
+				s.window.Canvas().Focus(v)
+				setEntrySelection(v, a.Selection)
+			}
 		})
+		n.Selection = entrySelection(v)
 		n.Placeholder = v.PlaceHolder
 		s.nodes = append(s.nodes, n)
 	case *widget.Check:

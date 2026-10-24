@@ -1,7 +1,7 @@
 //! App-owned semantic bridge. No scanner runtime or private-source dependencies.
 use accesskit::{
     Action, ActionData, ActionHandler, ActionRequest, ActivationHandler, DeactivationHandler, Live,
-    Node, NodeId, Rect, Role, Toggled, TreeId, TreeInfo, TreeUpdate,
+    Node, NodeId, Rect, Role, TextPosition, TextSelection, Toggled, TreeId, TreeInfo, TreeUpdate,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -37,6 +37,12 @@ struct SemanticNode {
     selected: bool,
     live: String,
     actions: Vec<String>,
+    selection: Option<SemanticSelection>,
+}
+#[derive(Clone, Deserialize, Serialize)]
+struct SemanticSelection {
+    anchor: usize,
+    focus: usize,
 }
 #[derive(Clone, Deserialize)]
 struct Snapshot {
@@ -63,6 +69,8 @@ struct SemanticAction {
     node_id: u64,
     kind: &'static str,
     value: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    selection: Option<SemanticSelection>,
 }
 struct Shared {
     snapshot: Mutex<Snapshot>,
@@ -86,6 +94,7 @@ impl ActionHandler for Handler {
             Action::SetValue => "set_value",
             Action::Expand => "expand",
             Action::Collapse => "collapse",
+            Action::SetTextSelection => "set_text_selection",
             _ => return,
         };
         let snapshot = self.0.snapshot.lock().unwrap();
@@ -101,6 +110,25 @@ impl ActionHandler for Handler {
         if node.disabled || !node.actions.iter().any(|a| a == kind) {
             return;
         }
+        let mut selection = None;
+        if kind == "set_text_selection" {
+            let Some(ActionData::SetTextSelection(ref range)) = req.data else {
+                return;
+            };
+            let run = NodeId(node.id | (1u64 << 63));
+            let count = character_lengths(&node.value).len();
+            if range.anchor.node != run
+                || range.focus.node != run
+                || range.anchor.character_index > count
+                || range.focus.character_index > count
+            {
+                return;
+            }
+            selection = Some(SemanticSelection {
+                anchor: range.anchor.character_index,
+                focus: range.focus.character_index,
+            });
+        }
         let value = match req.data {
             Some(ActionData::Value(v)) => v.to_string(),
             _ => String::new(),
@@ -111,6 +139,7 @@ impl ActionHandler for Handler {
                 node_id: node.id,
                 kind,
                 value,
+                selection,
             });
         }
     }
@@ -158,6 +187,12 @@ impl Snapshot {
             return false;
         }
         for node in &self.nodes {
+            if let Some(range) = &node.selection {
+                let count = character_lengths(&node.value).len();
+                if node.role != "entry" || range.anchor > count || range.focus > count {
+                    return false;
+                }
+            }
             if node.id >= (1u64 << 63) {
                 return false;
             }
@@ -274,8 +309,21 @@ impl Snapshot {
                         "set_value" => node.add_action(Action::SetValue),
                         "expand" => node.add_action(Action::Expand),
                         "collapse" => node.add_action(Action::Collapse),
+                        "set_text_selection" => node.add_action(Action::SetTextSelection),
                         _ => {}
                     }
+                }
+                if let Some(range) = &n.selection {
+                    node.set_text_selection(TextSelection {
+                        anchor: TextPosition {
+                            node: run_id,
+                            character_index: range.anchor,
+                        },
+                        focus: TextPosition {
+                            node: run_id,
+                            character_index: range.focus,
+                        },
+                    });
                 }
                 let mut result = vec![(NodeId(n.id), node)];
                 if text_run {
@@ -527,6 +575,62 @@ pub unsafe extern "C" fn scanner_a11y_macos_focus_class(name: *const c_char) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn text_selection_is_unicode_scoped_and_validated() {
+        let mut snapshot = Snapshot::default();
+        snapshot.nodes.push(SemanticNode {
+            id: 2,
+            parent: 1,
+            role: "entry".into(),
+            value: "aé🙂z".into(),
+            selection: Some(SemanticSelection {
+                anchor: 3,
+                focus: 1,
+            }),
+            actions: vec!["set_text_selection".into()],
+            ..Default::default()
+        });
+        assert!(snapshot.validate());
+        let tree = snapshot.tree();
+        let node = &tree
+            .nodes
+            .iter()
+            .find(|(id, _)| *id == NodeId(2))
+            .unwrap()
+            .1;
+        assert_eq!(node.text_selection().unwrap().anchor.character_index, 3);
+        assert_eq!(
+            node.text_selection().unwrap().focus.node,
+            NodeId(2 | (1u64 << 63))
+        );
+        let shared = Arc::new(Shared {
+            snapshot: Mutex::new(snapshot.clone()),
+            actions: Mutex::new(VecDeque::new()),
+        });
+        let mut handler = Handler(shared.clone());
+        let request = |run, focus| ActionRequest {
+            action: Action::SetTextSelection,
+            target_tree: TreeId::ROOT,
+            target_node: NodeId(2),
+            data: Some(ActionData::SetTextSelection(TextSelection {
+                anchor: TextPosition {
+                    node: NodeId(run),
+                    character_index: 1,
+                },
+                focus: TextPosition {
+                    node: NodeId(run),
+                    character_index: focus,
+                },
+            })),
+        };
+        handler.do_action(request(2 | (1u64 << 63), 3));
+        assert_eq!(shared.actions.lock().unwrap().len(), 1);
+        handler.do_action(request(3 | (1u64 << 63), 2));
+        handler.do_action(request(2 | (1u64 << 63), 5));
+        assert_eq!(shared.actions.lock().unwrap().len(), 1);
+        snapshot.nodes[1].selection.as_mut().unwrap().focus = 5;
+        assert!(!snapshot.validate());
+    }
     #[test]
     fn rejects_disconnected_duplicate_or_cycle() {
         let mut s = Snapshot::default();

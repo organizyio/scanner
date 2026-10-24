@@ -18,6 +18,18 @@ linux_session = importlib.util.module_from_spec(spec_linux)
 spec_linux.loader.exec_module(linux_session)
 
 class NativeCatalogTests(unittest.TestCase):
+    def test_renderer_selection_is_explicit_and_child_only(self):
+        parent = {"DISPLAY": ":0", "LIBGL_ALWAYS_SOFTWARE": "1", "vblank_mode": "1"}
+        chosen = linux_session.renderer_environment(parent, "hardware-no-vsync")
+        self.assertNotIn("LIBGL_ALWAYS_SOFTWARE", chosen)
+        self.assertEqual(chosen["vblank_mode"], "0")
+        self.assertEqual(parent["LIBGL_ALWAYS_SOFTWARE"], "1")
+        self.assertEqual(parent["vblank_mode"], "1")
+        self.assertEqual(linux_session.renderer_environment(parent, "software")["LIBGL_ALWAYS_SOFTWARE"], "1")
+        self.assertEqual(linux_session.renderer_environment(parent, "default"), parent)
+        with self.assertRaises(ValueError):
+            linux_session.renderer_environment(parent, "implicit-driver-change")
+
     def test_linux_activation_cannot_use_host_or_persistent_settings(self):
         linux_session.require_private_bus({"GSETTINGS_BACKEND": "memory", "DBUS_SESSION_BUS_ADDRESS": "private"}, "host")
         with self.assertRaisesRegex(RuntimeError, "private"):
