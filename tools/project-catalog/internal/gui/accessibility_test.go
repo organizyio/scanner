@@ -200,3 +200,21 @@ func TestNativeTextRangesRespectCurrentModalAndDisabledState(t *testing.T) {
 		t.Fatal("disabled action applied")
 	}
 }
+
+func TestInvalidNativeRangeDoesNotStealFocus(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+	entry := widget.NewEntry()
+	entry.PlaceHolder = "Synthetic path"
+	entry.SetText("aé🙂z")
+	button := widget.NewButton("Other", nil)
+	w := test.NewWindow(container.NewVBox(entry, button))
+	defer w.Close()
+	model := newSemanticWindow(w)
+	node := semanticNode(t, model.snapshot(), entry.PlaceHolder)
+	w.Canvas().Focus(button)
+	model.perform(nativea11y.Action{NodeID: node.ID, Kind: "set_text_selection", Selection: &nativea11y.TextSelection{Anchor: 0, Focus: 5}})
+	if w.Canvas().Focused() != button {
+		t.Fatal("invalid range stole keyboard focus")
+	}
+}

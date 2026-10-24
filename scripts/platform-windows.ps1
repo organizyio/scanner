@@ -233,8 +233,8 @@ public class QualificationWindow {
             Start-Sleep -Milliseconds 500
             $text = $entry.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
             $range = $text.DocumentRange.Clone()
-            $range.MoveEndpointByUnit([System.Windows.Automation.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.TextUnit]::Character, 1) | Out-Null
-            $range.MoveEndpointByUnit([System.Windows.Automation.TextPatternRangeEndpoint]::End, [System.Windows.Automation.TextUnit]::Character, -1) | Out-Null
+            $range.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.Text.TextUnit]::Character, 1) | Out-Null
+            $range.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::End, [System.Windows.Automation.Text.TextUnit]::Character, -1) | Out-Null
             $range.Select()
             $deadline = (Get-Date).AddSeconds(3)
             do {
@@ -244,12 +244,12 @@ public class QualificationWindow {
             } while ((Get-Date) -lt $deadline)
             if ($selection.Count -ne 1 -or $selection[0].GetText(-1) -ne $expected) { throw 'Native Unicode selection did not round trip' }
             $caret = $text.DocumentRange.Clone()
-            $caret.MoveEndpointByUnit([System.Windows.Automation.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.TextUnit]::Character, 2) | Out-Null
-            $caret.MoveEndpointByRange([System.Windows.Automation.TextPatternRangeEndpoint]::End, $caret, [System.Windows.Automation.TextPatternRangeEndpoint]::Start)
+            $caret.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.Text.TextUnit]::Character, 2) | Out-Null
+            $caret.MoveEndpointByRange([System.Windows.Automation.Text.TextPatternRangeEndpoint]::End, $caret, [System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start)
             $caret.Select()
             Start-Sleep -Milliseconds 500
             $observed = $text.GetSelection()
-            if ($observed.Count -ne 1 -or $observed[0].GetText(-1) -ne '' -or $observed[0].CompareEndpoints([System.Windows.Automation.TextPatternRangeEndpoint]::Start, $caret, [System.Windows.Automation.TextPatternRangeEndpoint]::Start) -ne 0) { throw 'Native caret did not round trip' }
+            if ($observed.Count -ne 1 -or $observed[0].GetText(-1) -ne '' -or $observed[0].CompareEndpoints([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, $caret, [System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start) -ne 0) { throw 'Native caret did not round trip' }
             if ($value.Current.Value -ne $unicode) { throw 'Selection changed field contents' }
             Save-WindowCapture 'text-selection.png'
             $qualified.textselection = @{unicode_selection=$true; caret=$true; value_unchanged=$true; spoken_reader=$false}

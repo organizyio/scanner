@@ -141,8 +141,9 @@ func (s *semanticWindow) visit(o fyne.CanvasObject, parent uint64, label string)
 				v.SetText(a.Value)
 			}
 			if a.Kind == "set_text_selection" {
-				s.window.Canvas().Focus(v)
-				setEntrySelection(v, a.Selection)
+				if setEntrySelection(v, a.Selection) {
+					s.window.Canvas().Focus(v)
+				}
 			}
 		})
 		n.Selection = entrySelection(v)
