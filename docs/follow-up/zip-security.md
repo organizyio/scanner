@@ -12,7 +12,9 @@ The preferred graph retains its deflate feature. The compatibility graph
 explicitly retains its previous archive formats; `bzip2-rs` selects the upstream
 native C backend (`bzip2-sys`) in this ZIP version. Original MIT imports and
 third-party notices remain intact. The native accessibility dependency graph and
-its reviewed AccessKit backport are independent of these metadata graphs.
+its reviewed AccessKit backport are independent of these metadata graphs; its
+[bounded informational maintenance dispositions](native-advisories.md) are
+reviewed separately.
 
 Regression tests in both metadata crates cover stored and deflated DOCX metadata,
 Unicode and XML entities, unchanged revision strings, malformed/missing metadata,

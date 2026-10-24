@@ -55,7 +55,8 @@ jobs:
         run: |
           cargo deny check
           cargo deny --manifest-path compat/scan-engine/Cargo.toml check --config "$PWD/deny.toml"
-          cargo deny --manifest-path tools/project-catalog/native-a11y/Cargo.toml check --config "$PWD/deny.toml"
+          python3 scripts/check-native-advisories.py
+          cargo deny --manifest-path tools/project-catalog/native-a11y/Cargo.toml check --config "$PWD/tools/project-catalog/native-a11y/deny.toml"
 
   validate:
     name: Rust validation (MSRV, minimal-versions, benches)
