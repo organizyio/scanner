@@ -7,10 +7,27 @@ release acceptance remain separate.
 
 | Approved follow-up phase | Observed result | Remaining boundary |
 | --- | --- | --- |
-| 1: consumer refresh | PR #10 merge qualified through real source-built compatibility integration, preferred Scanner checks, fixture enrollment/reconciliation, isolated Organizy and unchanged-pin rollback; [private results PR #7](https://github.com/organizyio/organizy-scan/pull/7) merged | Production pins unchanged; live providers and interactive GUI acceptance are separate |
+| 1: consumer refresh | PR #10 merge qualified, then security-main `3540db4` requalified through real source-built compatibility integration, preferred Scanner checks, fixture enrollment/reconciliation, isolated Organizy and unchanged-pin rollback; [private results PR #8](https://github.com/organizyio/organizy-scan/pull/8) | Production pins unchanged; live providers and interactive GUI acceptance are separate |
 | 2: Linux hardware | Full native controls, text ranges, live messages, keyboard, lifecycle, restart and quit passed on AMD/Mesa Xwayland with child-only `vblank_mode=0` | Default presentation mode remains unqualified; no driver/compositor settings were changed |
 | 3: accessibility | AX/UIA/AT-SPI Unicode caret/range actions passed on available hosts; Linux/Windows native status and affected-folder error events passed | Bounded field scope below; spoken-reader usability and broader selection scenarios remain unqualified |
 | 5: maintenance | Upstream fix/release state reviewed; verified Unix backport retained | Removal awaits a published fixed crate and native qualification |
+
+## Exact source scope
+
+[Security PR #12](https://github.com/organizyio/scanner/pull/12) merged patched
+ZIP 9.0.5 and the separate, expiring native informational maintenance policy.
+[Exact-candidate consumer CI](https://github.com/organizyio/organizy-scan/actions/runs/40092468921)
+passed all three jobs at `3540db4466d24fc475b1ebe9f6f46e6664af5cb2`.
+The final preferred/compatibility graphs and catalog scanning pipeline match
+that qualified security main. All 97 native production files match the separately
+exercised `fa7f6889930eadfcf849e5f1fd91d4edda4b6161` GUI source; ZIP metadata
+changes do not alter that isolated native graph. Earlier PR #10 consumer results
+remain historical evidence for their recorded revision, not evidence for an
+unreviewed dependency change.
+
+The [native maintenance dispositions](native-advisories.md) cover exactly three
+informational unmaintained notices and require re-review before 2026-11-24.
+They do not exempt ZIP vulnerabilities or establish release acceptance.
 
 ## Linux rendering scope
 

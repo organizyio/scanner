@@ -4,11 +4,15 @@
   "baseline_scanner_revision": "dcd5266632988bf837cc54460b7a048aa62111c6",
   "formal_platform_qualification_complete": false,
   "consumer_refresh": {
-    "scanner_revision": "dcd5266632988bf837cc54460b7a048aa62111c6",
-    "private_record": "https://github.com/organizyio/organizy-scan/pull/7",
+    "scanner_revision": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
+    "private_record": "https://github.com/organizyio/organizy-scan/pull/8",
     "implementation_qualification": "passed",
     "production_adoption": false,
-    "preferred_compatibility_and_catalog_pipeline_sources_unchanged_since_qualified_baseline": true
+    "previous_scanner_revision": "dcd5266632988bf837cc54460b7a048aa62111c6",
+    "previous_private_record": "https://github.com/organizyio/organizy-scan/pull/7",
+    "exact_candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40092468921",
+    "preferred_compatibility_and_catalog_pipeline_sources_equal_security_main": true,
+    "native_production_files_equal_qualified_revision": 97
   },
   "native_binary_sha256": {
     "linux": "7f8087691ada92ea499628c415fe6e68dd21dde340b17ca98ef1ab126ce403e9",
@@ -44,7 +48,15 @@
   "maintenance": {
     "accesskit_unix_latest_verified_release": "0.24.0",
     "upstream_fix": "https://github.com/AccessKit/accesskit/pull/819",
-    "disposition": "Retain verified backport; await a published release containing the fix and native qualification before removal"
+    "disposition": "Retain verified backport; await a published release containing the fix and native qualification before removal",
+    "security_parent": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
+    "zip_revision": "9.0.5",
+    "native_informational_notices": [
+      "RUSTSEC-2026-0370",
+      "RUSTSEC-2026-0371",
+      "RUSTSEC-2026-0372"
+    ],
+    "native_disposition_review_before": "2026-11-24"
   },
   "pending": [
     "Interactive macOS arm64 host unavailable; retained pending by owner",
@@ -66,7 +78,10 @@
     "windows-active-reader-4": "11b9e0c24261e7d87ed877adeda51b7fe57c58d909bffc71bd7a533da9918c99",
     "windows-active-reader-5": "b3c44f45eca3087e9a3ccf9057b14c83cce92ea6abc6ce70de1d5281b060fa90",
     "windows-active-reader-6": "37812603bf4cd509ad560817d4a02ef041809b1aa5a5222e235b4789b1cc5932",
-    "windows-final-strict-harness": "d816dc663c8962131c2091d99529573ef50ff44bc9f2a2ff1a0cb751671bb5f4"
+    "windows-final-strict-harness": "d816dc663c8962131c2091d99529573ef50ff44bc9f2a2ff1a0cb751671bb5f4",
+    "consumer-security-main": "28e856718ada464714a8b4b4e886687b15ebc1e9eea83537b3208d077df801d5",
+    "consumer-security-rollback": "c759471a078abf257a56ebc32bf9d423e03dc4cdd37aa5e36a5375426a7010f5",
+    "security-source-equivalence": "74f4ad6c325d8605e7cd75e36551504f99915b91d085cdda790f89a704801183"
   },
   "private_history_included": false,
   "runtime_convergence": false,
