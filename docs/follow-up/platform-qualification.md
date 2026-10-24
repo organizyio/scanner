@@ -100,3 +100,16 @@ Checkpoint continuation returns an inclusive cursor suffix, not a complete
 replacement inventory. Compare the deduplicated union of the saved prefix and
 resumed suffix with an uninterrupted inventory. Active filesystem calls are not
 preempted: cancellation stops subsequent work after the call returns.
+
+## Explicit Linux modes and extended text evidence
+
+The [post-PR #10 record](post-pr10-results.md) qualifies accelerated Mesa/Xwayland
+with `--rendering hardware-no-vsync`. The runner verifies acceleration before
+launch and records `vblank_mode=0` in the child environment. `--rendering software`
+and the unchanged `default` mode are separate claims; host settings are untouched.
+
+The extended Linux runner checks actual Unicode caret/range APIs and scan/error
+Announcement events. Windows `-Actions announcements,textselection,keyboard,quit`
+checks live-region events, native ranges and quit with the observer attached.
+These checks do not establish spoken-reader usability or unavailable macOS
+arm64/Retina operation. Raw evidence remains private.
