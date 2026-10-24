@@ -47,13 +47,15 @@
       "current_sha256": "0bddab8177f1ecd693ab1b1c55251200d487df33cf921a42aeb943b08f41d5e7"
     },
     "crates/metadata/Cargo.toml": {
-      "phase": 1,
-      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "phase": 5,
+      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained. Original Rust dual-license grant and package version retained.",
       "tests": [
-        "cargo metadata --locked",
-        "make check"
+        "pinned Rust 1.88 preferred/compatibility metadata tests",
+        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
+        "cargo deny with unchanged policy",
+        "full component and consumer requalification"
       ],
-      "current_sha256": "4c01e9a171f7bb7f866b69463c6c9cfc17548a7a68acf15622f5e9848d4feadd"
+      "current_sha256": "7c59f14bf8e3da284f9efb6597329f34725fce9cf6d6a802c3225cd3000983fa"
     },
     "crates/walker/Cargo.toml": {
       "phase": 1,
@@ -366,6 +368,61 @@
         "native platform qualification recorded separately"
       ],
       "current_sha256": "aa946c0f2353c647d891b41c6467a2471e34a8f2e362783714dea0f1ac7ceac8"
+    },
+    "Cargo.lock": {
+      "phase": 5,
+      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained.",
+      "tests": [
+        "pinned Rust 1.88 preferred/compatibility metadata tests",
+        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
+        "cargo deny with unchanged policy",
+        "full component and consumer requalification"
+      ],
+      "current_sha256": "ee04c04ab2d732862620e8b2702affc973fe5ff58ae44675bf23871ff512fd71"
+    },
+    "compat/scan-engine/Cargo.lock": {
+      "phase": 5,
+      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained.",
+      "tests": [
+        "pinned Rust 1.88 preferred/compatibility metadata tests",
+        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
+        "cargo deny with unchanged policy",
+        "full component and consumer requalification"
+      ],
+      "current_sha256": "34679e18806c5cc4f13e720a2cb67ca367823b62f27e480b53e2b55d55bd8de7"
+    },
+    "compat/scan-engine/Cargo.toml": {
+      "phase": 5,
+      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained.",
+      "tests": [
+        "pinned Rust 1.88 preferred/compatibility metadata tests",
+        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
+        "cargo deny with unchanged policy",
+        "full component and consumer requalification"
+      ],
+      "current_sha256": "c2ad2b36a6696e490a1ebd09b46a682a52f6110b7deff0b697fb7c1d33c8785e"
+    },
+    "compat/scan-engine/crates/metadata/src/document.rs": {
+      "phase": 5,
+      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained.",
+      "tests": [
+        "pinned Rust 1.88 preferred/compatibility metadata tests",
+        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
+        "cargo deny with unchanged policy",
+        "full component and consumer requalification"
+      ],
+      "current_sha256": "c127c71aa1b6520e98e5fcc0eb013dc0b6ab6aa98f8ecb5ccc557872c9033e08"
+    },
+    "crates/metadata/src/document.rs": {
+      "phase": 5,
+      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained.",
+      "tests": [
+        "pinned Rust 1.88 preferred/compatibility metadata tests",
+        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
+        "cargo deny with unchanged policy",
+        "full component and consumer requalification"
+      ],
+      "current_sha256": "c127c71aa1b6520e98e5fcc0eb013dc0b6ab6aa98f8ecb5ccc557872c9033e08"
     }
   }
 }
