@@ -400,7 +400,7 @@
         "cargo deny with unchanged policy",
         "full component and consumer requalification"
       ],
-      "current_sha256": "c2ad2b36a6696e490a1ebd09b46a682a52f6110b7deff0b697fb7c1d33c8785e"
+      "current_sha256": "72234829b0d2ad916f4d8f0f67d8e670634d91813357b5183857f30da52b4990"
     },
     "compat/scan-engine/crates/metadata/src/document.rs": {
       "phase": 5,
