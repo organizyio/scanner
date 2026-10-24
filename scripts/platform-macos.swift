@@ -58,9 +58,9 @@ if CommandLine.arguments.count > 3 {
     let separator: Character = CommandLine.arguments[3].contains(";") ? ";" : ","
     for key in CommandLine.arguments[3].split(separator: separator) {
         guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fail("synthetic app lost focus; no input sent") }
-        if key.hasPrefix("axpress:") || key.hasPrefix("axfocus:") || key.hasPrefix("axvalue|") || key.hasPrefix("axhit:") {
+        if key.hasPrefix("axpress:") || key.hasPrefix("axfocus:") || key.hasPrefix("axvalue|") || key.hasPrefix("axselect|") || key.hasPrefix("axhit:") {
             let parts = key.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
-            let title = key.hasPrefix("axvalue|") && parts.count == 3 ? parts[1] : String(key.dropFirst(key.hasPrefix("axhit:") ? 6 : 8))
+            let title = (key.hasPrefix("axvalue|") && parts.count == 3) || (key.hasPrefix("axselect|") && parts.count == 4) ? parts[1] : String(key.dropFirst(key.hasPrefix("axhit:") ? 6 : 8))
             func find(_ e: AXUIElement) -> AXUIElement? {
                 if value(e, kAXTitleAttribute) as? String == title { return e }
                 for child in value(e, kAXChildrenAttribute) as? [AXUIElement] ?? [] {
@@ -84,7 +84,19 @@ if CommandLine.arguments.count > 3 {
                 continue
             }
             let result: AXError
-            if key.hasPrefix("axfocus:") {
+            if key.hasPrefix("axselect|"), parts.count == 4, let start = Int(parts[2]), let length = Int(parts[3]), start >= 0, length >= 0 {
+                var range = CFRange(location: start, length: length)
+                guard let requested = AXValueCreate(.cfRange, &range) else { fail("invalid native selection range") }
+                guard AXUIElementSetAttributeValue(control, kAXSelectedTextRangeAttribute as CFString, requested) == .success else { fail("native selection action rejected") }
+                Thread.sleep(forTimeInterval: 0.5)
+                guard let observed = value(control, kAXSelectedTextRangeAttribute), CFGetTypeID(observed) == AXValueGetTypeID() else { fail("native range unavailable") }
+                var actual = CFRange()
+                guard AXValueGetValue(observed as! AXValue, .cfRange, &actual), actual.location == start, actual.length == length else { fail("native selection did not round trip") }
+                try JSONSerialization.data(withJSONObject: ["utf16_location": actual.location, "utf16_length": actual.length,
+                    "selected_text": value(control, kAXSelectedTextAttribute) as? String ?? "", "passed": true], options: [.prettyPrinted, .sortedKeys])
+                    .write(to: output.appendingPathComponent("native-text-selection-\(start)-\(length).json"))
+                continue
+            } else if key.hasPrefix("axfocus:") {
                 result = AXUIElementSetAttributeValue(control, kAXFocusedAttribute as CFString, kCFBooleanTrue)
             } else if key.hasPrefix("axvalue|"), parts.count == 3 {
                 result = AXUIElementSetAttributeValue(control, kAXValueAttribute as CFString, parts[2] as CFString)

@@ -152,3 +152,51 @@ func TestStaleNativeActionCannotInvokeBackgroundOrRemovedControl(t *testing.T) {
 		t.Fatal("stale native action invoked removed control")
 	}
 }
+
+func TestNavigationAndPersistenceErrorsAreLiveFeedback(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+	label := widget.NewLabel("Choose a folder")
+	w := test.NewWindow(label)
+	defer w.Close()
+	model := newSemanticWindow(w)
+	for _, text := range []string{"Choose a folder", "Loading folders…", "Cannot open folder: synthetic denial", "Current folder: /synthetic · 0 subfolders", "Settings not saved: synthetic denial", "Settings saved", "Max file size must be a nonnegative integer"} {
+		label.SetText(text)
+		node := semanticNode(t, model.snapshot(), text)
+		if node.Live != "polite" {
+			t.Fatalf("message not announced: %q", text)
+		}
+	}
+	label.SetText("ordinary project name")
+	if semanticNode(t, model.snapshot(), label.Text).Live != "" {
+		t.Fatal("ordinary label announced")
+	}
+}
+
+func TestNativeTextRangesRespectCurrentModalAndDisabledState(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+	entry := widget.NewEntry()
+	entry.PlaceHolder = "Synthetic path"
+	entry.SetText("aé🙂z")
+	w := test.NewWindow(entry)
+	defer w.Close()
+	model := newSemanticWindow(w)
+	node := semanticNode(t, model.snapshot(), entry.PlaceHolder)
+	model.perform(nativea11y.Action{NodeID: node.ID, Kind: "set_text_selection", Selection: &nativea11y.TextSelection{Anchor: 1, Focus: 3}})
+	if entry.SelectedText() != "é🙂" {
+		t.Fatal("native range not applied")
+	}
+	modal := widget.NewModalPopUp(widget.NewLabel("Modal"), w.Canvas())
+	modal.Show()
+	model.perform(nativea11y.Action{NodeID: node.ID, Kind: "set_text_selection", Selection: &nativea11y.TextSelection{Anchor: 0, Focus: 0}})
+	if entry.SelectedText() != "é🙂" {
+		t.Fatal("stale modal action applied")
+	}
+	modal.Hide()
+	entry.Disable()
+	model.perform(nativea11y.Action{NodeID: node.ID, Kind: "set_text_selection", Selection: &nativea11y.TextSelection{Anchor: 0, Focus: 0}})
+	if entry.SelectedText() != "é🙂" {
+		t.Fatal("disabled action applied")
+	}
+}

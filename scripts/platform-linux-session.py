@@ -224,14 +224,14 @@ def worker(binary, root, use_orca=False):
                 raise RuntimeError("Native Unicode selection action rejected")
             deadline = time.monotonic() + 3
             while True:
-                selected_range = text.get_selection(0)
+                selected_range = Atspi.Text.get_selection(text, 0)
                 if selected_range.start_offset == 1 and selected_range.end_offset == 3:
                     break
                 if time.monotonic() >= deadline:
                     raise RuntimeError("Native Unicode selection did not round trip")
                 time.sleep(0.1)
                 pump()
-            if text.get_text(1, 3) != "é🙂":
+            if Atspi.Text.get_text(text, 1, 3) != "é🙂":
                 raise RuntimeError("Native selection used byte or UTF-16 indexes")
             (root / "text-selection.json").write_text(json.dumps({"caret": 2, "selection": [1, 3],
                     "selected": "é🙂", "unicode_scalar_offsets": True, "passed": True}, ensure_ascii=False, indent=2))
@@ -246,7 +246,12 @@ def worker(binary, root, use_orca=False):
                         "--output", str(root / "folder-error")], env=env, check=True, timeout=20)
         error_snapshot = json.dumps(json.loads((root / "folder-error/accessibility.json").read_text()))
         native_error_status = "Cannot open folder" in error_snapshot and invalid in error_snapshot
-        pump()
+        deadline = time.monotonic() + 3
+        while not any("Cannot open folder" in str(event) and invalid in str(event) for event in announcements):
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Native affected-folder error announcement missing")
+            time.sleep(0.1)
+            pump()
         (root / "native-announcements.json").write_text(json.dumps(announcements, ensure_ascii=False, indent=2))
         native_text = entry.get_text_iface() is not None
         selected = root / "scan-root" / "selected-root"

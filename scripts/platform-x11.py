@@ -248,7 +248,7 @@ def main():
                         try:
                             text = node.get_text_iface()
                             if text:
-                                record["text"] = text.get_text(0, -1)
+                                record["text"] = Atspi.Text.get_text(text, 0, -1)
                         except Exception:
                             pass
                         if depth < 12:
