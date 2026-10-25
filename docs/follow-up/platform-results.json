@@ -266,5 +266,6 @@
       "linux-x86_64": "17ce full native controls/reader/lifecycle/restart replay plus AT-SPI Quit exited 0 without Fyne wrong-thread warnings; private software-rendered session only."
     }
   },
-  "platforms_record_scope": "Historical pre-bridge baseline, retained unchanged. Current results and resolved case dispositions are in completion_candidate_run."
+  "platforms_record_scope": "Historical pre-bridge baseline, retained unchanged. Later completion_candidate_run and follow-up records attest only their exact revisions; current_native_followup identifies the latest Linux and available Mac replay.",
+  "current_native_followup": "linux-macos-results.json"
 }

@@ -123,3 +123,12 @@ keyboard and settings-window Quit checks passed. The shared toolkit adaptation i
 compiled and regression-tested across CI hosts; earlier macOS/Linux operational
 evidence remains tied to its prior revisions. Native replay on those hosts,
 unavailable arm64/Retina hardware and release acceptance remain separate gates.
+
+## Linux and available Mac replay, 2026-10-25
+
+[The follow-up](linux-macos-replay.md) replays the merged Fyne adaptation on
+Linux and macOS x86_64, including native lifecycle, keyboard, text and filesystem
+checks. Its normalized results distinguish observer-attached and detached
+shutdown, explicit accelerated/software modes and the unresolved Linux default
+presentation failure. Unavailable macOS hardware and release acceptance remain
+separate.

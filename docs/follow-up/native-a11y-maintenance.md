@@ -52,3 +52,8 @@ version and public interfaces through a local source replacement. Remove that
 adaptation only after verifying both atomic shutdown submission and complete
 drain acknowledgements in a published release, then replay the native gates.
 The recorded Windows scope does not qualify other hosts or release acceptance.
+
+[The subsequent Linux and available Mac replay](linux-macos-replay.md) extends
+operation evidence for the unchanged toolkit adaptation. Its default Linux
+presentation failure, unavailable hardware and broader reader gates remain
+explicit. It does not retire either reviewed dependency adaptation.
