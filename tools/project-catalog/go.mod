@@ -40,3 +40,6 @@ require (
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 )
+
+// Reviewed Fyne 2.7.3 shutdown queue repair; upstream BSD notices retained.
+replace fyne.io/fyne/v2 => ./third_party/fyne

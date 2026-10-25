@@ -5,3 +5,6 @@
 
 # Retain upstream third-party notices byte-for-byte on every host.
 licenses/upstream/** -text whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
+
+# Reviewed Fyne snapshot retains exact upstream bytes and per-file hashes.
+tools/project-catalog/third_party/fyne/** -text whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
