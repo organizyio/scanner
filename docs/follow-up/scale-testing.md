@@ -53,3 +53,25 @@ Only normalized reports are uploaded as CI evidence, not release artifacts.
 This qualifies synthetic preferred-Scanner execution only. Apple Silicon/Retina
 GUI feedback remains pending. Production adoption, runtime convergence and release
 acceptance remain separate.
+
+## Recorded Intel Mac measurements — 2026-10-26
+
+[Normalized results](scale-results-2026-10-26.json) record 92 passing runs at
+`283f9a198e17e78e758ac283ad776d4a88fd6f32`, with 4,096 and 32,768 files,
+three repeats of each throughput/failure mode and eight cancellation repeats
+per fixture/walker. All 32 cancellation and 24 injected-failure runs completed
+their subsequent full recovery scans. Source hashes bind the unchanged scale
+probe and harness; later verifier/documentation edits do not alter those tested
+files or production engine code. Raw process logs and full measurements stay
+private; the normalized summary records their report checksum.
+
+For 32,768 files, standard-walker fast-callback median elapsed/first-record times
+were 386.18 / 2.94 ms; full-walker observations were 1,869.83 / 0.95 ms.
+Standard-walker delayed callbacks/output had median elapsed times of 1,635.58 /
+1,836.85 ms. Peak RSS across those standard-walker throughput cases ranged from
+14,610,432 to 16,683,008 bytes. The largest observed requested-cancellation return
+latency at that fixture size was 3.00 ms (standard) and 0.12 ms (full).
+These describe this synthetic host/run sequence only. The slower full-walker fast
+case than some delayed cases illustrates filesystem/cache variability, not a
+throughput guarantee or an improvement. No memory-growth or worst-case blocking
+I/O claim is inferred. Unavailable GUI hardware and release gates remain pending.

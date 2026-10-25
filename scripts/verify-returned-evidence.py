@@ -197,6 +197,7 @@ def zip_envelope(path):
 def inspect_archive(path):
     """Stream/hash bounded members; retain only bounded JSON and PNG geometry."""
     documents, hashes, pictures, names, total = {}, {}, {}, set(), 0
+    json_total = 0
     zip_envelope(path)
     with zipfile.ZipFile(path) as archive:
         require(len(archive.infolist()) <= MAX_FILES, "Too many ZIP members")
@@ -248,6 +249,8 @@ def inspect_archive(path):
             require(size == info.file_size, "ZIP size mismatch")
             hashes[name] = digest.hexdigest()
             if name.endswith(".json"):
+                json_total += size
+                require(json_total <= 32 << 20, "Aggregate JSON exceeds limit")
                 documents[name] = load_json(b"".join(chunks))
             if name.endswith(".png"):
                 pictures[name] = png_geometry(b"".join(chunks))

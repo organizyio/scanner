@@ -20,7 +20,7 @@ or fetches package content. It creates a new report and refuses to overwrite one
 
 ## Integrity and coverage
 
-- Preflight the ZIP directory before allocation: at most 10,000 members, 8 MiB central directory, 64 MiB per member, 512 MiB archive/expanded total and 4 MiB per JSON file. Reject excessive compression ratios, split/ZIP64/encrypted archives and unsupported compression. These are inspection limits, not permission to truncate evidence; an oversize legitimate return needs a separately reviewed handling change.
+- Preflight the ZIP directory before allocation: at most 10,000 members, 8 MiB central directory, 64 MiB per member, 512 MiB archive/expanded total and 4 MiB per JSON file and 32 MiB aggregate JSON. Reject excessive compression ratios, split/ZIP64/encrypted archives and unsupported compression. These are inspection limits, not permission to truncate evidence; an oversize legitimate return needs a separately reviewed handling change.
 - Reject traversal, absolute/drive/backslash paths, control characters, noncanonical Unicode, reserved device names, duplicate/case-colliding members, links/special files, private Git/SSH storage and recovery/executable artifacts. Hash each bounded byte stream and require exact manifest membership and hashes.
 - Compare the trusted helper hashes, source status/revision, host architecture, declared binary hashes, summary and canonical reports. Require every named build/CLI check and its journal/log reference.
 - Inventory native flow and sixteen shutdown scenarios, exit/deadline/forced-cleanup results, screenshot checksums and PNG container/CRC/dimensions. Pixel readability, authenticity and actual behavior remain manual review; PNG inspection does not decode or judge image content.
@@ -35,6 +35,6 @@ other useful evidence. A `ready_for_human_review` report always leaves formal
 qualification and release acceptance false.
 
 Private output includes only normalized coverage, not copied operator notes,
-command lines or screenshot pixels. Inspect raw returns privately. Test fixtures
+command lines or screenshot pixels. Inspect raw returns privately; integrity verification is not privacy approval. Test fixtures
 are synthetic and never establish Apple Silicon/Retina operation. Original
 handoff files and qualification evidence remain unchanged.

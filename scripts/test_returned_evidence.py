@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import stat
 import struct
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -249,6 +250,23 @@ class ReturnedEvidenceTests(unittest.TestCase):
         self.assertTrue(r["human_review_required"])
         self.assertFalse(r["formal_platform_qualification_complete"])
         self.assertFalse(r["release_acceptance"])
+
+    def test_cli_preserves_existing_reports_and_incomplete_package_never_accepts(self):
+        self.docs["evidence/host.json"]["machine"] = "x86_64"
+        self.write()
+        report = Path(self.tmp.name) / "review.json"
+        with patch.object(
+            sys, "argv", ["verify", str(self.path), "--report", str(report)]
+        ):
+            self.assertEqual(v.main(), 3)
+        before = report.read_bytes()
+        self.assertFalse(json.loads(before)["formal_platform_qualification_complete"])
+        with patch.object(
+            sys, "argv", ["verify", str(self.path), "--report", str(report)]
+        ):
+            with self.assertRaises(FileExistsError):
+                v.main()
+        self.assertEqual(report.read_bytes(), before)
 
     def test_external_archive_digest_is_checked_when_supplied(self):
         self.write()
