@@ -110,3 +110,13 @@ password and oversized range semantics remain outside this qualification.
 Phase 4 remains incomplete. Windows retains its separately recorded PR #13
 scope. Production consumer adoption, runtime convergence, release publication
 and product release acceptance remain separate decisions.
+
+## Subsequent Linux investigation
+
+This page retains PR #14's historical observations. [The live desktop
+follow-up](linux-default-rendering.md) records the later diagnosis and five
+passing guarded default-mode runs. Earlier Linux runs lacked proof that the
+actual desktop was unlocked/powered on and that the window manager had activated
+the app. Their native protocol observations remain evidence; their screenshots
+and no-vsync passes do not qualify normal interactive/default presentation.
+Unavailable macOS gates and release acceptance remain separate.

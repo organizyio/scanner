@@ -132,3 +132,15 @@ checks. Its normalized results distinguish observer-attached and detached
 shutdown, explicit accelerated/software modes and the unresolved Linux default
 presentation failure. Unavailable macOS hardware and release acceptance remain
 separate.
+
+## Current Linux default-mode qualification
+
+[The live desktop investigation](linux-default-rendering.md) resolves the
+reproduced default-mode gate on the recorded host without changing rendering
+semantics. GNOME must report its screen saver inactive and displays powered on
+before launch and throughout observed operation. The helper requires actual
+window-manager activation as well as X11 focus; it never injects focus behind
+the desktop lock screen. Unknown/refused readiness keeps qualification pending.
+The current readiness observer supports GNOME; other desktops need an observer.
+Use the final parent report and live foreground/state evidence, not worker
+reports or historical screenshots alone.

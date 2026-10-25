@@ -82,6 +82,22 @@ class QualificationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             x11.validate_point(900, 650, 800, 620)
 
+    def test_injected_x11_focus_does_not_prove_window_manager_foreground(self):
+        parents = {300: 200, 200: 100, 100: 0, 400: 0}
+        self.assertFalse(x11.foreground_owned(200, 200, 0, lambda v: parents[v]))
+        self.assertFalse(x11.foreground_owned(200, 200, 400, lambda v: parents[v]))
+        self.assertFalse(x11.foreground_owned(400, 200, 200, lambda v: parents[v]))
+        self.assertTrue(x11.foreground_owned(300, 200, 200, lambda v: parents[v]))
+
+    def test_activation_is_normal_owned_application_request(self):
+        event = x11.activation_request(None, 200, 123)
+        self.assertEqual(event.client.type, 33)
+        self.assertEqual(event.client.window, 200)
+        self.assertEqual(event.client.message_type, 123)
+        self.assertEqual(event.client.format, 32)
+        self.assertEqual(event.client.data.longs[0], 1)
+        self.assertEqual(event.client.data.longs[1], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

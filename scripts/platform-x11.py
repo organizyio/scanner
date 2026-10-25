@@ -22,6 +22,37 @@ def descendant_of(window, selected, parent_lookup):
     return False
 
 
+def foreground_owned(focused, selected, active_window, parent_lookup):
+    # X11 focus alone may be injected into an obscured/locked Xwayland client.
+    return active_window == selected and descendant_of(focused, selected, parent_lookup)
+
+
+class ClientMessageData(C.Union):
+    _fields_ = [("bytes", C.c_char * 20), ("shorts", C.c_short * 10), ("longs", C.c_long * 5)]
+
+
+class ClientMessage(C.Structure):
+    _fields_ = [("type", C.c_int), ("serial", C.c_ulong), ("send_event", C.c_int),
+                ("display", C.c_void_p), ("window", C.c_ulong), ("message_type", C.c_ulong),
+                ("format", C.c_int), ("data", ClientMessageData)]
+
+
+class XEvent(C.Union):
+    _fields_ = [("client", ClientMessage), ("padding", C.c_long * 24)]
+
+
+def activation_request(display, selected, atom):
+    event = XEvent()
+    event.client.type = 33  # ClientMessage
+    event.client.display = display
+    event.client.window = selected
+    event.client.message_type = atom
+    event.client.format = 32
+    event.client.data.longs[0] = 1  # Normal application request, not direct focus injection.
+    event.client.data.longs[1] = 0  # CurrentTime; the window manager may refuse it.
+    return event
+
+
 def checked_sequence(check_focus, events):
     check_focus()
     for event in events:
@@ -49,7 +80,10 @@ def main():
     parser.add_argument("--click", help="client-relative x,y points separated by semicolons")
     parser.add_argument("--title", choices=["Scanner", "Settings"], default="Scanner")
     parser.add_argument("--text", default="", help="lowercase ASCII synthetic root path only")
+    parser.add_argument("--close-settings", action="store_true", help="request normal close of the owned Settings window after capture")
     args = parser.parse_args()
+    if args.close_settings and args.title != "Settings":
+        parser.error("close requests are limited to the owned Settings window")
     x = C.CDLL(ctypes.util.find_library("X11") or "libX11.so.6")
     x.XOpenDisplay.argtypes = [C.c_char_p]
     x.XOpenDisplay.restype = C.c_void_p
@@ -115,6 +149,21 @@ def main():
         x.XCloseDisplay(display)
         raise SystemExit("No X11 window for requested process; qualification pending")
     selected = windows[0]
+    root_window = x.XDefaultRootWindow(display)
+    active_atom = x.XInternAtom(display, b"_NET_ACTIVE_WINDOW", 0)
+
+    def active_window():
+        actual, count, remaining = ulong(), ulong(), ulong()
+        fmt, data = C.c_int(), C.c_void_p()
+        x.XGetWindowProperty(display, root_window, active_atom, 0, 1, 0, 0,
+                             C.byref(actual), C.byref(fmt), C.byref(count), C.byref(remaining), C.byref(data))
+        try:
+            if data and fmt.value == 32 and count.value == 1:
+                return C.cast(data, C.POINTER(ulong))[0]
+            return None
+        finally:
+            if data:
+                x.XFree(data)
 
     def parent_of(window):
         root, parent, count = ulong(), ulong(), C.c_uint()
@@ -127,7 +176,7 @@ def main():
     def assert_focus():
         focused, revert = ulong(), C.c_int()
         x.XGetInputFocus(display, C.byref(focused), C.byref(revert))
-        if not descendant_of(focused.value, selected, parent_of):
+        if not foreground_owned(focused.value, selected, active_window(), parent_of):
             raise RuntimeError("focus left selected synthetic window; no input sent")
 
     def dimensions(window):
@@ -139,16 +188,34 @@ def main():
         return width.value, height.value
     args.output.mkdir(parents=True, exist_ok=True)
     try:
+        # Ask the real window manager to activate this owned window. Do not
+        # synthesize X11 focus behind GNOME's lock screen or another app.
+        x.XSendEvent.argtypes = [C.c_void_p, ulong, C.c_int, C.c_long, C.POINTER(XEvent)]
+        x.XFlush.argtypes = [C.c_void_p]
+        event = activation_request(display, selected, active_atom)
+        if not x.XSendEvent(display, root_window, 0, (1 << 19) | (1 << 20), C.byref(event)):
+            raise RuntimeError("owned window activation request failed; no input sent")
+        x.XFlush(display)
+        activation_deadline = time.monotonic() + 5
+        while True:
+            focused, revert = ulong(), C.c_int()
+            x.XGetInputFocus(display, C.byref(focused), C.byref(revert))
+            if foreground_owned(focused.value, selected, active_window(), parent_of):
+                break
+            if time.monotonic() >= activation_deadline:
+                raise RuntimeError("window manager did not activate the owned window; qualification pending")
+            time.sleep(.05)
+        (args.output / "foreground.json").write_text(json.dumps({
+            "selected_window": selected, "window_manager_active": active_window(),
+            "x11_focus": focused.value, "activation": "window-manager-request", "owned_foreground": True}, indent=2) + "\n")
         if args.keys or args.click or args.text:
             xtst = C.CDLL(ctypes.util.find_library("Xtst") or "libXtst.so.6")
-            x.XSetInputFocus.argtypes = [C.c_void_p, ulong, C.c_int, ulong]
             x.XStringToKeysym.argtypes = [C.c_char_p]
             x.XStringToKeysym.restype = ulong
             x.XKeysymToKeycode.argtypes = [C.c_void_p, ulong]
             x.XKeysymToKeycode.restype = C.c_uint
             x.XFlush.argtypes = [C.c_void_p]
             xtst.XTestFakeKeyEvent.argtypes = [C.c_void_p, C.c_uint, C.c_int, ulong]
-            x.XSetInputFocus(display, selected, 2, 0)
             assert_focus()
 
             def send_keys(events):
@@ -206,6 +273,7 @@ def main():
                     x.XFlush(display)
                     time.sleep(0.025)
                 time.sleep(1)
+        assert_focus()
         x.XGetGeometry.argtypes = [C.c_void_p, ulong, C.POINTER(ulong), C.POINTER(C.c_int),
                                   C.POINTER(C.c_int), C.POINTER(C.c_uint), C.POINTER(C.c_uint),
                                   C.POINTER(C.c_uint), C.POINTER(C.c_uint)]
@@ -259,6 +327,21 @@ def main():
             (args.output / "accessibility.json").write_text(json.dumps(matching, indent=2) + "\n")
         except (ImportError, ValueError) as error:
             (args.output / "accessibility.json").write_text(json.dumps({"pending": str(error)}))
+        assert_focus()
+        final_focus, revert = ulong(), C.c_int()
+        x.XGetInputFocus(display, C.byref(final_focus), C.byref(revert))
+        (args.output / "foreground-after.json").write_text(json.dumps({
+            "selected_window": selected, "window_manager_active": active_window(),
+            "x11_focus": final_focus.value, "owned_foreground": True}, indent=2) + "\n")
+        if args.close_settings:
+            assert_focus()
+            close = activation_request(display, selected, x.XInternAtom(display, b"WM_PROTOCOLS", 0))
+            close.client.data.longs[0] = x.XInternAtom(display, b"WM_DELETE_WINDOW", 0)
+            if not x.XSendEvent(display, selected, 0, 0, C.byref(close)):
+                raise RuntimeError("owned Settings close request failed")
+            x.XFlush(display)
+            (args.output / "close-request.json").write_text(json.dumps({
+                "owned_window": selected, "protocol": "WM_DELETE_WINDOW", "forced": False}, indent=2) + "\n")
         print("Captured application-only evidence; evaluate controls, focus and accessibility separately.")
     finally:
         x.XCloseDisplay(display)

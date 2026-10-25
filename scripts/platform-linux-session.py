@@ -17,6 +17,7 @@ import time
 import uuid
 
 import qualification_stages as stages
+from linux_desktop import DesktopMonitor
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("qualification", HERE / "platform-qualification.py")
@@ -317,6 +318,24 @@ def worker(binary, root, use_orca=False, observer_mode="attached"):
         settings = qualification.settings_directory(root) / "settings.yaml"
         if str(selected) not in settings.read_text():
             raise RuntimeError("Native selected root was not persisted")
+        settings_before = settings.read_bytes()
+        press("Settings")
+        subprocess.run([sys.executable, str(HERE / "platform-x11.py"), "--pid", str(gui.pid),
+                        "--output", str(root / "settings-window"), "--title", "Settings", "--keys", "Tab",
+                        "--close-settings"], env=env, check=True, timeout=20)
+        settings_snapshot = (root / "settings-window/accessibility.json").read_text()
+        if "Browse root 1" not in settings_snapshot or str(root / "scan-root") not in settings_snapshot:
+            raise RuntimeError("Native Settings controls/root were not captured")
+        deadline = time.monotonic() + 5
+        while find(app, "Browse root 1") is not None:
+            if gui.poll() is not None or time.monotonic() >= deadline:
+                raise RuntimeError("Owned Settings close did not preserve the running main window")
+            time.sleep(.05)
+            pump()
+        if settings.read_bytes() != settings_before:
+            raise RuntimeError("Opening/closing Settings changed the saved profile")
+        subprocess.run([sys.executable, str(HERE / "platform-x11.py"), "--pid", str(gui.pid),
+                        "--output", str(root / "after-settings"), "--keys", "ctrl+l"], env=env, check=True, timeout=20)
         # A tiny owned FIFO holds active extraction without a large workload.
         fifo = root / "scan-root" / "0-controlled-read"
         os.mkfifo(fifo)
@@ -370,6 +389,7 @@ def worker(binary, root, use_orca=False, observer_mode="attached"):
                   "native_atspi_press": True, "native_focus": True, "native_editable_text_interface": editable is not None,
                   "keyboard_edit": True, "keyboard_tree_focus_selection_details": True,
                   "native_profile_switch_restore": True, "native_pause_resume_cancel": True,
+                  "native_settings_window_keyboard_close": True, "settings_unchanged_after_close": True,
                   "native_process_restart_settings_partial_resume": True,
                   "renderer": "software" if env.get("LIBGL_ALWAYS_SOFTWARE") == "1" else "host-default",
                   "selected_root_persisted": True, "native_text_interface": native_text,
@@ -415,7 +435,7 @@ def worker(binary, root, use_orca=False, observer_mode="attached"):
         for log_name in ("gui.stderr.txt", "restart.stderr.txt"):
             if "Error in Fyne call thread" in (root / log_name).read_text(errors="replace"):
                 raise RuntimeError("Fyne wrong-thread diagnostic observed")
-        (root / "session-report.json").write_text(json.dumps(report, indent=2) + "\n")
+        (root / "worker-report.json").write_text(json.dumps(report, indent=2) + "\n")
         return report
     finally:
         if "signatures" in locals():
@@ -473,7 +493,9 @@ def run(binary, root, use_orca=False, rendering="default", observer_mode="attach
     env["SCANNER_QUALIFICATION_HOST_BUS"] = host
     nonce = uuid.uuid4().hex
     env["SCANNER_QUALIFICATION_NONCE"] = nonce
+    desktop = DesktopMonitor(host_env, root)
     try:
+        desktop.start()
         with (root / "session.stdout.txt").open("w") as stdout, (root / "session.stderr.txt").open("w") as stderr:
             session = subprocess.Popen(["dbus-run-session", "--", sys.executable, str(Path(__file__).resolve()),
                                         "--binary", str(binary), "--fixture", str(root), "--private-session",
@@ -482,6 +504,7 @@ def run(binary, root, use_orca=False, rendering="default", observer_mode="attach
             deadline = time.monotonic() + 90
             try:
                 while True:
+                    desktop.check()
                     if stages.expired(root, nonce):
                         raise RuntimeError("Owned native stage exceeded eight-second total deadline")
                     if session.poll() is not None:
@@ -498,14 +521,17 @@ def run(binary, root, use_orca=False, rendering="default", observer_mode="attach
                         os.killpg(session.pid, signal.SIGKILL)
                         session.wait(timeout=5)
     finally:
+        desktop.close()
         after = bus_status(host_env)
         (root / "host-status.json").write_text(json.dumps({"before": before, "after": after,
                                                           "unchanged": before == after}, indent=2) + "\n")
     if before != after:
         raise RuntimeError("Host accessibility state changed unexpectedly")
+    desktop.check()
     if session.returncode:
         raise RuntimeError("Native private-session qualification failed; inspect private logs")
-    report = json.loads((root / "session-report.json").read_text())
+    report = json.loads((root / "worker-report.json").read_text())
+    report["desktop_availability"] = "GNOME unlocked and displays powered on throughout observed run"
     report["rendering"] = {"mode": rendering, "child_vblank_mode": env.get("vblank_mode"),
                            "child_software_override": env.get("LIBGL_ALWAYS_SOFTWARE"),
                            "host_environment_changed": False}
