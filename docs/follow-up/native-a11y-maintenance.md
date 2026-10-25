@@ -43,3 +43,12 @@ zbus 5 dependencies retained by published AccessKit/AT-SPI. The isolated policy
 is version-bounded and expires before 2026-11-24; required CI rejects drift or
 expiry. This disposition does not authorize vulnerability exceptions, an
 unreviewed zbus 6 port, or release acceptance.
+
+## Fyne graphics queue repair
+
+The [reviewed Fyne v2.7.3 adaptation](../../tools/project-catalog/third_party/README.md)
+addresses the subsequently reproduced Windows shutdown race. It preserves the
+version and public interfaces through a local source replacement. Remove that
+adaptation only after verifying both atomic shutdown submission and complete
+drain acknowledgements in a published release, then replay the native gates.
+The recorded Windows scope does not qualify other hosts or release acceptance.

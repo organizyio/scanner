@@ -1,5 +1,10 @@
 # Post-PR #10 qualification — 2026-10-24
 
+Historical PR #11 record. The later [Windows follow-up](windows-shutdown.md)
+repairs the toolkit queue and supersedes the Windows timing gate for its tested
+revision. Source-equivalence statements below apply to PR #11. Other-host
+operation has not been replayed against the later modified toolkit.
+
 [Normalized results and evidence checksums](post-pr10-results.json) distinguish
 public Scanner source, private consumer records and remaining platform gates.
 Implementation qualification, production adoption, runtime convergence and

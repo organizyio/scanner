@@ -92,7 +92,7 @@ def dependency_notices(out, component, gui=False):
         for path in sorted(source.rglob('*')):
             if not path.is_file() or path.is_symlink():
                 continue
-            if not (path.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'COPYRIGHT')) or
+            if not (path.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'NOTICE', 'COPYRIGHT', 'AUTHORS')) or
                     any(part.upper() in ('LICENSES', 'LICENCES') for part in path.relative_to(source).parts[:-1])):
                 continue
             if path.suffix.lower() in ('.go', '.rs', '.png', '.jpg'):

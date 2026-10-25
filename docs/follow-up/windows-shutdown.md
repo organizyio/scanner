@@ -1,7 +1,8 @@
 # Windows shutdown qualification follow-up
 
-Implementation candidate, 2026-10-25. Native acceptance remains pending until the
-full exact-source matrix passes. Release acceptance remains separate.
+Reviewed 2026-10-25. The full exact-source matrix passed on the available Windows
+x64 host. [Normalized results and evidence hashes](windows-shutdown-results.json)
+retain the tested source and artifact. Release acceptance remains separate.
 
 ## Demonstrated cause and correction
 
@@ -42,6 +43,20 @@ The helper retains evidence and stops on the first failure; restart the complete
 matrix after a relevant correction.
 
 Raw stacks, personal paths, screenshots and recovery history stay outside public
-Git. Public results will retain only sanitized observations and evidence hashes.
+Git. Public results retain only sanitized observations and evidence hashes.
 macOS arm64/Retina, Linux default rendering and broader accessibility gates remain
 pending. No release is published or accepted through this work.
+
+## Observed acceptance
+
+At `b81f822dc36103299d4522b6960d3cd98fe2231a`, all 26 required process runs
+passed with natural exit zero and no invocation errors. Total Quit times ranged
+from 170.0781 to 343.3401 ms. All ten reattachment cycles delivered their native
+error events. The extra Unicode caret/selection/keyboard replay and secondary
+settings-window Quit also passed. Neither extra run used forced cleanup.
+
+The original matrix stopped at its reproduced failure; it is retained alongside
+the diagnostic capture and negative-control/race regressions. The private
+diagnostic executable was excluded from qualification. This closes the recorded
+Windows observer-detach shutdown gate for the tested scope. Other Fyne shutdown
+scenarios and native replay of the modified toolkit on other hosts remain separate.
