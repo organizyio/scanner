@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import tempfile
 import threading
@@ -12,6 +13,33 @@ AVAILABLE = {"screensaver_active": False, "power_save_mode": 0}
 
 
 class DesktopTests(unittest.TestCase):
+    def test_locked_preflight_never_spawns_gui_or_private_session(self):
+        spec = importlib.util.spec_from_file_location(
+            "linux_session", Path(__file__).with_name("platform-linux-session.py")
+        )
+        session = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(session)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "fresh"
+
+            def factory(env, folder):
+                return DesktopMonitor(
+                    env,
+                    folder,
+                    inspect=lambda _: dict(AVAILABLE, screensaver_active=True),
+                )
+
+            with (
+                patch.object(session, "DesktopMonitor", side_effect=factory),
+                patch.object(session, "bus_status", return_value="(<false>,)"),
+                patch.object(session.subprocess, "Popen") as spawn,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "locked"):
+                    session.run(Path(tmp) / "unused-binary", root)
+                spawn.assert_not_called()
+            self.assertFalse((root / "session-report.json").exists())
+            self.assertFalse((root / "worker-report.json").exists())
+
     def test_locked_off_unknown_and_unsupported_are_never_available(self):
         for state in [
             {},
