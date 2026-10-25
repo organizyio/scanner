@@ -16,3 +16,6 @@ Makefile text eol=lf
 *.jpeg binary
 *.ico  binary
 *.gif  binary
+
+# Preserve reviewed upstream snapshot bytes; source hashes enforce integrity.
+third_party/fyne/** -text !eol -whitespace
