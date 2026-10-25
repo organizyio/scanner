@@ -2,6 +2,7 @@
 """Owned native AX observer/Quit matrix; no speech, permissions or host changes."""
 
 import argparse
+import errno
 import hashlib
 import importlib.util
 import json
@@ -27,7 +28,6 @@ def run_case(args, name, mode, scenario):
     if scenario == "active":
         fifo = root / "scan-root/0-controlled-read"
         os.mkfifo(fifo)
-        holder = os.open(fifo, os.O_RDWR | os.O_NONBLOCK)
     gui = subprocess.Popen(
         [str(args.binary)],
         env=env,
@@ -74,6 +74,18 @@ def run_case(args, name, mode, scenario):
             snapshot = (root / "active/accessibility-after.json").read_text()
             if "running | files=" not in snapshot:
                 raise RuntimeError("active fixture did not enter running state")
+            read_deadline = time.monotonic() + 5
+            while holder is None:
+                try:
+                    # A writer can open only once Scanner's reader is present;
+                    # an owned RDWR handle would incorrectly satisfy this proof.
+                    holder = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+                except OSError as error:
+                    if error.errno != errno.ENXIO or time.monotonic() >= read_deadline:
+                        raise RuntimeError(
+                            "Scanner did not enter the owned FIFO read"
+                        ) from error
+                    time.sleep(0.02)
         detach_ms = None
         if mode == "detach-before-quit":
             start = time.monotonic()
@@ -112,6 +124,7 @@ def run_case(args, name, mode, scenario):
                 time.sleep(0.25)
                 if gui.poll() is not None:
                     raise RuntimeError("Quit preempted active extraction")
+                os.write(holder, b"synthetic active-read qualification\n")
                 os.close(holder)
                 holder = None
             if helper.wait(timeout=max(0.01, 8 - (time.monotonic() - start))) != 0:
@@ -133,8 +146,14 @@ def run_case(args, name, mode, scenario):
                 raise RuntimeError(
                     "registered AX observer never received a native event"
                 )
-        if scenario == "active" and not (root / "checkpoint.json").exists():
-            raise RuntimeError("active Quit did not flush checkpoint")
+        if scenario == "active":
+            checkpoint = json.loads((root / "checkpoint.json").read_text())
+            if checkpoint.get("last_path") != str(fifo) or not checkpoint.get(
+                "updated_at"
+            ):
+                raise RuntimeError(
+                    "active Quit did not flush the completed read's checkpoint"
+                )
         if "Error in Fyne call thread" in (root / "stderr.txt").read_text():
             raise RuntimeError("Fyne wrong-thread warning")
         report = {
