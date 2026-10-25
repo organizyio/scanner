@@ -383,8 +383,29 @@ class ReturnedEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(v.Invalid, "colliding"):
             self.write({v.ROOT + "evidence/HOST.json": b"{}"})
 
+    def test_embedded_nul_cannot_be_hidden_by_zipinfo_name_truncation(self):
+        self.write({v.ROOT + "evidence/nameXtail.txt": b"data"})
+        self.path.write_bytes(
+            self.path.read_bytes().replace(b"nameXtail.txt", b"name\0tail.txt")
+        )
+        with self.assertRaisesRegex(v.Invalid, "Ambiguous ZIP member"):
+            v.verify(self.path)
+
+    def test_invalid_deflate_writes_invalid_package_report(self):
+        self.write()
+        data = bytearray(self.path.read_bytes())
+        name_len, extra_len = struct.unpack("<HH", data[26:30])
+        data[30 + name_len + extra_len] = 7  # forbidden deflate block type
+        self.path.write_bytes(data)
+        report = Path(self.tmp.name) / "invalid-review.json"
+        with patch.object(
+            sys, "argv", ["verify", str(self.path), "--report", str(report)]
+        ):
+            self.assertEqual(v.main(), 2)
+        self.assertEqual(json.loads(report.read_text())["status"], "invalid_package")
+
     def test_duplicate_and_nonfinite_json_rejected(self):
-        for b in [b'{"a":1,"a":2}', b'{"a":NaN}']:
+        for b in [b'{"a":1,"a":2}', b'{"a":NaN}', b'{"a":1e999}']:
             with self.assertRaises(v.Invalid):
                 v.load_json(b)
 

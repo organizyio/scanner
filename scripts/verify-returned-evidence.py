@@ -72,11 +72,18 @@ def pairs(items):
     return result
 
 
+def finite_float(value):
+    number = float(value)
+    require(math.isfinite(number), "Nonfinite JSON number")
+    return number
+
+
 def load_json(data):
     require(len(data) <= MAX_JSON, "JSON member exceeds limit")
     return json.loads(
         data,
         object_pairs_hook=pairs,
+        parse_float=finite_float,
         parse_constant=lambda _: (_ for _ in ()).throw(
             Invalid("Nonfinite JSON number")
         ),
@@ -202,6 +209,7 @@ def inspect_archive(path):
     with zipfile.ZipFile(path) as archive:
         require(len(archive.infolist()) <= MAX_FILES, "Too many ZIP members")
         for info in archive.infolist():
+            require(info.orig_filename == info.filename, "Ambiguous ZIP member name")
             name = safe_name(info.filename)
             canonical = name.casefold()
             require(canonical not in names, "Duplicate/case-colliding ZIP member")
@@ -669,6 +677,8 @@ def main():
         TypeError,
         OSError,
         zipfile.BadZipFile,
+        zlib.error,
+        EOFError,
         RuntimeError,
     ) as error:
         result = {
