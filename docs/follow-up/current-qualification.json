@@ -74,5 +74,9 @@
     "unchanged_pin_rollback": "Fresh locked worker tests/build and all three required native tests passed; original lock, manifest and embedded binary restored",
     "explicit_skip": "Interactive system-vault test; not required native Scanner tests",
     "production_pin_changed": false
+  },
+  "preparation_followups": {
+    "returned_evidence_verifier": "returned-evidence.md; inspection tooling only, no hardware acceptance",
+    "scale_testing": "scale-testing.md; synthetic preferred execution, no GUI or release acceptance"
   }
 }

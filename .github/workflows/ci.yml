@@ -36,6 +36,14 @@ jobs:
         run: cargo build --locked --bin scanfs
       - name: test
         run: cargo test --workspace --locked
+      - name: Bounded scale and failure-recovery qualification (synthetic CLI only)
+        run: python scripts/qualify-scale.py --output "${{ runner.temp }}/scanner-scale" --files 1024 --repeats 1 --cancel-repeats 3
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: synthetic-scale-${{ runner.os }}-${{ runner.arch }}
+          path: ${{ runner.temp }}/scanner-scale/report.json
+          if-no-files-found: error
 
   lint:
     runs-on: ubuntu-latest
