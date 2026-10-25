@@ -40,6 +40,17 @@ qualified hosts. The Linux application and rendering defaults were unchanged.
 [Dependency maintenance review](maintenance-review-2026-10-26.md) records current
 published sources and keeps the existing adaptations and November 24 review
 cutoff. Consumer refresh results are tracked separately from GUI qualification.
+[The consumer refresh](https://github.com/organizyio/organizy-scan/pull/9)
+records three passing [exact-candidate CI jobs](https://github.com/organizyio/organizy-scan/actions/runs/40230583741)
+at Scanner `1e27d74`, source-built compatibility integration and two reconciled
+prototype files with zero pending batches. Isolated published Organizy resolves
+all eight Scanner packages to that candidate; worker tests/build, all three
+required native managed tests and unchanged-pin rollback passed. Exact private
+consumer refs and raw evidence stay private. The unrelated interactive vault
+test remains an explicit skip; live providers and other Organizy consumer
+platforms are outside the report. macOS-arm64 CI CLI execution cannot qualify
+the pending interactive hardware gate.
+
 Production adoption, runtime convergence, publication and release acceptance
 remain excluded.
 

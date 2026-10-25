@@ -59,7 +59,20 @@
     "existing_record": "post-pr10-results.json",
     "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
     "refresh_candidate": "1e27d747799b852da0e0b3e73987fc4d5599715e",
-    "refresh_record": "Private Organizy Scan qualification register; execution and results are separately reviewed",
-    "scope": "Harness runs and source-equivalence do not adopt production pins or qualify GUI/live providers"
+    "refresh_record": "https://github.com/organizyio/organizy-scan/pull/9",
+    "scope": "Harness runs and source-equivalence do not adopt production pins or qualify GUI/live providers",
+    "refresh_status": "passed for documented implementation flows",
+    "exact_candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40230583741",
+    "ci_jobs_passed": 3,
+    "prototype": {
+      "local_files": 2,
+      "inventory_files": 2,
+      "matched": true,
+      "pending_batches": 0
+    },
+    "isolated_organizy": "All eight Scanner package origins verified; worker tests/build and all three required native managed tests passed",
+    "unchanged_pin_rollback": "Fresh locked worker tests/build and all three required native tests passed; original lock, manifest and embedded binary restored",
+    "explicit_skip": "Interactive system-vault test; not required native Scanner tests",
+    "production_pin_changed": false
   }
 }
