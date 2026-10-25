@@ -14,6 +14,9 @@ import signal
 import subprocess
 import sys
 import time
+import uuid
+
+import qualification_stages as stages
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("qualification", HERE / "platform-qualification.py")
@@ -33,7 +36,7 @@ def require_private_bus(env, host):
         raise RuntimeError("Refusing accessibility activation outside private memory-only session")
 
 
-def worker(binary, root, use_orca=False):
+def worker(binary, root, use_orca=False, observer_mode="attached"):
     def interrupted(_signum, _frame):
         raise RuntimeError("Owned private-session qualification interrupted")
     signal.signal(signal.SIGTERM, interrupted)
@@ -373,7 +376,6 @@ def worker(binary, root, use_orca=False):
                   "native_error_status": native_error_status,
                   "passed": native_text and native_error_status and editable is not None, "release_acceptance": False}
         pump()
-        native_bus.signal_unsubscribe(subscription)
         signatures["AddAccessible"] = sorted(set(signatures["AddAccessible"]))
         signatures["RemoveAccessible"] = sorted(set(signatures["RemoveAccessible"]))
         cache_ok = (signatures["GetItems"] == "a((so)(so)(so)iiassusau)" and
@@ -393,10 +395,23 @@ def worker(binary, root, use_orca=False):
                               "parent_lookup_exceptions": log.count("Exception in get_parent"),
                               "announcements_and_caret": "not qualified"}
             report["passed"] = report["passed"] and all(report["orca"][k] for k in ["running", "app_observed_in_log", "error_observed_in_log", "tree_focus_observed_in_log"]) and report["orca"]["cache_signature_warnings"] == 0 and report["orca"]["parent_lookup_exceptions"] == 0
+        if observer_mode == "detach-before-quit":
+            stage = stages.begin(root, env["SCANNER_QUALIFICATION_NONCE"], "observer-detach")
+            native_bus.signal_unsubscribe(subscription)
+            native_bus.signal_unsubscribe(announcement_subscription)
+            pump()
+            report["observer_detach_ms"] = stages.finish(root, stage)
+        stage = stages.begin(root, env["SCANNER_QUALIFICATION_NONCE"], "native-quit")
         press("Quit")
         if gui.wait(timeout=8) != 0:
             raise RuntimeError("Owned native Quit returned a nonzero exit")
-        report["native_quit"] = {"action": "AT-SPI Quit", "exit_code": gui.returncode, "forced": False}
+        quit_ms = stages.finish(root, stage)
+        report["native_quit"] = {"action": "AT-SPI Quit", "exit_code": gui.returncode,
+                                 "forced": False, "total_ms": quit_ms, "limit_ms": 8000}
+        report["observer_mode"] = observer_mode
+        if observer_mode == "attached":
+            native_bus.signal_unsubscribe(subscription)
+            native_bus.signal_unsubscribe(announcement_subscription)
         for log_name in ("gui.stderr.txt", "restart.stderr.txt"):
             if "Error in Fyne call thread" in (root / log_name).read_text(errors="replace"):
                 raise RuntimeError("Fyne wrong-thread diagnostic observed")
@@ -440,7 +455,7 @@ def renderer_environment(parent, mode):
     return env
 
 
-def run(binary, root, use_orca=False, rendering="default"):
+def run(binary, root, use_orca=False, rendering="default", observer_mode="attached"):
     env = qualification.prepare(root)
     env = renderer_environment(env, rendering)
     if rendering == "hardware-no-vsync":
@@ -456,24 +471,32 @@ def run(binary, root, use_orca=False, rendering="default"):
     host_env = dict(os.environ, DBUS_SESSION_BUS_ADDRESS=host)
     before = bus_status(host_env)
     env["SCANNER_QUALIFICATION_HOST_BUS"] = host
+    nonce = uuid.uuid4().hex
+    env["SCANNER_QUALIFICATION_NONCE"] = nonce
     try:
-        session = subprocess.Popen(["dbus-run-session", "--", sys.executable, str(Path(__file__).resolve()),
-                                    "--binary", str(binary), "--fixture", str(root), "--private-session"] + (["--orca"] if use_orca else []),
-                                   env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   text=True, start_new_session=True)
-        try:
-            stdout, stderr = session.communicate(timeout=90)
-        except subprocess.TimeoutExpired:
-            os.killpg(session.pid, signal.SIGTERM)
+        with (root / "session.stdout.txt").open("w") as stdout, (root / "session.stderr.txt").open("w") as stderr:
+            session = subprocess.Popen(["dbus-run-session", "--", sys.executable, str(Path(__file__).resolve()),
+                                        "--binary", str(binary), "--fixture", str(root), "--private-session",
+                                        "--observer-mode", observer_mode] + (["--orca"] if use_orca else []),
+                                       env=env, stdout=stdout, stderr=stderr, start_new_session=True)
+            deadline = time.monotonic() + 90
             try:
-                stdout, stderr = session.communicate(timeout=10)
-            except subprocess.TimeoutExpired:
-                os.killpg(session.pid, signal.SIGKILL)
-                stdout, stderr = session.communicate(timeout=5)
-            raise RuntimeError("Owned private session timed out and was stopped")
-        finally:
-            (root / "session.stdout.txt").write_text(stdout if "stdout" in locals() else "")
-            (root / "session.stderr.txt").write_text(stderr if "stderr" in locals() else "")
+                while True:
+                    if stages.expired(root, nonce):
+                        raise RuntimeError("Owned native stage exceeded eight-second total deadline")
+                    if session.poll() is not None:
+                        break
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError("Owned private session timed out")
+                    time.sleep(.05)
+            finally:
+                if session.poll() is None:
+                    os.killpg(session.pid, signal.SIGTERM)
+                    try:
+                        session.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(session.pid, signal.SIGKILL)
+                        session.wait(timeout=5)
     finally:
         after = bus_status(host_env)
         (root / "host-status.json").write_text(json.dumps({"before": before, "after": after,
@@ -497,11 +520,12 @@ if __name__ == "__main__":
     parser.add_argument("--orca", action="store_true", help="also exercise existing Orca silently in this isolated session")
     parser.add_argument("--rendering", choices=("default", "software", "hardware-no-vsync"), default="default",
                         help="explicit child-only renderer mode; hardware-no-vsync requires accelerated glxinfo")
+    parser.add_argument("--observer-mode", choices=("attached", "detach-before-quit"), default="attached")
     parser.add_argument("--private-session", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     args.binary, args.fixture = args.binary.resolve(), args.fixture.resolve()
     if args.private_session:
-        report = worker(args.binary, args.fixture, args.orca)
+        report = worker(args.binary, args.fixture, args.orca, args.observer_mode)
         raise SystemExit(0 if report["passed"] else 1)
     else:
-        print(json.dumps(run(args.binary, args.fixture, args.orca, args.rendering), indent=2))
+        print(json.dumps(run(args.binary, args.fixture, args.orca, args.rendering, args.observer_mode), indent=2))
