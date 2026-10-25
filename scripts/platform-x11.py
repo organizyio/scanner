@@ -80,7 +80,10 @@ def main():
     parser.add_argument("--click", help="client-relative x,y points separated by semicolons")
     parser.add_argument("--title", choices=["Scanner", "Settings"], default="Scanner")
     parser.add_argument("--text", default="", help="lowercase ASCII synthetic root path only")
+    parser.add_argument("--close-settings", action="store_true", help="request normal close of the owned Settings window after capture")
     args = parser.parse_args()
+    if args.close_settings and args.title != "Settings":
+        parser.error("close requests are limited to the owned Settings window")
     x = C.CDLL(ctypes.util.find_library("X11") or "libX11.so.6")
     x.XOpenDisplay.argtypes = [C.c_char_p]
     x.XOpenDisplay.restype = C.c_void_p
@@ -323,6 +326,15 @@ def main():
             (args.output / "accessibility.json").write_text(json.dumps(matching, indent=2) + "\n")
         except (ImportError, ValueError) as error:
             (args.output / "accessibility.json").write_text(json.dumps({"pending": str(error)}))
+        if args.close_settings:
+            assert_focus()
+            close = activation_request(display, selected, x.XInternAtom(display, b"WM_PROTOCOLS", 0))
+            close.client.data.longs[0] = x.XInternAtom(display, b"WM_DELETE_WINDOW", 0)
+            if not x.XSendEvent(display, selected, 0, 0, C.byref(close)):
+                raise RuntimeError("owned Settings close request failed")
+            x.XFlush(display)
+            (args.output / "close-request.json").write_text(json.dumps({
+                "owned_window": selected, "protocol": "WM_DELETE_WINDOW", "forced": False}, indent=2) + "\n")
         print("Captured application-only evidence; evaluate controls, focus and accessibility separately.")
     finally:
         x.XCloseDisplay(display)

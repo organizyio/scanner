@@ -318,6 +318,24 @@ def worker(binary, root, use_orca=False, observer_mode="attached"):
         settings = qualification.settings_directory(root) / "settings.yaml"
         if str(selected) not in settings.read_text():
             raise RuntimeError("Native selected root was not persisted")
+        settings_before = settings.read_bytes()
+        press("Settings")
+        subprocess.run([sys.executable, str(HERE / "platform-x11.py"), "--pid", str(gui.pid),
+                        "--output", str(root / "settings-window"), "--title", "Settings", "--keys", "Tab",
+                        "--close-settings"], env=env, check=True, timeout=20)
+        settings_snapshot = (root / "settings-window/accessibility.json").read_text()
+        if "Browse root 1" not in settings_snapshot or str(root / "scan-root") not in settings_snapshot:
+            raise RuntimeError("Native Settings controls/root were not captured")
+        deadline = time.monotonic() + 5
+        while find(app, "Browse root 1") is not None:
+            if gui.poll() is not None or time.monotonic() >= deadline:
+                raise RuntimeError("Owned Settings close did not preserve the running main window")
+            time.sleep(.05)
+            pump()
+        if settings.read_bytes() != settings_before:
+            raise RuntimeError("Opening/closing Settings changed the saved profile")
+        subprocess.run([sys.executable, str(HERE / "platform-x11.py"), "--pid", str(gui.pid),
+                        "--output", str(root / "after-settings"), "--keys", "ctrl+l"], env=env, check=True, timeout=20)
         # A tiny owned FIFO holds active extraction without a large workload.
         fifo = root / "scan-root" / "0-controlled-read"
         os.mkfifo(fifo)
@@ -371,6 +389,7 @@ def worker(binary, root, use_orca=False, observer_mode="attached"):
                   "native_atspi_press": True, "native_focus": True, "native_editable_text_interface": editable is not None,
                   "keyboard_edit": True, "keyboard_tree_focus_selection_details": True,
                   "native_profile_switch_restore": True, "native_pause_resume_cancel": True,
+                  "native_settings_window_keyboard_close": True, "settings_unchanged_after_close": True,
                   "native_process_restart_settings_partial_resume": True,
                   "renderer": "software" if env.get("LIBGL_ALWAYS_SOFTWARE") == "1" else "host-default",
                   "selected_root_persisted": True, "native_text_interface": native_text,
