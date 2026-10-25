@@ -145,3 +145,15 @@ application source. The reproduced stall ran with a locked, powered-off desktop.
 The runner now requires live desktop state and real window-manager activation;
 five final default-mode runs passed. Pending macOS/Retina evidence and broader reader
 gates remain separate; phase 4 and release acceptance are not complete.
+
+## Returned evidence and scale preparation
+
+[The offline returned-evidence verifier](returned-evidence.md) checks the existing
+Apple Silicon/Retina handoff format without extracting or executing its content.
+It reports integrity and coverage separately from owner review; hardware gates
+remain pending until actual returned evidence is reviewed.
+
+[The preferred Scanner scale harness](scale-testing.md) source-builds an isolated
+probe for repeated multiroot, slow-consumer, cancellation and failure-recovery
+runs. Measurements are synthetic observations, not performance improvement,
+GUI qualification, consumer adoption, runtime convergence or release acceptance.
