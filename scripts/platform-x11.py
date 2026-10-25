@@ -273,6 +273,7 @@ def main():
                     x.XFlush(display)
                     time.sleep(0.025)
                 time.sleep(1)
+        assert_focus()
         x.XGetGeometry.argtypes = [C.c_void_p, ulong, C.POINTER(ulong), C.POINTER(C.c_int),
                                   C.POINTER(C.c_int), C.POINTER(C.c_uint), C.POINTER(C.c_uint),
                                   C.POINTER(C.c_uint), C.POINTER(C.c_uint)]
@@ -326,6 +327,12 @@ def main():
             (args.output / "accessibility.json").write_text(json.dumps(matching, indent=2) + "\n")
         except (ImportError, ValueError) as error:
             (args.output / "accessibility.json").write_text(json.dumps({"pending": str(error)}))
+        assert_focus()
+        final_focus, revert = ulong(), C.c_int()
+        x.XGetInputFocus(display, C.byref(final_focus), C.byref(revert))
+        (args.output / "foreground-after.json").write_text(json.dumps({
+            "selected_window": selected, "window_manager_active": active_window(),
+            "x11_focus": final_focus.value, "owned_foreground": True}, indent=2) + "\n")
         if args.close_settings:
             assert_focus()
             close = activation_request(display, selected, x.XInternAtom(display, b"WM_PROTOCOLS", 0))
