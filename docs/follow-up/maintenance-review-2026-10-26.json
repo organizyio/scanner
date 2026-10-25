@@ -1,0 +1,123 @@
+{
+  "reviewed_at": "2026-10-26",
+  "review_before": "2026-11-24",
+  "scanner_revision": "1e27d747799b852da0e0b3e73987fc4d5599715e",
+  "decision": "Retain qualified pins and reviewed adaptations; no dependency adoption or policy extension",
+  "crates": {
+    "accesskit_unix": {
+      "latest_published": "0.24.0",
+      "checksum": "202f24df034a7476d07b7f74284de84f6d62aabd858dbe7ee9cad3b7ad6f8f9d",
+      "rust_version": "1.87",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/accesskit_unix/0.24.0",
+      "archive_sha256_verified": true
+    },
+    "accesskit_atspi_common": {
+      "latest_published": "0.21.0",
+      "checksum": "52c182f9c282ac9c5638d876d551d15e5f7d397ec263349a0c6a2b61595dd5e4",
+      "rust_version": "1.87",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/accesskit_atspi_common/0.21.0",
+      "archive_sha256_verified": true
+    },
+    "zvariant": {
+      "latest_published": "5.15.1",
+      "checksum": "80bf6d6cd6a4b601acb64cfb8284cdc643fcfa75ef26ae3c46ec8aa4e8a1fbb7",
+      "rust_version": "1.87",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/zvariant/5.15.1",
+      "archive_sha256_verified": true
+    },
+    "zbus_names": {
+      "latest_published": "4.3.5",
+      "checksum": "812a12be4ead7a59e18ea8f047d08add0066b73bc62fc1467066a2472ae088dd",
+      "rust_version": "1.87",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/zbus_names/4.3.5",
+      "archive_sha256_verified": true
+    },
+    "zvariant_derive": {
+      "latest_published": "5.15.1",
+      "checksum": "ef2672456ba1cb54b5eaec136e63135b3c7495fb938e53b28a62e633496d486d",
+      "rust_version": "1.87",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/zvariant_derive/5.15.1",
+      "archive_sha256_verified": true
+    }
+  },
+  "fyne": {
+    "v2.7.4": {
+      "module_sum": "h1:OVCI5mT+Onb2kA4wlmGA5pLCqKik9f4NDb5jiR1OMTc=",
+      "source_commit": "d9f0bebaa389f90e52882ee830323c9a73cd5a8e",
+      "archive_sha256": "e3674b4f6a6f3c6c04bf02fedd13e7995f201b20f31880e03aa73e2eee7856b3",
+      "loop_sha256": "d15914b9536c96cfdb7627b6b78b7ca3ad31b56428b2061f8421e93bbe859e45",
+      "channel_sha256": "eb341639ff16a05acb87580cb0011e0a8609a3a01a9d6ed5b2451353d96190fd",
+      "source": "https://github.com/fyne-io/fyne/blob/d9f0bebaa389f90e52882ee830323c9a73cd5a8e/internal/driver/glfw/loop.go",
+      "finding": "Retains queued stopped hook, raw unbounded-channel submission and output-length drain before Close; does not contain both required local shutdown corrections",
+      "native_qualification": "not attempted; not adopted"
+    },
+    "v2.8.2": {
+      "module_sum": "h1:gYNJj+ZEPd2wF3M8SlF5iL6febpZkZ1csheRFkuEfHU=",
+      "source_commit": "77c1fa8e0a50b6cbd04cd6c4454289e55a307a2d",
+      "archive_sha256": "6b0d3d9e3bb8cc539b3c3252f6f29a293d07009f4bb6a770edaaa8b0e81ae596",
+      "loop_sha256": "744f17cbbc9b72681530d5c9c5207493e5502e6d3168d5198548abaebe09af9b",
+      "channel_sha256": "eb341639ff16a05acb87580cb0011e0a8609a3a01a9d6ed5b2451353d96190fd",
+      "source": "https://github.com/fyne-io/fyne/blob/77c1fa8e0a50b6cbd04cd6c4454289e55a307a2d/internal/driver/glfw/loop.go",
+      "finding": "Retains queued stopped hook, raw unbounded-channel submission and output-length drain before Close; does not contain both required local shutdown corrections",
+      "native_qualification": "not attempted; not adopted"
+    }
+  },
+  "advisories": {
+    "RUSTSEC-2026-0370": {
+      "source": "https://rustsec.org/advisories/RUSTSEC-2026-0370.html",
+      "raw_source_sha256": "55991b6a4484c3541c8091cb16cf7446c8610de09ac642ab3ff88c332e394bf0",
+      "informational": "unmaintained",
+      "patched": []
+    },
+    "RUSTSEC-2026-0371": {
+      "source": "https://rustsec.org/advisories/RUSTSEC-2026-0371.html",
+      "raw_source_sha256": "3e618914dab3ef0d6d2434f42ac8aa1947cb1738fd156b4f0092d6c7ad53b394",
+      "informational": "unmaintained",
+      "patched": []
+    },
+    "RUSTSEC-2026-0372": {
+      "source": "https://rustsec.org/advisories/RUSTSEC-2026-0372.html",
+      "raw_source_sha256": "e03677b3351db11984e2fd3bd839b6368cfc3a93aca08c4401980264b228635d",
+      "informational": "unmaintained",
+      "patched": []
+    }
+  },
+  "source_review_only": true,
+  "dependency_files_changed": false,
+  "release_acceptance": false,
+  "accesskit_cache_fix": {
+    "upstream_pr": "https://github.com/AccessKit/accesskit/pull/819",
+    "merged_commit": "bffadacde348b0b73d3d7201bfb0b7f69a54b0bf",
+    "published_unix_archive_matches_original_unpatched_import": true,
+    "decision": "Retain reviewed cache-signal backport"
+  },
+  "fyne_upstream_pr": {
+    "url": "https://github.com/fyne-io/fyne/pull/6442",
+    "state": "closed",
+    "merged": false
+  },
+  "native_graph": {
+    "accesskit_unix": "0.24.0 plus reviewed cache patch",
+    "accesskit_atspi_common": "0.21.0",
+    "zvariant": "5.15.0",
+    "zvariant_derive": "5.15.0",
+    "zbus_names": "4.3.4",
+    "decision": "Retain exact qualified lock; newer deprecated patch releases do not resolve maintenance notices; upstream-compatible zbus 6 migration remains follow-up"
+  },
+  "unchanged_files_sha256": {
+    "Cargo.lock": "ee04c04ab2d732862620e8b2702affc973fe5ff58ae44675bf23871ff512fd71",
+    "Cargo.toml": "0627a28a81e78bff1f5b7aabe6014de395e6c2163fcdca0224c32d298f812976",
+    "compat/scan-engine/Cargo.lock": "34679e18806c5cc4f13e720a2cb67ca367823b62f27e480b53e2b55d55bd8de7",
+    "tools/project-catalog/go.mod": "5c0d8739337042d27bd9c0ecdbd17ca577f46a073679653f450b48f65c8f8100",
+    "tools/project-catalog/go.sum": "12356b6e64eb68f00809203a3d468d9e72c58c6ef94798df946ad305343db8e7",
+    "tools/project-catalog/native-a11y/Cargo.toml": "b2b0470320b43ce0eeecdae5a5b5258ab91e3fe8d77d02e6b8d0926989e16074",
+    "tools/project-catalog/native-a11y/Cargo.lock": "c5caa47e81060ceef9c02baa3d17e49945495af92f0e4f6ced488ca950fcabf4",
+    "tools/project-catalog/native-a11y/deny.toml": "06108fa77ad853b1a1abacf6e25fe784a5bfdcfcbcabc0e238b08fdd97f5ea55",
+    "scripts/check-native-advisories.py": "4bf06e25db2c8df23c2b00a203bdb938be5c8b888d20fdd1a43cf839d234fa6b"
+  }
+}

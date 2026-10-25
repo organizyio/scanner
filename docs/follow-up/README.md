@@ -9,10 +9,39 @@ Owner-approved implementation specification, 2026-10-15. Sole owner: @ArmanAvane
 | 1: contracts and licensing | Immutable baseline checks, golden fixtures, measured synthetic baseline, owner licensing grant | Merged ([PR #6](https://github.com/organizyio/scanner/pull/6)) | Baseline only | Not accepted |
 | 2: Go discovery | Worktrees/submodules; timeout/cancel; null unknown dirty; safe logger; sanitized remotes; shared markers; honest timestamps; visible partial results | Merged ([PR #8](https://github.com/organizyio/scanner/pull/8)) | Regression and native CLI checks passed; GUI gates remain separate | Not accepted |
 | 3: preferred execution | Queue bound 256; caller-thread callbacks; 100ms cancellation polling; stage checks; joined workers and failure cleanup | Merged ([PR #7](https://github.com/organizyio/scanner/pull/7)) | Deterministic execution and documented consumer flows qualified; broader native gates remain | Not accepted |
-| 4: platforms and Fyne | CLI matrix plus actual ACL denial; interactive GUI/keyboard/accessibility on macOS, Linux and Windows | Native bridge, lifecycle and keyboard corrections implemented ([PR #10](https://github.com/organizyio/scanner/pull/10)); host gates remain | [Exact host results and unavailable-host gates](platform-qualification.md) | Not accepted |
+| 4: platforms and Fyne | CLI matrix plus actual ACL denial; interactive GUI/keyboard/accessibility on macOS, Linux and Windows | Native bridge, lifecycle and keyboard corrections merged (PRs #10, #13–15); host gates remain | [Exact host results and unavailable-host gates](platform-qualification.md) | Not accepted |
 | 5: consumers | Exact-main candidate; real engine; fixture enrollment/inventory; isolated published Organizy Cargo patches; rollback; Archivist boundary | Qualification harness merged | Exact reviewed candidate qualified for documented flows; private results retained; production pins unchanged | Not accepted |
 
 Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only after exact-head checks pass. Missing native evidence keeps qualification pending rather than converting compilation into acceptance. Runtime convergence and publishing/releases are excluded.
+
+## Current qualification — 2026-10-26
+
+[The current register](current-qualification.json) identifies superseding evidence
+without rewriting historical runs or their hashes. Scanner main at review is
+`1e27d747799b852da0e0b3e73987fc4d5599715e` (PR #15). Phases 1–3 are
+implemented; phase 5 has scoped candidate evidence and an unchanged production
+pin. Phase 4 remains incomplete.
+
+| Host or gate | Current qualification | Remaining boundary |
+| --- | --- | --- |
+| Linux x86_64, GNOME/Xwayland | [Five guarded default accelerated runs](linux-default-rendering.md), including Settings keyboard/native close, lifecycle/restart, attached/detached observers and silent Orca | Only this live desktop/renderer; other desktops need readiness observers; native Wayland unsupported |
+| Windows x86_64 | [26 native shutdown runs](windows-shutdown.md), UIA controls/text, keyboard, Settings, restart and observer ordering | Recorded host scope; broader spoken-reader usability unqualified |
+| Intel macOS, actual 1x | [Native AX flow, shutdown matrix and actual active-I/O checkpoint shutdown](linux-macos-replay.md) | Does not qualify arm64 or Retina |
+| macOS arm64 | Awaiting external native qualification feedback | Pending; compilation and Intel runs cannot close it |
+| Actual Retina 2x and display transitions | Awaiting real-display screenshots, geometry and interaction evidence | Pending; transform tests cannot close it |
+| Broader spoken-reader usability | Native protocol evidence only | Unqualified; additional spoken testing deferred |
+
+The older Linux GPU/default-presentation failure and Windows observer-detach
+failure are retained below as historical observations. PR #13 repaired Windows
+shutdown, PR #14 replayed Linux/Intel Mac, and PR #15 established live Linux
+desktop/foreground proof. They are not current unresolved defects on those
+qualified hosts. The Linux application and rendering defaults were unchanged.
+
+[Dependency maintenance review](maintenance-review-2026-10-26.md) records current
+published sources and keeps the existing adaptations and November 24 review
+cutoff. Consumer refresh results are tracked separately from GUI qualification.
+Production adoption, runtime convergence, publication and release acceptance
+remain excluded.
 
 ## Contracts and intentional corrections
 
@@ -46,14 +75,16 @@ Consumer qualification uses exact candidate SHA ancestry from reviewed Scanner m
 
 [Phase 3 measurements](phase3-measurements.json) use the same 4096-file synthetic fixture as the [baseline](baseline-measurements.json), with normalized CLI contracts exactly equal. On one local debug run, baseline versus candidate elapsed time was 0.214s / 0.190s, first record 0.041s / 0.017s and peak RSS 10,792,960 / 9,162,752 bytes. Interruption after the first record returned 130 in both runs (0.0019s / 0.0172s). These single-run observations establish neither a performance improvement nor a worst-case cancellation bound. Deterministic tests establish early delivery, the 256-record queue bound and worker cleanup independently of timing. Active extraction, OS calls and callbacks remain non-preemptible.
 
-## Phase 4 completion qualification
+<a id="phase-4-completion-qualification"></a>
+
+## Historical phase 4 completion candidate (before PRs #11–15)
 
 [The platform register](platform-results.json) retains the earlier baseline and adds development evidence separately. Native filesystem probes now cover disappearing files, symlink hashing, cancellation and reconstruction from a saved prefix plus an inclusive resumed suffix. Native `scan-cli fs` interruption retains its existing exit-zero partial-output convention; this does not change the catalog command's separate signal contract.
 
 | Interactive host | Recorded qualification | Remaining gate |
 | --- | --- | --- |
 | macOS x86_64, 1x display | Final native AX picker/value/focus/error and real permission warning; keyboard tree/details and distinct focus; retained earlier lifecycle/restart evidence with unchanged controller/scan code | Native Quit/Cmd+Q and active-extraction checkpoint shutdown passed on17ce; actual 2x display unavailable; additional reader behavior remains separately scoped |
-| Linux x86_64, Xwayland | Final native AT-SPI text/actions, picker/error, profiles, keyboard tree/details, pause/resume/cancel and actual process restart; silent Orca app/error/tree navigation; correct native cache wire signatures | Qualified with child-only software rendering; hardware-accelerated host driver stalled in GLFW and remains unqualified |
+| Linux x86_64, Xwayland | Final native AT-SPI text/actions, picker/error, profiles, keyboard tree/details, pause/resume/cancel and actual process restart; silent Orca app/error/tree navigation; correct native cache wire signatures | At this historical candidate: software rendering passed; accelerated/default gate lacked later live-desktop proof. Superseded by the current register |
 | Windows x86_64 | Final UIA picker/value/focus/error, Unicode roots, profiles, keyboard tree/details, distinct focus and process restart/settings/partial resume; earlier lifecycle evidence with unchanged controller/scan code | Spoken reader/caret behavior is outside the recorded scope |
 | macOS arm64 | No interactive evidence from the available Intel host | Pending interactive arm64 host |
 
@@ -67,30 +98,32 @@ checkpoint flush. No Fyne wrong-thread diagnostics occurred in those final
 probes. The earlier shutdown failure remains historical evidence. Interactive
 macOS arm64 remains explicitly pending; release acceptance remains separate.
 
-## Post-PR #10 follow-up
+<a id="post-pr-10-follow-up"></a>
+
+## Historical post-PR #10 follow-up
 
 [2026-10-24 qualification](post-pr10-results.md) records the consumer refresh,
 explicit accelerated Linux mode, bounded native text ranges and feedback events,
-and upstream maintenance review. Unavailable macOS gates, default Linux
-presentation, Windows observer-detach timing and broader reader behavior remain
-explicitly pending. The original evidence above remains historical and intact.
-
-[Post-PR #10 follow-up results](post-pr10-results.md) record the subsequent
-consumer refresh, explicit accelerated Linux mode, native text/event scope and
-backport maintenance review. Missing hosts and unresolved cases remain pending.
+and upstream maintenance review. At that revision, default Linux presentation
+and Windows observer-detach timing were pending. Later records supersede those
+two gates for their tested scope; unavailable macOS and broader reader gates
+remain open. The original evidence remains intact.
 
 [Windows shutdown repair and exact-source results](windows-shutdown.md) record
-the subsequent Fyne queue correction and 26 passing native runs. The unavailable
-macOS gates, Linux default presentation and other-host replay remain pending.
+the subsequent Fyne queue correction and 26 passing native runs. At that point,
+Linux default presentation and other-host replay were still pending; PRs #14–15
+subsequently supplied the recorded host evidence. Unavailable macOS gates remain.
 
-## Linux and available Mac replay after PR #13
+<a id="linux-and-available-mac-replay-after-pr-13"></a>
+
+## Historical Linux and available Mac replay after PR #13
 
 [2026-10-25 native replay](linux-macos-replay.md) records the unchanged merged
 application with its Fyne shutdown adaptation on Linux and the available Intel
 Mac. The runners distinguish observer ordering, actual native operation and
-filesystem checks from compilation. Default Linux presentation remains an
-unresolved failure; unavailable macOS arm64/Retina and broader reader gates
-remain pending. Production adoption, runtime convergence and release acceptance
+filesystem checks from compilation. That record predates the live-desktop
+investigation; its Linux default failure is superseded within PR #15 scope.
+Unavailable macOS arm64/Retina and broader reader gates remain pending. Production adoption, runtime convergence and release acceptance
 are unchanged.
 
 ## Linux default-mode gate after live desktop verification

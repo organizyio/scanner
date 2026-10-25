@@ -124,3 +124,10 @@ See the [repository consolidation record](docs/consolidation/README.md) for the 
 
 See [ZIP dependency security maintenance](docs/follow-up/zip-security.md) for the
 reviewed metadata upgrade and its qualification boundaries.
+
+## Implementation qualification
+
+[Current qualification and remaining gates](docs/follow-up/README.md#current-qualification--2026-10-26)
+separate recorded native/consumer evidence from unavailable hardware, production
+adoption, runtime convergence and release acceptance. Historical source evidence
+and failed runs remain retained.
