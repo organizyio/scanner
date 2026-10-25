@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 import re
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -144,8 +145,14 @@ def run_case(args, name, mode, scenario):
         if fifo is not None:
             fifo.unlink(missing_ok=True)
         if gui.poll() is None:
-            gui.kill()
-            gui.wait(timeout=5)
+            # Only after failure: preserve the owned process's Go stacks before
+            # cleanup. Diagnostic exit or forced cleanup never counts as a pass.
+            gui.send_signal(signal.SIGQUIT)
+            try:
+                gui.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                gui.kill()
+                gui.wait(timeout=5)
             (root / "forced-cleanup.json").write_text(
                 json.dumps({"pid": gui.pid, "forced": True})
             )
