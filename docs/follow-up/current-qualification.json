@@ -1,0 +1,78 @@
+{
+  "reviewed_at": "2026-10-26",
+  "scanner_main_at_review": "1e27d747799b852da0e0b3e73987fc4d5599715e",
+  "status": "Implementation merged; recorded host and consumer flows qualified; phase 4 remains incomplete",
+  "phases": {
+    "1": "implemented",
+    "2": "implemented",
+    "3": "implemented",
+    "4": "incomplete: unavailable hardware and broader reader gates",
+    "5": "scoped candidate qualification; no production adoption"
+  },
+  "native_evidence": {
+    "linux-x86_64": {
+      "record": "linux-default-results.json",
+      "status": "default accelerated rendering qualified on recorded live GNOME/Xwayland host",
+      "runs": 5,
+      "scope": "Readiness sampled; actual window-manager foreground verified before and after captures; application/rendering defaults unchanged"
+    },
+    "windows-x86_64": {
+      "record": "windows-shutdown-results.json",
+      "status": "recorded UIA/keyboard/lifecycle and observer-ordering scope qualified",
+      "shutdown_runs": 26
+    },
+    "macos-x86_64-1x": {
+      "record": "linux-macos-results.json",
+      "status": "recorded AX/keyboard/lifecycle/filesystem scope qualified; actual active-reader barrier and checkpoint shutdown passed"
+    }
+  },
+  "pending": [
+    {
+      "gate": "macos-arm64-interactive",
+      "status": "pending external feedback"
+    },
+    {
+      "gate": "actual-Retina-2x-and-display-transitions",
+      "status": "pending external feedback"
+    },
+    {
+      "gate": "broader-spoken-reader-usability",
+      "status": "unqualified; additional spoken testing deferred"
+    }
+  ],
+  "unsupported": [
+    "Native Wayland",
+    "Linux desktops without a readiness observer",
+    "Ambiguous repeated-text anchors, multiline/CRLF, password and oversized entry range actions"
+  ],
+  "historical_register": "platform-results.json",
+  "historical_failures": "Retained with exact source/hash evidence; Linux default and Windows observer-detach gates superseded only within current native_evidence scope",
+  "dependency_review": "maintenance-review-2026-10-26.md",
+  "private_history_included": false,
+  "production_pin_adoption": false,
+  "runtime_convergence": false,
+  "release_publication": false,
+  "release_acceptance": false,
+  "catalog_toolkit_tree": "02125a61b9dfe5c29729b2431a560e00a04702ec",
+  "source_equivalence": "Entire catalog/native/toolkit tree equals native-tested b81f822 (Windows) and f1c0958 (Linux/Intel Mac application). PR #15 changed Linux qualification guards, not application code.",
+  "consumer_evidence": {
+    "existing_record": "post-pr10-results.json",
+    "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
+    "refresh_candidate": "1e27d747799b852da0e0b3e73987fc4d5599715e",
+    "refresh_record": "https://github.com/organizyio/organizy-scan/pull/9",
+    "scope": "Harness runs and source-equivalence do not adopt production pins or qualify GUI/live providers",
+    "refresh_status": "passed for documented implementation flows",
+    "exact_candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40230583741",
+    "ci_jobs_passed": 3,
+    "prototype": {
+      "local_files": 2,
+      "inventory_files": 2,
+      "matched": true,
+      "pending_batches": 0
+    },
+    "isolated_organizy": "All eight Scanner package origins verified; worker tests/build and all three required native managed tests passed",
+    "unchanged_pin_rollback": "Fresh locked worker tests/build and all three required native tests passed; original lock, manifest and embedded binary restored",
+    "explicit_skip": "Interactive system-vault test; not required native Scanner tests",
+    "production_pin_changed": false
+  }
+}

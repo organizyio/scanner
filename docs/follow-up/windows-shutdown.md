@@ -44,8 +44,9 @@ matrix after a relevant correction.
 
 Raw stacks, personal paths, screenshots and recovery history stay outside public
 Git. Public results retain only sanitized observations and evidence hashes.
-macOS arm64/Retina, Linux default rendering and broader accessibility gates remain
-pending. No release is published or accepted through this work.
+At this historical revision, macOS arm64/Retina, Linux default rendering and
+broader accessibility gates were pending. The [current register](current-qualification.json)
+identifies subsequent host results and remaining gates. No release is published or accepted through this work.
 
 ## Observed acceptance
 
@@ -63,4 +64,6 @@ scenarios and native replay of the modified toolkit on other hosts remain separa
 
 [The Linux and available Mac replay](linux-macos-replay.md) subsequently tests
 the unchanged application/toolkit tree on those hosts. That scoped evidence does
-not close unavailable macOS hardware, default Linux presentation or release gates.
+not close unavailable macOS hardware or release gates. The later
+[live Linux follow-up](linux-default-rendering.md) supplies guarded default-mode
+evidence for its recorded host.

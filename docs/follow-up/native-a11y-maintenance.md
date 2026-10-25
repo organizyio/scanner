@@ -1,6 +1,6 @@
 # Native accessibility dependency maintenance
 
-Reviewed 2026-10-24. The isolated native bridge remains source-built with Rust
+Original review 2026-10-24; [refreshed source review, 2026-10-26](maintenance-review-2026-10-26.md). The isolated native bridge remains source-built with Rust
 1.88; production Scanner consumer pins are unchanged. AccessKit pins and the
 reviewed backport remain unchanged; separate metadata ZIP security maintenance
 is recorded in [its review](zip-security.md).
@@ -8,7 +8,7 @@ is recorded in [its review](zip-security.md).
 ## AccessKit Unix backport
 
 The [upstream cache fix](https://github.com/AccessKit/accesskit/pull/819) is merged
-as `bffadacde348b0b73d3d7201bfb0b7f69a54b0bf`. The latest published Unix release
+as `bffadacde348b0b73d3d7201bfb0b7f69a54b0bf`. At the original review, the latest published Unix release
 verified through the [upstream release list](https://github.com/AccessKit/accesskit/releases)
 is still `accesskit_unix-v0.24.0`. That original release predates the fix.
 Retain the reviewed backport and its immutable archive/file provenance.

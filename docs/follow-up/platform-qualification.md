@@ -2,7 +2,8 @@
 
 Implementation qualification and release acceptance are separate. A successful
 cross-build, widget test, or headless run does not qualify interactive Fyne use.
-The [qualification register](platform-results.json) records exact tested source
+The [current register](current-qualification.json) selects the latest scoped evidence;
+the [historical register](platform-results.json) retains exact tested source
 revisions and distinguishes CLI, compilation, interaction and accessibility.
 
 ## Reproduce safely
@@ -101,7 +102,9 @@ replacement inventory. Compare the deduplicated union of the saved prefix and
 resumed suffix with an uninterrupted inventory. Active filesystem calls are not
 preempted: cancellation stops subsequent work after the call returns.
 
-## Explicit Linux modes and extended text evidence
+<a id="explicit-linux-modes-and-extended-text-evidence"></a>
+
+## Historical explicit Linux modes and extended text evidence
 
 The [post-PR #10 record](post-pr10-results.md) qualifies accelerated Mesa/Xwayland
 with `--rendering hardware-no-vsync`. The runner verifies acceleration before
@@ -129,8 +132,9 @@ unavailable arm64/Retina hardware and release acceptance remain separate gates.
 [The follow-up](linux-macos-replay.md) replays the merged Fyne adaptation on
 Linux and macOS x86_64, including native lifecycle, keyboard, text and filesystem
 checks. Its normalized results distinguish observer-attached and detached
-shutdown, explicit accelerated/software modes and the unresolved Linux default
-presentation failure. Unavailable macOS hardware and release acceptance remain
+shutdown and historical accelerated/software-mode observations. The subsequent
+live-desktop investigation below supersedes its default-presentation gate for
+the recorded host. Unavailable macOS hardware and release acceptance remain
 separate.
 
 ## Current Linux default-mode qualification

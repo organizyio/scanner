@@ -91,7 +91,9 @@ that the host accessibility state is unchanged. Neither this runner nor the Mac
 runner modifies user ScannerApp settings. Raw logs, screenshots, personal paths
 and access details remain outside public Git.
 
-## Remaining gates
+<a id="remaining-gates"></a>
+
+## Historical remaining gates at PR #14
 
 Default Linux presentation remains **failed/unqualified**, not unavailable hardware.
 The full flow again stalls with the application in GLFW `MakeContextCurrent`;
