@@ -92,3 +92,12 @@ filesystem checks from compilation. Default Linux presentation remains an
 unresolved failure; unavailable macOS arm64/Retina and broader reader gates
 remain pending. Production adoption, runtime convergence and release acceptance
 are unchanged.
+
+## Linux default-mode gate after live desktop verification
+
+[The live desktop follow-up](linux-default-rendering.md) qualifies default
+accelerated rendering on the recorded Ubuntu/GNOME Xwayland host with unchanged
+application source. The reproduced stall ran with a locked, powered-off desktop.
+The runner now requires live desktop state and real window-manager activation;
+five final default-mode runs passed. Pending macOS/Retina evidence and broader reader
+gates remain separate; phase 4 and release acceptance are not complete.

@@ -57,3 +57,8 @@ The recorded Windows scope does not qualify other hosts or release acceptance.
 operation evidence for the unchanged toolkit adaptation. Its default Linux
 presentation failure, unavailable hardware and broader reader gates remain
 explicit. It does not retire either reviewed dependency adaptation.
+
+[The live Linux desktop follow-up](linux-default-rendering.md) subsequently
+qualifies default-mode presentation with unchanged toolkit/bridge source. It
+adds readiness and actual foreground guards to qualification; it does not retire
+reviewed dependency adaptations or approve releases.

@@ -267,5 +267,6 @@
     }
   },
   "platforms_record_scope": "Historical pre-bridge baseline, retained unchanged. Later completion_candidate_run and follow-up records attest only their exact revisions; current_native_followup identifies the latest Linux and available Mac replay.",
-  "current_native_followup": "linux-macos-results.json"
+  "current_native_followup": "linux-macos-results.json",
+  "current_linux_followup": "linux-default-results.json"
 }

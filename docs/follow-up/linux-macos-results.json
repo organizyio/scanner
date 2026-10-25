@@ -434,5 +434,8 @@
   "runtime_convergence": false,
   "production_pin_adoption": false,
   "release_publication": false,
-  "release_acceptance": false
+  "release_acceptance": false,
+  "historical_record": true,
+  "current_linux_followup": "linux-default-results.json",
+  "linux_evidence_scope_note": "Earlier native protocol/mode observations retained. These runs lacked live-desktop/window-manager proof; use the current Linux follow-up for default-mode interactive qualification."
 }

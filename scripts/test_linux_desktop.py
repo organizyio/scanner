@@ -32,6 +32,7 @@ class DesktopTests(unittest.TestCase):
             with (
                 patch.object(session, "DesktopMonitor", side_effect=factory),
                 patch.object(session, "bus_status", return_value="(<false>,)"),
+                patch.object(session.os, "getuid", return_value=1000, create=True),
                 patch.object(session.subprocess, "Popen") as spawn,
             ):
                 with self.assertRaisesRegex(RuntimeError, "locked"):
