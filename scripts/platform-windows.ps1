@@ -5,12 +5,21 @@ param(
     [string]$CliBinary,
     [ValidatePattern('^(start|pause|resume|cancel|restart|settings|picker|announcements|textselection|keyboard|lifecycle|profile|processrestart|quit|quitshortcut)(,(start|pause|resume|cancel|restart|settings|picker|announcements|textselection|keyboard|lifecycle|profile|processrestart|quit|quitshortcut))*$')]
     [string]$Actions='start',
+    [ValidateSet('attached','detach-before-quit','none')][string]$ObserverMode='attached',
+    [string]$DebuggerPath='',
+    [ValidateRange(0,10)][int]$ObserverCycles=0,
     [switch]$Interactive,
     [string]$RunId=''
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'windows-qualification-stages.ps1')
+if ($ObserverMode -eq 'none' -and ($Actions.Split(',') -contains 'announcements' -or $ObserverCycles)) {
+    throw 'Announcements and observer cycles require an observer'
+}
+if (($ObserverCycles -or $ObserverMode -eq 'detach-before-quit') -and -not @($Actions.Split(',') | Where-Object { $_ -eq 'quit' -or $_ -eq 'quitshortcut' }).Count) { throw 'Observer shutdown qualification requires a final Quit action' }
 $Binary = (Resolve-Path -LiteralPath $Binary).Path
 $Fixture = (Resolve-Path -LiteralPath $Fixture).Path
+if ($DebuggerPath) { $DebuggerPath = (Resolve-Path -LiteralPath $DebuggerPath).Path }
 if (-not (Test-Path -LiteralPath (Join-Path $Fixture 'qualification-fixture.json'))) {
     throw 'Prepare an isolated synthetic fixture before GUI launch'
 }
@@ -27,6 +36,10 @@ if (-not $Interactive) {
     $argsText = '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $PSCommandPath + '" -Binary "' + $Binary + '" -Fixture "' + $Fixture + '" -Interactive'
     if ($CliBinary) { $argsText += ' -CliBinary "' + (Resolve-Path -LiteralPath $CliBinary).Path + '"' }
     $argsText += ' -Actions "' + $Actions + '" -RunId "' + $RunId + '"'
+    $argsText += ' -ObserverMode ' + $ObserverMode + ' -ObserverCycles ' + $ObserverCycles
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'windows-ui') -Force | Out-Null
+    $stageFile = Join-Path $Fixture 'windows-ui/deadline.json'
+    if (Test-Path -LiteralPath $stageFile) { Move-Item -LiteralPath $stageFile -Destination ($stageFile + '.previous-' + [guid]::NewGuid().ToString('N')) }
     $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argsText
     $principal = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive
     try {
@@ -34,10 +47,53 @@ if (-not $Interactive) {
         Start-ScheduledTask -TaskName $task
         $deadline = (Get-Date).AddSeconds(90)
         do {
-            Start-Sleep -Milliseconds 500
-            $state = (Get-ScheduledTask -TaskName $task).State
-        } while ((-not (Test-Path -LiteralPath $report) -or $state -eq 'Running') -and (Get-Date) -lt $deadline)
-        if ($state -eq 'Running') { throw 'Interactive qualification timed out' }
+            Start-Sleep -Milliseconds 100
+            $expired = Read-QualificationDeadline (Join-Path $Fixture 'windows-ui') $RunId
+            if ($expired) {
+                $failure = @{run_id=$RunId; gui_qualification='pending'; stage=$expired.stage;
+                    error=('Native stage exceeded eight seconds: ' + $expired.stage); elapsed_ms=$expired.elapsed_ms; release_acceptance=$false}
+                $failure | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $Fixture 'windows-ui/deadline-failure.json')
+                $failure | ConvertTo-Json | Set-Content -Encoding UTF8 $report
+                # Diagnostics run only after failure, against this nonce's owned processes.
+                $ownedFile = Join-Path $Fixture 'windows-ui/process.json'
+                $owned = Get-Content -LiteralPath $ownedFile -Raw | ConvertFrom-Json
+                if ($owned.run_id -eq $RunId) {
+                    $targets = @(@{id=$owned.pid; ticks=$owned.start_ticks; name='app'},
+                        @{id=$expired.runner_pid; ticks=$expired.runner_start_ticks; name='runner'})
+                    $gdb = if ($DebuggerPath) { @{Source=$DebuggerPath} } else { Get-Command gdb.exe -ErrorAction SilentlyContinue }
+                    foreach ($target in $targets) {
+                        $observed = Get-Process -Id $target.id -ErrorAction SilentlyContinue
+                        if ($gdb -and $observed -and $observed.StartTime.ToUniversalTime().Ticks -eq $target.ticks) {
+                            $debugger = $null
+                            try {
+                                $debugger = Start-Process -FilePath $gdb.Source -ArgumentList @('-nx','-batch','-iex','"set auto-load off"','-iex','"set auto-solib-add off"','-ex','"set pagination off"','-ex','"thread apply all bt"','-p',([string]$target.id)) -PassThru -RedirectStandardOutput (Join-Path $Fixture ('windows-ui/' + $target.name + '-timeout-stacks.txt')) -RedirectStandardError (Join-Path $Fixture ('windows-ui/' + $target.name + '-debugger-stderr.txt'))
+                                $debuggerHandle = $debugger.Handle
+                                $completed = $debugger.WaitForExit(20000)
+                                if (-not $completed) { Stop-Process -Id $debugger.Id }
+                                @{completed=$completed; exit_code=$debugger.ExitCode} | ConvertTo-Json | Set-Content (Join-Path $Fixture ('windows-ui/' + $target.name + '-debugger-result.json'))
+                            } catch { $_ | Out-String | Set-Content (Join-Path $Fixture ('windows-ui/' + $target.name + '-diagnostic-error.txt')) }
+                            finally { if ($debugger -and -not $debugger.HasExited) { Stop-Process -Id $debugger.Id } }
+                        }
+                    }
+                }
+                @{run_id=$RunId} | ConvertTo-Json | Set-Content (Join-Path $Fixture 'windows-ui/diagnostics-complete.json')
+                throw $failure.error
+            }
+            # No scheduler RPC while monitoring native deadlines: use the owned
+            # runner's kernel process identity, then query task state after exit.
+            $runnerLive = $true
+            $runnerFile = Join-Path $Fixture 'windows-ui/runner.json'
+            if (Test-Path -LiteralPath $runnerFile) {
+                $runnerRecord = Get-Content -LiteralPath $runnerFile -Raw | ConvertFrom-Json
+                if ($runnerRecord.run_id -ne $RunId) { throw 'Runner belongs to another run' }
+                $runnerProcess = Get-Process -Id $runnerRecord.pid -ErrorAction SilentlyContinue
+                $runnerLive = $runnerProcess -and $runnerProcess.StartTime.ToUniversalTime().Ticks -eq $runnerRecord.start_ticks
+            }
+        } while ((-not (Test-Path -LiteralPath $report) -or $runnerLive) -and (Get-Date) -lt $deadline)
+        if ($runnerLive) { throw 'Interactive qualification timed out' }
+        $taskEnd = (Get-Date).AddSeconds(5)
+        while ((Get-ScheduledTask -TaskName $task).State -eq 'Running' -and (Get-Date) -lt $taskEnd) { Start-Sleep -Milliseconds 100 }
+        if ((Get-ScheduledTask -TaskName $task).State -eq 'Running') { throw 'Owned runner exited but task did not finish' }
         $exitCode = (Get-ScheduledTaskInfo -TaskName $task).LastTaskResult
         if ($exitCode -ne 0) { throw ('Interactive runner failed with task exit code ' + $exitCode) }
         if (-not (Test-Path -LiteralPath (Join-Path $Fixture 'windows-ui/report.json'))) {
@@ -66,6 +122,7 @@ New-Item -ItemType Directory -Path $out -Force | Out-Null
 $process = $null
 try {
     if (-not [Environment]::UserInteractive) { throw 'No interactive desktop token' }
+    @{run_id=$RunId; pid=$PID; start_ticks=(Get-Process -Id $PID).StartTime.ToUniversalTime().Ticks} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'runner.json')
     $python = (Get-Command python).Source
     foreach ($item in @{'HOME'='home'; 'USERPROFILE'='home'; 'APPDATA'='config'; 'LOCALAPPDATA'='local'; 'XDG_CONFIG_HOME'='config'; 'XDG_CACHE_HOME'='cache'; 'XDG_DATA_HOME'='data'}.GetEnumerator()) {
         $directory = Join-Path $Fixture $item.Value
@@ -204,34 +261,20 @@ public class QualificationWindow {
         } while ((Get-Date) -lt $deadline)
         throw ('Expected ' + $prefix + ', observed native status: ' + $status)
     }
-    $qualified = @{}
-    $quitObserved = $false
-    # Use native UIA Invoke actions: changed layouts cannot click another control.
-    $names = @{start='Start'; restart='Start (Resume)'; pause='Pause'; resume='Resume'; cancel='Cancel'; settings='Settings'}
-    $sequence = 0
-    foreach ($action in $Actions.Split(',')) {
-        if ($action -eq 'quit' -or $action -eq 'quitshortcut') {
-            if ($action -ne $Actions.Split(',')[-1]) { throw 'Quit must be the final action' }
-            Require-OwnedForeground
-            $exitHandle = $process.Handle
-            $quitTimer = [Diagnostics.Stopwatch]::StartNew()
-            @{pid=$process.Id; started_utc=[DateTime]::UtcNow.ToString('o')} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'quit-start.json')
-            $quitInvokeError = $null
-            try {
-                if ($action -eq 'quit') { Invoke-NativeControl 'Quit' }
-                else { [System.Windows.Forms.SendKeys]::SendWait('^q') }
-            } catch {
-                # UIA can disconnect while an invoked Quit is returning. Only a
-                # verified exit-zero process below can establish successful exit.
-                $quitInvokeError = $_.Exception.Message
-            }
-            if (-not $process.WaitForExit(8000)) { throw 'Owned native Quit did not terminate within eight seconds' }
-            [uint32]$nativeExitCode = 259
-            if (-not [QualificationWindow]::GetExitCodeProcess($exitHandle, [ref]$nativeExitCode) -or $nativeExitCode -ne 0) { throw ('Owned native Quit returned ' + $nativeExitCode) }
-            if ($quitInvokeError) { throw ('Exit zero observed, but native Quit Invoke failed: ' + $quitInvokeError) }
-            $quitObserved = $true
-            $qualified.quit = @{native_action=$action; exit_code=$nativeExitCode; forced=$false; elapsed_ms=$quitTimer.ElapsedMilliseconds; invoke_error=$quitInvokeError}
-        } elseif ($action -eq 'announcements') {
+    function Record-NativeStage([string]$name, [long]$start) {
+        $elapsed = ([Diagnostics.Stopwatch]::GetTimestamp() - $start) * 1000.0 / [Diagnostics.Stopwatch]::Frequency
+        @{run_id=$RunId;stage=$name;elapsed_ms=$elapsed} | ConvertTo-Json -Compress | Add-Content -Encoding UTF8 (Join-Path $out 'stage-timings.jsonl')
+        return $elapsed
+    }
+    function Stop-LiveObserver([string]$name) {
+        if (-not [ScannerLiveEvents]::IsListening) { return }
+        $start = Write-QualificationStage $out $RunId $name $true
+        try {
+            [ScannerLiveEvents]::Stop()
+            $elapsed = Record-NativeStage $name $start
+            if ($elapsed -ge 8000) { throw ($name + ' exceeded eight seconds') }
+        } finally { Write-QualificationStage $out $RunId $name $false $start | Out-Null }
+    }
             $references = @([System.Windows.Automation.AutomationElement].Assembly.Location, [System.Windows.Automation.AutomationEvent].Assembly.Location)
             Add-Type -ReferencedAssemblies $references @'
 using System;
@@ -242,12 +285,16 @@ public static class ScannerLiveEvents {
     static AutomationEventHandler handler;
     static AutomationEvent live = AutomationEvent.LookupById(20024);
     public static ConcurrentQueue<string> Messages = new ConcurrentQueue<string>();
+    public static bool IsListening { get { return handler != null; } }
     public static void Start(AutomationElement element, int pid) {
+        if (IsListening) throw new InvalidOperationException("Observer already attached");
+        var messages = new ConcurrentQueue<string>();
+        Messages = messages;
         root = element;
         handler = (sender,args) => {
             try {
                 var node = sender as AutomationElement;
-                if (node != null && node.Current.ProcessId == pid) Messages.Enqueue(node.Current.Name);
+                if (node != null && node.Current.ProcessId == pid) messages.Enqueue(node.Current.Name);
             } catch (ElementNotAvailableException) { }
         };
         Automation.AddAutomationEventHandler(live, root, TreeScope.Subtree, handler);
@@ -261,7 +308,60 @@ public static class ScannerLiveEvents {
     }
 }
 '@
-            [ScannerLiveEvents]::Start($element, $process.Id)
+
+
+    if ($ObserverMode -ne 'none') { [ScannerLiveEvents]::Start($element, $process.Id) }
+    $qualified = @{}
+    $quitObserved = $false
+    # Use native UIA Invoke actions: changed layouts cannot click another control.
+    $names = @{start='Start'; restart='Start (Resume)'; pause='Pause'; resume='Resume'; cancel='Cancel'; settings='Settings'}
+    $sequence = 0
+    foreach ($action in $Actions.Split(',')) {
+        if ($action -eq 'quit' -or $action -eq 'quitshortcut') {
+            if ($action -ne $Actions.Split(',')[-1]) { throw 'Quit must be the final action' }
+            Require-OwnedForeground
+            for ($cycle = 0; $cycle -lt $ObserverCycles; $cycle++) {
+                Stop-LiveObserver 'observer-detach'
+                [ScannerLiveEvents]::Start($element, $process.Id)
+                Invoke-NativeControl 'Add Folder'
+                $entry = Find-NativeControl 'Folder path: type a path, then Enter or Go'
+                $invalid = Join-Path $Fixture ('nonexistent-cycle-' + $cycle)
+                $entry.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($invalid)
+                Invoke-NativeControl 'Go'
+                $eventDeadline = (Get-Date).AddSeconds(4)
+                do {
+                    $received = @([ScannerLiveEvents]::Messages.ToArray() | Where-Object { $_ -like 'Cannot open folder:*' -and $_.Contains($invalid) }).Count -gt 0
+                    if (-not $received) { Start-Sleep -Milliseconds 100 }
+                } while (-not $received -and (Get-Date) -lt $eventDeadline)
+                if (-not $received) { throw 'Native event missing after observer reattachment' }
+                Invoke-NativeControl 'Cancel'
+            }
+            if ($ObserverCycles) { $qualified.observer_cycles = @{count=$ObserverCycles; reattached_events_verified=$true} }
+            if ($ObserverMode -eq 'detach-before-quit') { Stop-LiveObserver 'observer-detach' }
+            $quitStart = Write-QualificationStage $out $RunId 'quit' $true
+            $exitHandle = $process.Handle
+            @{pid=$process.Id; started_utc=[DateTime]::UtcNow.ToString('o')} | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'quit-start.json')
+            $quitInvokeError = $null
+            try {
+                if ($action -eq 'quit') { Invoke-NativeControl 'Quit' }
+                else { [System.Windows.Forms.SendKeys]::SendWait('^q') }
+            } catch {
+                # UIA can disconnect while an invoked Quit is returning. Only a
+                # verified exit-zero process below can establish successful exit.
+                $quitInvokeError = $_.Exception.Message
+            }
+            $invokeMs = Record-NativeStage 'quit-invoke' $quitStart
+            $remaining = [Math]::Max(0, 8000 - [int][Math]::Ceiling($invokeMs))
+            if ($remaining -eq 0 -or -not $process.WaitForExit($remaining)) { throw 'Owned native Quit did not terminate within eight seconds including invocation' }
+            [uint32]$nativeExitCode = 259
+            if (-not [QualificationWindow]::GetExitCodeProcess($exitHandle, [ref]$nativeExitCode) -or $nativeExitCode -ne 0) { throw ('Owned native Quit returned ' + $nativeExitCode) }
+            if ($quitInvokeError) { throw ('Exit zero observed, but native Quit Invoke failed: ' + $quitInvokeError) }
+            $elapsedMs = Record-NativeStage 'quit-total' $quitStart
+            if ($elapsedMs -ge 8000) { throw 'Owned native Quit exceeded total deadline' }
+            Write-QualificationStage $out $RunId 'quit' $false $quitStart | Out-Null
+            $quitObserved = $true
+            $qualified.quit = @{native_action=$action; exit_code=$nativeExitCode; forced=$false; elapsed_ms=$elapsedMs; invoke_ms=$invokeMs; invoke_error=$quitInvokeError; observer_mode=$ObserverMode}
+        } elseif ($action -eq 'announcements') {
             Invoke-NativeControl 'Start'
             Wait-NativeStatus 'finished' | Out-Null
             $deadline = (Get-Date).AddSeconds(4)
@@ -421,14 +521,22 @@ public static class ScannerLiveEvents {
         Save-WindowCapture 'window.png'
     }
     if ((Get-Content -LiteralPath (Join-Path $out 'stderr.txt') -Raw) -match 'Error in Fyne call thread') { throw 'Fyne wrong-thread diagnostic observed' }
-    @{system='Windows'; architecture=$env:PROCESSOR_ARCHITECTURE; interactive=$true;
+    Stop-LiveObserver 'observer-cleanup'
+    @{run_id=$RunId; observer_mode=$ObserverMode; system='Windows'; architecture=$env:PROCESSOR_ARCHITECTURE; interactive=$true;
       input=$Actions; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
         ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
 } catch {
+    # Preserve the failed stage for supervisor stack capture before owned cleanup.
+    # This wait occurs only after failure and never extends qualification limits.
+    $expiredOnFailure = Read-QualificationDeadline $out $RunId
+    if ($expiredOnFailure -and $Interactive) {
+        $diagnosticDeadline = (Get-Date).AddSeconds(60)
+        while (-not (Test-Path (Join-Path $out 'diagnostics-complete.json')) -and (Get-Date) -lt $diagnosticDeadline) { Start-Sleep -Milliseconds 100 }
+    }
     @{gui_qualification='pending'; error=$_.Exception.Message; release_acceptance=$false} |
         ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
     throw
 } finally {
-    try { if ('ScannerLiveEvents' -as [type]) { [ScannerLiveEvents]::Stop() } }
+    try { if (('ScannerLiveEvents' -as [type]) -and [ScannerLiveEvents]::IsListening) { Stop-LiveObserver 'observer-cleanup' } }
     finally { if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id } }
 }

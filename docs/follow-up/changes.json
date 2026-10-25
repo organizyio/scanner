@@ -423,6 +423,26 @@
         "full component and consumer requalification"
       ],
       "current_sha256": "c127c71aa1b6520e98e5fcc0eb013dc0b6ab6aa98f8ecb5ccc557872c9033e08"
+    },
+    "tools/project-catalog/go.mod": {
+      "phase": 4,
+      "reason": "Reviewed local Fyne 2.7.3 shutdown queue repair; module identities, versions and transitive graph retained, upstream BSD notices preserved.",
+      "tests": [
+        "Fyne async shutdown queue race regressions and negative control",
+        "Windows native shutdown matrix",
+        "GUI build matrix",
+        "consolidation verification"
+      ],
+      "current_sha256": "5c0d8739337042d27bd9c0ecdbd17ca577f46a073679653f450b48f65c8f8100"
+    },
+    "tools/project-catalog/.gitattributes": {
+      "phase": 4,
+      "reason": "Retain exact public Fyne snapshot bytes across hosts; upstream whitespace is attested rather than rewritten.",
+      "tests": [
+        "all vendored Git blobs match reviewed hashes",
+        "consolidation verification"
+      ],
+      "current_sha256": "129c39b5720f35943eb7cb63b472ce9fa8ae300a9e7b73f48401f4af5f7b47d4"
     }
   }
 }

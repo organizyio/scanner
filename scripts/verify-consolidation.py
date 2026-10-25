@@ -72,6 +72,7 @@ def verify_vendor(directory, register):
 
 vendor = ROOT / 'tools/project-catalog/native-a11y/vendor'
 verify_vendor(vendor / 'accesskit_unix', json.loads((vendor / 'provenance.json').read_text()))
+verify_vendor(ROOT / 'tools/project-catalog/third_party/fyne', json.loads((ROOT / 'tools/project-catalog/third_party/fyne-provenance.json').read_text()))
 for component in ('scan-engine', 'scan-fs'):
     assert not (ROOT / 'compat' / component / '.git').exists()
     assert not (ROOT / 'compat' / component / '.cursor').exists()

@@ -1,0 +1,96 @@
+{
+  "reviewed_at": "2026-10-25",
+  "tested_source_revision": "b81f822dc36103299d4522b6960d3cd98fe2231a",
+  "binary_sha256": "f8743fadb602286c5803929f9480adda07182f5312b6d89e3289e19ca0deda8c",
+  "build_id": "b81f822-windows-shutdown-20261025",
+  "production_source_files_verified": 2102,
+  "diagnostic_build_used_for_qualification": false,
+  "platform": {
+    "os": "Windows NT 10.0.26300.0",
+    "architecture": "x86_64",
+    "go": "1.26.2",
+    "rust": "1.88.0",
+    "gcc": "gcc.exe (Rev13, Built by MSYS2 project) 15.2.0"
+  },
+  "cause": "Fyne shutdown could strand accepted synchronous lifecycle work before output publication or while submission raced queue sealing.",
+  "correction": "Reviewed Fyne 2.7.3 adaptation: stopped hooks on app goroutine, atomic submission/sealing and complete end-of-stream cancellation acknowledgements.",
+  "matrix": {
+    "passed": true,
+    "process_runs": 26,
+    "cases": {
+      "detached": 10,
+      "attached": 5,
+      "shortcut": 5,
+      "no-observer": 5,
+      "reattach": 1
+    },
+    "quit_total_ms_min": 170.0781,
+    "quit_total_ms_max": 343.3401,
+    "observer_reattachment_cycles": 10,
+    "all_reattached_error_events_verified": true,
+    "all_natural_exit_zero": true,
+    "all_invocation_errors_absent": true,
+    "total_quit_and_detach_limit_ms": 8000
+  },
+  "extra_native_checks": {
+    "strict-extra": {
+      "quit_ms": 177.5243,
+      "native_text_and_keyboard_passed": true
+    },
+    "settings-quit": {
+      "quit_ms": 185.4653
+    }
+  },
+  "regressions": {
+    "old_drain_negative_control": "failed as expected: accepted callback stranded",
+    "corrected_async_race_tests": "passed on local Mac, native Windows and CI",
+    "native_windows_owner_thread_lifecycle": "passed",
+    "windows_gui_native_race_tests": "passed",
+    "cross_process_deadline_guard": "passed"
+  },
+  "windows_observer_detach_shutdown_gate": "passed for recorded host and source scope",
+  "formal_platform_qualification_complete": false,
+  "other_platform_scope": "Earlier macOS/Linux operation retains original revisions; toolkit adaptation is compiled/tested in CI but not replayed interactively on those hosts.",
+  "pending": [
+    "Interactive macOS arm64",
+    "Actual Retina 2x",
+    "Linux default presentation",
+    "Other-host native replay of the Fyne adaptation",
+    "Broader text ranges and spoken-reader usability"
+  ],
+  "private_history_included": false,
+  "production_pin_adoption": false,
+  "runtime_convergence": false,
+  "release_publication": false,
+  "release_acceptance": false,
+  "evidence_sha256": {
+    "failures.tar": "7a4369b989aab6eab110e55aa6feffb1cd00fe2063c21f1df0a124e907e01ed8",
+    "patched-ui-evidence.tar": "713b0e01b4f1cc9c0346d4c6d0d229cd0a97d60dc08de2c1cf6308f72e7a9860",
+    "fyne-negative-control.log": "4072de2d6ee20fa883b6040ef71b9d914b3e70ca39e318c40657bceadd6ca1a7",
+    "fyne-async-race.log": "4cfdd0550d15cd3c1fa1664a46316a7ff8456ffd5ed3c9af3f87f20bdd7eafbe",
+    "windows-regressions.log": "4063070fe2d4ef22571bcfa0f79db5bb1048ab5b98c477be278bc2e5bd1b9c0e",
+    "test-stages.log": "f33191f99708300342ceb764c0d280ff401f5c65284d47da0d85f9af86daab9c",
+    "cleanup.log": "ba4a1c72e8737674a85c990c07eba1c36dd350b7ab4b684d1262d02ec62e239b",
+    "distribution-notices.json": "606133cb4c4cabc417010b0150bdc4aa535edce736bcfdfddadca9b838afb034",
+    "host-final.log": "3972db5f9eb7f1ae2c3ad894df4c29b468ea2ab77a1cf7dd83f21937ef45c23e"
+  },
+  "qualification_harness_sha256": {
+    "platform-windows.ps1": "b5fcabc6cf792a04df42e4099068dcaec6753cacc6188c8282f978770e30efc1",
+    "windows-qualification-stages.ps1": "9d04c5c1f24d655542e24327505aa260449f9a0ae896f5b191407ba2bb727864",
+    "test-windows-qualification-stages.ps1": "3929ddd1d5b941101efd09febba619203e596dac727594e98aa8a7c6839332e6",
+    "qualify-windows-shutdown.ps1": "97dc1c7ce0f4f3f6ed4a7206af766fa0d8daedd6b2168c81d5c1b327f64c2284"
+  },
+  "cleanup": {
+    "owned_runs_checked": 59,
+    "owned_gui_processes_remaining": 0,
+    "owned_tasks_remaining": 0
+  },
+  "distribution_notices": {
+    "verified": true,
+    "retained": [
+      "Fyne BSD license",
+      "AUTHORS",
+      "Scanner MIT adaptation license"
+    ]
+  }
+}

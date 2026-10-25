@@ -17,4 +17,8 @@ roxmltree = "roxmltree"
 
 # Preserve exact upstream license/notice bytes; hashes are checked separately.
 [files]
-extend-exclude = ["licenses/upstream/**", "tools/project-catalog/native-a11y/vendor/**"]
+extend-exclude = [
+  "licenses/upstream/**",
+  "tools/project-catalog/native-a11y/vendor/**",
+  "tools/project-catalog/third_party/fyne/**",
+]

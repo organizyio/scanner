@@ -93,5 +93,8 @@
     "platform-windows.ps1": "becf8a6e9c3d4a826f4dafb38738b13c0c3301252929503624eaf00f4ea453fd",
     "platform-macos.swift": "258b3896d8f0598c82107b7a6cba707d7de1fe74ccd45822cb72c420fa3e8ad3",
     "platform-x11.py": "75b0e22587850546ff73a543e31beb67c87b602d072f94325c6d435ed26e3af7"
-  }
+  },
+  "historical_record": true,
+  "current_windows_followup": "windows-shutdown-results.json",
+  "source_scope": "This record attests PR #11; the subsequent Fyne adaptation changes the GUI dependency graph. Use the Windows follow-up for its tested scope."
 }

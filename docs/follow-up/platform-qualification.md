@@ -113,3 +113,13 @@ Announcement events. Windows `-Actions announcements,textselection,keyboard,quit
 checks live-region events, native ranges and quit with the observer attached.
 These checks do not establish spoken-reader usability or unavailable macOS
 arm64/Retina operation. Raw evidence remains private.
+
+## Windows shutdown repair, 2026-10-25
+
+The [Windows follow-up](windows-shutdown.md) closes the reproduced observer-detach
+shutdown gate on its exact candidate after a Fyne queue repair and 26 passing
+native runs. Earlier failure evidence remains retained. Additional native Unicode,
+keyboard and settings-window Quit checks passed. The shared toolkit adaptation is
+compiled and regression-tested across CI hosts; earlier macOS/Linux operational
+evidence remains tied to its prior revisions. Native replay on those hosts,
+unavailable arm64/Retina hardware and release acceptance remain separate gates.

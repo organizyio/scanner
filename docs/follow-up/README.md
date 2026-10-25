@@ -78,3 +78,7 @@ explicitly pending. The original evidence above remains historical and intact.
 [Post-PR #10 follow-up results](post-pr10-results.md) record the subsequent
 consumer refresh, explicit accelerated Linux mode, native text/event scope and
 backport maintenance review. Missing hosts and unresolved cases remain pending.
+
+[Windows shutdown repair and exact-source results](windows-shutdown.md) record
+the subsequent Fyne queue correction and 26 passing native runs. The unavailable
+macOS gates, Linux default presentation and other-host replay remain pending.

@@ -109,6 +109,10 @@ jobs:
         run: rustup toolchain install 1.88 --profile minimal --component clippy --component rustfmt --no-self-update
       - name: Validate and build native accessibility adapter
         run: python scripts/build-native-a11y.py --check
+      - name: Windows qualification supervisor regressions
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: powershell.exe -NoProfile -NonInteractive -File scripts/test-windows-qualification-stages.ps1
       - name: Windows native owner-thread and query-close lifecycle regression
         if: runner.os == 'Windows'
         working-directory: tools/project-catalog
@@ -133,6 +137,11 @@ jobs:
       - name: Linux real D-Bus cache-signal regression
         if: runner.os == 'Linux'
         run: python scripts/test-native-cache-signals.py
+      - name: Fyne shutdown queue regression and race tests
+        working-directory: tools/project-catalog/third_party/fyne
+        env:
+          CGO_ENABLED: '1'
+        run: go test -mod=readonly -race ./internal/async
       - name: Native GUI semantic and lifecycle regression tests
         working-directory: tools/project-catalog
         env:
