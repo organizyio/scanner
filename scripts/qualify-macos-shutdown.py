@@ -93,7 +93,23 @@ def run_case(args, name, mode, scenario):
         )
         try:
             if scenario == "active":
-                time.sleep(1)
+                # Prove Quit was actually invoked before releasing the read;
+                # helper startup/lookup time cannot stand in for I/O waiting.
+                invocation_deadline = time.monotonic() + 5
+                trace = root / "quit/native-stages.json"
+                while not trace.exists() or not any(
+                    value["stage"] == "native-press-returned"
+                    for value in json.loads(trace.read_text())
+                ):
+                    if (
+                        helper.poll() is not None
+                        or time.monotonic() >= invocation_deadline
+                    ):
+                        raise RuntimeError(
+                            "Quit was not invoked before active-read release"
+                        )
+                    time.sleep(0.02)
+                time.sleep(0.25)
                 if gui.poll() is not None:
                     raise RuntimeError("Quit preempted active extraction")
                 os.close(holder)
