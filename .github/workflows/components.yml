@@ -128,6 +128,11 @@ jobs:
         run: |
           clang -std=c11 -fblocks native-a11y/tests/macos_lifecycle.m -framework AppKit -framework Foundation -o "$RUNNER_TEMP/scanner-a11y-lifecycle"
           "$RUNNER_TEMP/scanner-a11y-lifecycle"
+      - name: Compile macOS native qualification helpers (interaction remains separate)
+        if: runner.os == 'macOS'
+        run: |
+          swiftc scripts/platform-macos.swift -o "$RUNNER_TEMP/scanner-ax-helper"
+          swiftc scripts/platform-macos-observer.swift -o "$RUNNER_TEMP/scanner-ax-observer"
       - name: Linux checked stale-window and concurrent close regression
         if: runner.os == 'Linux'
         working-directory: tools/project-catalog

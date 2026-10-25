@@ -60,3 +60,7 @@ the diagnostic capture and negative-control/race regressions. The private
 diagnostic executable was excluded from qualification. This closes the recorded
 Windows observer-detach shutdown gate for the tested scope. Other Fyne shutdown
 scenarios and native replay of the modified toolkit on other hosts remain separate.
+
+[The Linux and available Mac replay](linux-macos-replay.md) subsequently tests
+the unchanged application/toolkit tree on those hosts. That scoped evidence does
+not close unavailable macOS hardware, default Linux presentation or release gates.

@@ -15,6 +15,12 @@ guard CommandLine.arguments.count >= 3,
 let output = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
 try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 let application = AXUIElementCreateApplication(pid)
+var stages: [[String: Any]] = []
+func mark(_ name: String) {
+    stages.append(["stage": name, "monotonic_seconds": ProcessInfo.processInfo.systemUptime])
+    try? JSONSerialization.data(withJSONObject: stages, options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("native-stages.json"), options: .atomic)
+}
 let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
 let owned = windows.filter { $0[kCGWindowOwnerPID as String] as? Int32 == pid && $0[kCGWindowLayer as String] as? Int == 0 }
 let targetTitle = CommandLine.arguments.count > 4 ? CommandLine.arguments[4] : "Scanner"
@@ -41,9 +47,19 @@ func inspectWindows() -> [String: Any] {
     let appWindows = value(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
     return ["AXRole": "AXApplication", "children": appWindows.map { inspect($0) }]
 }
-let before = inspectWindows()
-try JSONSerialization.data(withJSONObject: before, options: [.prettyPrinted, .sortedKeys])
-    .write(to: output.appendingPathComponent("accessibility-before.json"))
+let quitOnly = CommandLine.arguments.count > 3 && ["cmd+q", "axpress:Quit"].contains(CommandLine.arguments[3])
+if !quitOnly {
+    mark("snapshot-start")
+    let before = inspectWindows()
+    try JSONSerialization.data(withJSONObject: before, options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("accessibility-before.json"))
+    mark("snapshot-finished")
+} else {
+    // Quit qualification already captured controls in its preceding interaction.
+    // Traversing every attribute of every window is unrelated to finding/invoking
+    // Quit and can consume the entire supervisor budget before an action is sent.
+    mark("quit-start")
+}
 if CommandLine.arguments.count > 3 {
     let codes: [String: CGKeyCode] = ["q": 12, "b": 11, "o": 31, "s": 1, "p": 35, "r": 15, "k": 40, "l": 37, "comma": 43, "a": 0, "tab": 48, "space": 49, "escape": 53, "return": 36,
                                     "left": 123, "right": 124, "down": 125, "up": 126]
@@ -59,6 +75,7 @@ if CommandLine.arguments.count > 3 {
     for key in CommandLine.arguments[3].split(separator: separator) {
         guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { fail("synthetic app lost focus; no input sent") }
         if key.hasPrefix("axpress:") || key.hasPrefix("axfocus:") || key.hasPrefix("axvalue|") || key.hasPrefix("axselect|") || key.hasPrefix("axhit:") {
+            mark("native-control-lookup")
             let parts = key.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
             let title = (key.hasPrefix("axvalue|") && parts.count == 3) || (key.hasPrefix("axselect|") && parts.count == 4) ? parts[1] : String(key.dropFirst(key.hasPrefix("axhit:") ? 6 : 8))
             func find(_ e: AXUIElement) -> AXUIElement? {
@@ -101,7 +118,9 @@ if CommandLine.arguments.count > 3 {
             } else if key.hasPrefix("axvalue|"), parts.count == 3 {
                 result = AXUIElementSetAttributeValue(control, kAXValueAttribute as CFString, parts[2] as CFString)
             } else {
+                mark("native-press-invoke")
                 result = AXUIElementPerformAction(control, kAXPressAction as CFString)
+                mark("native-press-returned")
             }
             guard result == .success else { fail("native accessible control action failed") }
             Thread.sleep(forTimeInterval: 0.5)
@@ -141,6 +160,7 @@ if CommandLine.arguments.count > 3 {
 if CommandLine.arguments.count > 3 {
     let requested = CommandLine.arguments[3]
     if requested == "cmd+q" || requested == "axpress:Quit" {
+        mark("native-exit-wait")
         let deadline = Date().addingTimeInterval(8)
         while Date() < deadline {
             if NSRunningApplication(processIdentifier: pid)?.isTerminated != false {

@@ -82,3 +82,13 @@ backport maintenance review. Missing hosts and unresolved cases remain pending.
 [Windows shutdown repair and exact-source results](windows-shutdown.md) record
 the subsequent Fyne queue correction and 26 passing native runs. The unavailable
 macOS gates, Linux default presentation and other-host replay remain pending.
+
+## Linux and available Mac replay after PR #13
+
+[2026-10-25 native replay](linux-macos-replay.md) records the unchanged merged
+application with its Fyne shutdown adaptation on Linux and the available Intel
+Mac. The runners distinguish observer ordering, actual native operation and
+filesystem checks from compilation. Default Linux presentation remains an
+unresolved failure; unavailable macOS arm64/Retina and broader reader gates
+remain pending. Production adoption, runtime convergence and release acceptance
+are unchanged.

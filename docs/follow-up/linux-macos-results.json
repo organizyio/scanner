@@ -1,0 +1,438 @@
+{
+  "reviewed_at": "2026-10-25",
+  "application_revision": "f1c09580c3e66ceb3b83601cc5869465f75a6608",
+  "catalog_toolkit_tree": "02125a61b9dfe5c29729b2431a560e00a04702ec",
+  "application_tree_unchanged_through_harness_revision": "bccc2d4708e97d2bafa8c159b63dae1f35ab815f",
+  "harness_revisions": {
+    "linux_full_flow": "9985196b2221ecd5d828f8bf8e0840c709281207",
+    "macos_idle_settings_modal_matrix": "903531e1e3a3e6f1b3762c0798ca428a0b072102",
+    "macos_active_reader_barrier": "bccc2d4708e97d2bafa8c159b63dae1f35ab815f"
+  },
+  "formal_platform_qualification_complete": false,
+  "macos": {
+    "os": "Version 15.8.1 (Build 24H32)",
+    "architecture": "x86_64",
+    "actual_display_scale": 1,
+    "go": "go version go1.27.2 darwin/amd64",
+    "rust": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+    "gui_sha256": "b2b19739307be80791a26e8ceaeb4217a09837913d794df0a605090fa2d59aec",
+    "cli_sha256": "fcd97f1552cda20f7fa3ed708c7f49ae70cf12d081efb3c8967c704029c32de6",
+    "full_native_flow": "passed: AX Unicode selection/caret, folder error/recovery, profiles, keyboard tree/focus/details, pause/resume/cancel, settings/checkpoint process restart, natural exit zero",
+    "accepted_shutdown_cases": [
+      {
+        "passed": true,
+        "observer_mode": "attached",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1664.9063319782726,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "attached",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1673.7412399961613,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "attached",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1672.7538629784249,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "attached",
+        "scenario": "settings",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 2518.6439840472303,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "attached",
+        "scenario": "modal",
+        "quit_method": "cmd+q",
+        "quit_ms": 809.1724810074084,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "detach-before-quit",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1684.751597000286,
+        "observer_detach_ms": 124.33771300129592,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "detach-before-quit",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1669.2325390176848,
+        "observer_detach_ms": 67.85236502764747,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "detach-before-quit",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1677.3066960158758,
+        "observer_detach_ms": 72.36917602131143,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "detach-before-quit",
+        "scenario": "settings",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 2529.6584549942054,
+        "observer_detach_ms": 73.21078196400777,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "detach-before-quit",
+        "scenario": "modal",
+        "quit_method": "cmd+q",
+        "quit_ms": 828.4198269830085,
+        "observer_detach_ms": 0.4128729924559593,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "none",
+        "scenario": "idle",
+        "quit_method": "cmd+q",
+        "quit_ms": 821.5840280172415,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "none",
+        "scenario": "idle",
+        "quit_method": "cmd+q",
+        "quit_ms": 778.7425990100019,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "none",
+        "scenario": "idle",
+        "quit_method": "cmd+q",
+        "quit_ms": 821.0478730034083,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "none",
+        "scenario": "settings",
+        "quit_method": "cmd+q",
+        "quit_ms": 810.8557949890383,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "none",
+        "scenario": "modal",
+        "quit_method": "cmd+q",
+        "quit_ms": 822.9143980424851,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "passed": true,
+        "observer_mode": "attached",
+        "scenario": "active",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1665.0045400019735,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": true
+      }
+    ],
+    "accepted_case_count": 16,
+    "accepted_quit_ms_range": [
+      778.7425990100019,
+      2529.6584549942054
+    ],
+    "active_case_scope": "Strict supplementary run replaces the original matrix active case: a write-only FIFO handle proves Scanner has a reader, actual AX Quit must return before release, natural exit and exact FIFO checkpoint are required.",
+    "observer_scope": "AXFocusedUIElementChanged/AXWindowCreated delivery; attached through Quit, detached before Quit, or absent; no speech",
+    "helper_failure_disposition": {
+      "status": "resolved",
+      "native_quit_invoked_before_original_deadline": false,
+      "unrelated_snapshot_ms": 7111.445375951007,
+      "correction": "Pure Quit omits full-tree pre-snapshot; total eight-second budget still includes lookup/invoke/exit. Failed runs retained."
+    }
+  },
+  "linux": {
+    "os": "Ubuntu 24.04.5 x86_64; Xwayland",
+    "kernel": "6.17.0-1033-oem",
+    "go": "go version go1.27.0 linux/amd64",
+    "native_rust": "1.88.0",
+    "renderer": "Radeon 8060S Graphics; radeonsi; Mesa 25.2.8",
+    "gui_sha256": "e1b73fbb649435a70c084266a0ba0ffa55fa6027b8bb1194a36a1c60cf5669f0",
+    "cli_sha256": "f82c58762859418f65742a36aab83b4fbe22bd966d147ddcc380ea9d8c305e0d",
+    "full_native_flow": "passed in explicit hardware-no-vsync and software modes; AT-SPI controls/Unicode ranges/Announcement events, profiles, keyboard tree/details/focus, lifecycle, restart/checkpoint and natural Quit",
+    "runs": {
+      "final-attached": {
+        "schema": 1,
+        "private_memory_bus": true,
+        "native_process_matched": true,
+        "native_atspi_press": true,
+        "native_focus": true,
+        "native_editable_text_interface": true,
+        "keyboard_edit": true,
+        "keyboard_tree_focus_selection_details": true,
+        "native_profile_switch_restore": true,
+        "native_pause_resume_cancel": true,
+        "native_process_restart_settings_partial_resume": true,
+        "renderer": "host-default",
+        "selected_root_persisted": true,
+        "native_text_interface": true,
+        "native_error_status": true,
+        "passed": true,
+        "release_acceptance": false,
+        "native_cache_wire": true,
+        "native_quit": {
+          "action": "AT-SPI Quit",
+          "exit_code": 0,
+          "forced": false,
+          "total_ms": 407.017248,
+          "limit_ms": 8000
+        },
+        "observer_mode": "attached",
+        "rendering": {
+          "mode": "hardware-no-vsync",
+          "child_vblank_mode": "0",
+          "child_software_override": null,
+          "host_environment_changed": false
+        }
+      },
+      "final-detached": {
+        "schema": 1,
+        "private_memory_bus": true,
+        "native_process_matched": true,
+        "native_atspi_press": true,
+        "native_focus": true,
+        "native_editable_text_interface": true,
+        "keyboard_edit": true,
+        "keyboard_tree_focus_selection_details": true,
+        "native_profile_switch_restore": true,
+        "native_pause_resume_cancel": true,
+        "native_process_restart_settings_partial_resume": true,
+        "renderer": "host-default",
+        "selected_root_persisted": true,
+        "native_text_interface": true,
+        "native_error_status": true,
+        "passed": true,
+        "release_acceptance": false,
+        "native_cache_wire": true,
+        "observer_detach_ms": 0.21721,
+        "native_quit": {
+          "action": "AT-SPI Quit",
+          "exit_code": 0,
+          "forced": false,
+          "total_ms": 405.907214,
+          "limit_ms": 8000
+        },
+        "observer_mode": "detach-before-quit",
+        "rendering": {
+          "mode": "hardware-no-vsync",
+          "child_vblank_mode": "0",
+          "child_software_override": null,
+          "host_environment_changed": false
+        }
+      },
+      "final-orca": {
+        "schema": 1,
+        "private_memory_bus": true,
+        "native_process_matched": true,
+        "native_atspi_press": true,
+        "native_focus": true,
+        "native_editable_text_interface": true,
+        "keyboard_edit": true,
+        "keyboard_tree_focus_selection_details": true,
+        "native_profile_switch_restore": true,
+        "native_pause_resume_cancel": true,
+        "native_process_restart_settings_partial_resume": true,
+        "renderer": "host-default",
+        "selected_root_persisted": true,
+        "native_text_interface": true,
+        "native_error_status": true,
+        "passed": true,
+        "release_acceptance": false,
+        "native_cache_wire": true,
+        "orca": {
+          "running": true,
+          "speech": false,
+          "braille": false,
+          "app_observed_in_log": true,
+          "error_observed_in_log": true,
+          "tree_focus_observed_in_log": true,
+          "cache_signature_warnings": 0,
+          "parent_lookup_exceptions": 0,
+          "announcements_and_caret": "not qualified"
+        },
+        "native_quit": {
+          "action": "AT-SPI Quit",
+          "exit_code": 0,
+          "forced": false,
+          "total_ms": 408.202913,
+          "limit_ms": 8000
+        },
+        "observer_mode": "attached",
+        "rendering": {
+          "mode": "hardware-no-vsync",
+          "child_vblank_mode": "0",
+          "child_software_override": null,
+          "host_environment_changed": false
+        }
+      },
+      "final-software": {
+        "schema": 1,
+        "private_memory_bus": true,
+        "native_process_matched": true,
+        "native_atspi_press": true,
+        "native_focus": true,
+        "native_editable_text_interface": true,
+        "keyboard_edit": true,
+        "keyboard_tree_focus_selection_details": true,
+        "native_profile_switch_restore": true,
+        "native_pause_resume_cancel": true,
+        "native_process_restart_settings_partial_resume": true,
+        "renderer": "software",
+        "selected_root_persisted": true,
+        "native_text_interface": true,
+        "native_error_status": true,
+        "passed": true,
+        "release_acceptance": false,
+        "native_cache_wire": true,
+        "native_quit": {
+          "action": "AT-SPI Quit",
+          "exit_code": 0,
+          "forced": false,
+          "total_ms": 405.831205,
+          "limit_ms": 8000
+        },
+        "observer_mode": "attached",
+        "rendering": {
+          "mode": "software",
+          "child_vblank_mode": null,
+          "child_software_override": "1",
+          "host_environment_changed": false
+        }
+      }
+    },
+    "host_accessibility_state_unchanged": true,
+    "default_presentation": {
+      "status": "failed/unqualified",
+      "observation": "Full native flow stalls with main thread in GLFW MakeContextCurrent; explicit no-vsync and software pass. Minimal Fyne window-lifecycle probe exits zero even in default mode; complete root cause is not established.",
+      "host_or_default_behavior_changed": false
+    }
+  },
+  "filesystem": {
+    "macos_x86_64": "passed",
+    "linux_x86_64": "passed",
+    "cases": [
+      "actual associated read denial",
+      "Unicode and symlink records",
+      "disappearing file",
+      "cancellation at checkpoint",
+      "saved prefix plus inclusive suffix inventory equivalence",
+      "native CLI SIGINT and SIGTERM partial output"
+    ],
+    "posix_locked_file": "not applicable; does not qualify Windows mandatory sharing"
+  },
+  "pending": [
+    "Interactive macOS arm64 host unavailable",
+    "Actual Retina 2x/display transitions unavailable",
+    "Linux default presentation failure unresolved",
+    "Native Wayland unsupported",
+    "Broader spoken-reader usability and intentionally unsupported text-range cases"
+  ],
+  "previous_windows_scope": "windows-shutdown-results.json",
+  "evidence_sha256": {
+    "mac-full-flow": "02ee4718b353a21ee012241ed7fbf670ef93c002a440adea69cc592d0bd7c691",
+    "mac-full-matrix": "d6d2d77f4eb89d4318c1ead28ae6766ec9c036862377aabba1a4d8b71e7fd9d3",
+    "mac-active-reader-barrier": "dcc601a7dcfda851b909475dbd70727e1c3b754311c3d3f6f050403f7a0a9ec7",
+    "mac-active-invocation-trace": "eae173523d05141015e2f71e6731ec01dcca241633aad8550c7ee8488f462f80",
+    "mac-settings-helper-failure-trace": "d18a5a029f21b2ac018a58e19905f47feda70e92761533fe6a07262bd8324984",
+    "mac-settings-corrected-trace": "4bdca2c7c51cac140950502fb79e11bebff0de8083f3f4d99cc8c14c8db96ef1",
+    "mac-native-filesystem": "f058e815eb13fc1fa4c765061ea2526788f165e14efc905be7ad4405d7131e24",
+    "mac-native-signals": "80f8034d4fe8019d8fd1adb6ac9dd38536190fd26586e2d7173eb0608ec59592",
+    "mac-cli": "67ab48e0a9deb36d5db1ca907fe786715e1e4afc22cd4483e820a8a2cb004843",
+    "mac-host": "3fb0b9c9015c136786b573fceadd22639d1e031407516e9647e1dcdf9e0b1068",
+    "linux-private-evidence-archive": "a07abb02f6eba7ac8e923d6a07fa92725d1a40bb3addcdaffc136b05147b5330",
+    "linux-default-failure": "b404b7d458595910ef4dac38feed6ac5507428ad8ec0fb799bb1a1fea942aba9",
+    "linux-default-go-stack": "79fc5fa3a2af61a21058a4ed4c1976acb652bf3b49488fd31192225ded4b27e5",
+    "linux-minimal-window-diagnostic": "b16c20b13693bb306dc0c689c62400623422842dd789887ea2b296486d1c615e",
+    "linux-native-filesystem": "02bd47c7d45060053a7bd49331344ae14825c4e3672fbee1cbf629cec5fdbac3",
+    "linux-native-signals": "216577ed1131cb89d1af8d786e1b49966f538ff8d894daf5f488bcd8a0eb0bb2",
+    "linux-cli": "b378b1a14b9ffa3e8ae600ccb43a56a5d6a068c04a4169a20e1dab535044e01e",
+    "linux-host": "b4177158bf1263950244c008814785c46f38305aee8e2abd65c356c44d38086c",
+    "linux-final-attached": "8226e1001e407afcdea8b078ef5210a071942e5040fb0251f212ad03094cea82",
+    "linux-final-detached": "85df53c6e30077daadd33731a5041ce324238677f64e901375474ec32e672d93",
+    "linux-final-orca": "66df0a8d53a851b61eb5328286c323b50988fb2ecaf18da2310f84ab11192935",
+    "linux-final-software": "3f678996f7c3b1182aecad6c081e6ad70d1496ee9f5c965a7bfec0a1d404aabd"
+  },
+  "qualification_harness_sha256": {
+    "platform-macos.swift": "bce82abe267571c07c841145c25ddfe056c221b4bfc3736dffa74becb1058dac",
+    "platform-macos-observer.swift": "1f8af70da48f1301b348eb3d4402011d25564266260a9297627d9be5ffc7e7ab",
+    "platform-macos-session.py": "275f65af9bad031d8b9dfde8e35ef5d6f5a47409e7201ba3f6bcd932adea1063",
+    "qualify-macos-shutdown.py": "e5a34b3d203f561a3d7b435fe7123fa15adbe4bc7f42bb032abec2317ae4d2b4",
+    "platform-linux-session.py": "a04e3e1b3391243b7ce14adaa0382fd71e114400cfe6a2c835bd527ef289e7aa",
+    "qualification_stages.py": "6f17074f1ac11d368fb50ae59543a21fa7e76a763dbcccc442a6f85f3c2a0c96"
+  },
+  "private_history_included": false,
+  "unpublished_organizy_preserved": true,
+  "runtime_convergence": false,
+  "production_pin_adoption": false,
+  "release_publication": false,
+  "release_acceptance": false
+}
