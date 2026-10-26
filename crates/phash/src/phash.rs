@@ -12,8 +12,19 @@ pub enum PhashError {
 }
 
 /// Perceptual hash as a single `u64` (first 8 bytes of 8×8 gradient hash).
+///
+/// PNG input is limited to 32 MiB encoded bytes, 16,384 pixels per dimension
+/// and 64 MiB decoded samples. Resource failures remain `PhashError::Image`.
+/// These limits do not bound process RSS or preempt active I/O/decoding.
 pub fn phash_u64(path: &Path) -> Result<u64, PhashError> {
-    let img = image::open(path)?;
+    let img = if matches!(
+        image::ImageFormat::from_path(path),
+        Ok(image::ImageFormat::Png)
+    ) {
+        crate::png::open(path)?
+    } else {
+        image::open(path)?
+    };
     let config = HasherConfig::new()
         .hash_size(8, 8)
         .hash_alg(HashAlg::Gradient);

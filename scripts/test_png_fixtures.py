@@ -10,7 +10,13 @@ import unittest
 
 class PngFixtures(unittest.TestCase):
     def test_regeneration_matches_every_tracked_byte_and_hash(self):
-        source = Path(__file__).with_name("generate-png-fixtures.py")
+        self.check_generator("generate-png-fixtures.py")
+
+    def test_limit_headers_are_reproducible(self):
+        self.check_generator("generate-png-limit-fixtures.py")
+
+    def check_generator(self, name):
+        source = Path(__file__).with_name(name)
         spec = importlib.util.spec_from_file_location("png_fixtures", source)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

@@ -18,6 +18,8 @@ fn png_encodings_have_exact_gradient_hash_through_facade_and_cli() {
         "indexed.png",
         "gray16.png",
         "rgb16.png",
+        "gray-alpha16.png",
+        "rgba16.png",
         "adam7.png",
         "constant.png",
     ] {
@@ -74,7 +76,7 @@ fn check(bytes: &[u8], enabled: bool) {
         .lines()
         .map(|line| serde_json::from_str(line).unwrap())
         .collect();
-    assert_eq!(rows.len(), 13);
+    assert_eq!(rows.len(), 15);
     for row in rows {
         let path = row["identity"]["path"].as_str().unwrap();
         let name = Path::new(path).file_name().unwrap().to_str().unwrap();
@@ -91,6 +93,73 @@ fn check(bytes: &[u8], enabled: bool) {
                 Value::Null
             };
             assert_eq!(row["meta"]["phash"], expected, "{name}");
+        }
+    }
+}
+
+#[test]
+fn budget_errors_remain_records_and_do_not_poison_following_scans() {
+    let dir = tempdir().unwrap();
+    let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("../crates/phash/tests");
+    for name in ["width.png", "height.png", "decoded-budget.png"] {
+        fs::copy(fixtures.join("limits").join(name), dir.path().join(name)).unwrap();
+    }
+    let file = fs::File::create(dir.path().join("encoded-budget.png")).unwrap();
+    file.set_len((32 << 20) + 1).unwrap();
+    drop(file);
+    fs::copy(
+        fixtures.join("fixtures/rgb.png"),
+        dir.path().join("valid.png"),
+    )
+    .unwrap();
+    for _ in 0..2 {
+        let mut bytes = Vec::new();
+        scanner::scan(
+            &scanner::ScanOptions {
+                roots: vec![dir.path().to_owned()],
+                phash: true,
+                ..Default::default()
+            },
+            &mut bytes,
+        )
+        .unwrap();
+        check_budget_rows(&bytes);
+        let out = Command::new(cargo_bin("scanfs"))
+            .args([
+                "--root",
+                dir.path().to_str().unwrap(),
+                "--phash",
+                "--format",
+                "json",
+            ])
+            .output()
+            .unwrap();
+        assert!(out.status.success());
+        check_budget_rows(&out.stdout);
+    }
+}
+fn check_budget_rows(bytes: &[u8]) {
+    let rows: Vec<Value> = String::from_utf8_lossy(bytes)
+        .lines()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    assert_eq!(rows.len(), 5);
+    for r in rows {
+        let name = Path::new(r["identity"]["path"].as_str().unwrap())
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap();
+        if name == "valid.png" {
+            assert!(r["error"].is_null());
+            assert_eq!(r["meta"]["phash"].as_u64(), Some(GOLDEN));
+        } else {
+            let error = r["error"].as_str().unwrap();
+            assert!(
+                error == "phash: Image is too large" || error == "phash: Insufficient memory",
+                "{error}"
+            );
+            assert!(r["meta"]["phash"].is_null());
         }
     }
 }

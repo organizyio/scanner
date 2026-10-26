@@ -1,0 +1,20 @@
+{
+  "width.png": {
+    "sha256": "068c32badfbc5b7766ecc951d039725f8b7d59a9b1118a8e25f6e11011e05586",
+    "width": 16385,
+    "height": 1,
+    "expected": "resource limit before decoding missing pixel payload"
+  },
+  "height.png": {
+    "sha256": "24cde7f682386f82bfc136c45bbfbe51e3d8f0d0893b9006cf4c1b22c7a66d1e",
+    "width": 1,
+    "height": 16385,
+    "expected": "resource limit before decoding missing pixel payload"
+  },
+  "decoded-budget.png": {
+    "sha256": "11493fe7ff6d55c4c9877aa243905e6c45e05880f59caba94a47130ef39513b4",
+    "width": 4096,
+    "height": 4097,
+    "expected": "resource limit before decoding missing pixel payload"
+  }
+}

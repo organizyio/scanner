@@ -1,0 +1,203 @@
+{
+  "reviewed_at": "2026-10-26",
+  "review_before": "2026-11-24",
+  "scanner_baseline": "82986118edf3c24fab0fa2deb1ef07b2957aa2f2",
+  "registry": {
+    "png": {
+      "version": "0.18.1",
+      "checksum": "60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61",
+      "rust_version": "1.73",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/png",
+      "registry_response_sha256": "0cba68c86c29eb57b04e07b21e979e3638f3d96dc14845d683e5dce2a77f6527"
+    },
+    "image": {
+      "version": "0.25.10",
+      "checksum": "85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104",
+      "rust_version": "1.88.0",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/image",
+      "registry_response_sha256": "8f4d2a6f87ead5d1f3ab4cb13df66d1ee3a6b0ab58de856aff554fe0895490f1"
+    },
+    "img_hash": {
+      "version": "3.2.0",
+      "checksum": "5ea4eac6fc4f64ed363d5c210732b747bfa5ddd8a25ac347d887f298c3a70b49",
+      "rust_version": null,
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/img_hash",
+      "registry_response_sha256": "4b278ecfcc4836669d6fa52384ee9921ed660d04db6031fc7b5f8f487ef71b28"
+    },
+    "accesskit_unix": {
+      "version": "0.24.1",
+      "checksum": "30d5192871228c54f1b0fb4a85cef000e11a3804f25d2165f14afa0daa67f3f6",
+      "rust_version": "1.87",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/accesskit_unix",
+      "registry_response_sha256": "2ddf8ced5edeb2a4cab4a2a51e7e833dd5f552c3516ba72a7e7f7f84a7af5a00"
+    },
+    "accesskit_atspi_common": {
+      "version": "0.21.1",
+      "checksum": "24f5baf62e34a4a6c30e3d697e4782f821a7337049c44c3b40576a27dfbb580d",
+      "rust_version": "1.87",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/accesskit_atspi_common",
+      "registry_response_sha256": "66ed5330259b52e0aa24f6f13d662b65582d600a14ca2f20281870ab099cc585"
+    },
+    "zvariant": {
+      "version": "5.15.1",
+      "checksum": "80bf6d6cd6a4b601acb64cfb8284cdc643fcfa75ef26ae3c46ec8aa4e8a1fbb7",
+      "rust_version": "1.87",
+      "license": "MIT",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/zvariant",
+      "registry_response_sha256": "4875f8af950b76f7c52e98f69e289507b236e5d310718a9e33af73475bf6edc7"
+    },
+    "zvariant_derive": {
+      "version": "5.15.1",
+      "checksum": "ef2672456ba1cb54b5eaec136e63135b3c7495fb938e53b28a62e633496d486d",
+      "rust_version": "1.87",
+      "license": "MIT",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/zvariant_derive",
+      "registry_response_sha256": "bf3f11796843c1ef66ad3c8c300a62c03bc65471a5aa9ff534e0fe2c55d4bce2"
+    },
+    "zbus_names": {
+      "version": "4.3.5",
+      "checksum": "812a12be4ead7a59e18ea8f047d08add0066b73bc62fc1467066a2472ae088dd",
+      "rust_version": "1.87",
+      "license": "MIT",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/zbus_names",
+      "registry_response_sha256": "9a3531a3b69bd21bb7ab9ace4a49b5b41720788a67ea1eb251ec797f940437c0"
+    },
+    "inout": {
+      "version": "0.2.5",
+      "checksum": "3b5cf4372d022092674a83b8febf5865f7a573cc0c5baec5e49c879b6a20978f",
+      "rust_version": "1.85",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/inout",
+      "registry_response_sha256": "31985547fbd915bc49cdfac8eb4e0f7d7c243149e69805dbd9c31f70e81620c5"
+    },
+    "transpose": {
+      "version": "0.2.3",
+      "checksum": "1ad61aed86bc3faea4300c7aee358b4c6d0c8d6ccc36524c96e4c92ccf26e77e",
+      "rust_version": null,
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/transpose",
+      "registry_response_sha256": "4e057a78fa27b62ba361bb9216939ceb386674aea25f83c27992197d62809922"
+    },
+    "paste": {
+      "version": "1.0.15",
+      "checksum": "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a",
+      "rust_version": "1.31",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "source": "https://crates.io/api/v1/crates/paste",
+      "registry_response_sha256": "b2647742353346bba851d0421e126e8fd3e08256324a799e83d957214fadab72"
+    }
+  },
+  "advisories": {
+    "RUSTSEC-2026-0370": {
+      "source": "https://raw.githubusercontent.com/RustSec/advisory-db/main/crates/zvariant/RUSTSEC-2026-0370.md",
+      "sha256": "55991b6a4484c3541c8091cb16cf7446c8610de09ac642ab3ff88c332e394bf0",
+      "informational": "unmaintained",
+      "patched": []
+    },
+    "RUSTSEC-2026-0371": {
+      "source": "https://raw.githubusercontent.com/RustSec/advisory-db/main/crates/zbus_names/RUSTSEC-2026-0371.md",
+      "sha256": "3e618914dab3ef0d6d2434f42ac8aa1947cb1738fd156b4f0092d6c7ad53b394",
+      "informational": "unmaintained",
+      "patched": []
+    },
+    "RUSTSEC-2026-0372": {
+      "source": "https://raw.githubusercontent.com/RustSec/advisory-db/main/crates/zvariant_derive/RUSTSEC-2026-0372.md",
+      "sha256": "e03677b3351db11984e2fd3bd839b6368cfc3a93aca08c4401980264b228635d",
+      "informational": "unmaintained",
+      "patched": []
+    }
+  },
+  "decisions": {
+    "png": "Adopt exact 0.18.1 budgeted reader; retain old image pixel/resizing types and gradient API; remove legacy PNG feature graph",
+    "inout": "Adopt locked 0.2.5 replacing yanked 0.2.3; padding boundary roundtrips and PDF regression suite required",
+    "accesskit": "0.24.1 includes cache fix #819 but still zbus 5.19; common 0.21.1 still zvariant 5.15. Source review only, not adopted. Native graph and November 24 cutoff unchanged; replacement needs wire/native replay",
+    "fyne": "v2.8.2 archive/source equal previous inspected publication; required shutdown adaptation still retained; no native adoption",
+    "image_img_hash": "Retain image 0.23.14 types and img_hash 3.2.0; new image 0.25.10 is outside img_hash supported range, so no hash/resizing migration in this change"
+  },
+  "reviewed_archives": {
+    "png": {
+      "sha256": "60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61",
+      "verified_registry_checksum": true,
+      "source_files": {
+        "Cargo.toml": "642c5d3c2bf538404cf1d5c4aac254d033e0854af844610435fd13e910bf93aa",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "eaf40297c75da471f7cda1f3458e8d91b4b2ec866e609527a13acfa93b638652"
+      }
+    },
+    "inout": {
+      "sha256": "3b5cf4372d022092674a83b8febf5865f7a573cc0c5baec5e49c879b6a20978f",
+      "verified_registry_checksum": true,
+      "source_files": {
+        "CHANGELOG.md": "f6dbcb2ed251bd04661c9df313da31b1e57f08b86b5aa8c335b0ed6ebde28bc5",
+        "Cargo.toml": "1845f64246752089ba336ee54f9c01e31b14976c32d1bc4e7ff45ce465e53132",
+        "LICENSE-APACHE": "a9040321c3712d8fd0b09cf52b17445de04a23a10165049ae187cd39e5c86be5",
+        "LICENSE-MIT": "a07fcacc3c60de4dc0fab10ac9d6aaba7379974e28451c99da7f7df09c25b28c",
+        "src/inout_buf.rs": "b17690758395eefefff4d8d4f5016113bf5e6661b1f156b727e66ca7f1dfc29e"
+      }
+    },
+    "accesskit_unix": {
+      "sha256": "30d5192871228c54f1b0fb4a85cef000e11a3804f25d2165f14afa0daa67f3f6",
+      "verified_registry_checksum": true,
+      "source_files": {
+        "CHANGELOG.md": "a3be3e176ab3ba62c4f79ce3baf015640b4f23d9cd76d6d65f30051ea9699df6",
+        "Cargo.toml": "08ad6ca7d9443b93675078dbff2d1b0c5257446dab1d079b5a15666ebf4f6e86",
+        "src/atspi/bus.rs": "3e29c138a0e5da9b884638e62d54a0f44acd1d6c8b1dddd8a91d1761d6e480b2"
+      }
+    },
+    "accesskit_atspi_common": {
+      "sha256": "24f5baf62e34a4a6c30e3d697e4782f821a7337049c44c3b40576a27dfbb580d",
+      "verified_registry_checksum": true,
+      "source_files": {
+        "CHANGELOG.md": "a044e7df0c0d5d1db69676ae521b45ff43089a9dc15ccb7745b25e0733b52253",
+        "Cargo.toml": "716e1920a31d05052c51155a154ca7355c8878d3fecbd8a8149d28df0762368c"
+      }
+    }
+  },
+  "fyne": {
+    "version": "v2.8.2",
+    "module_sum": "h1:gYNJj+ZEPd2wF3M8SlF5iL6febpZkZ1csheRFkuEfHU=",
+    "commit": "77c1fa8e0a50b6cbd04cd6c4454289e55a307a2d",
+    "archive_sha256": "6b0d3d9e3bb8cc539b3c3252f6f29a293d07009f4bb6a770edaaa8b0e81ae596",
+    "loop_sha256": "744f17cbbc9b72681530d5c9c5207493e5502e6d3168d5198548abaebe09af9b",
+    "channel_sha256": "eb341639ff16a05acb87580cb0011e0a8609a3a01a9d6ed5b2451353d96190fd"
+  },
+  "unchanged_native_files_sha256": {
+    "tools/project-catalog/native-a11y/Cargo.lock": "c5caa47e81060ceef9c02baa3d17e49945495af92f0e4f6ced488ca950fcabf4",
+    "tools/project-catalog/native-a11y/deny.toml": "06108fa77ad853b1a1abacf6e25fe784a5bfdcfcbcabc0e238b08fdd97f5ea55",
+    "scripts/check-native-advisories.py": "4bf06e25db2c8df23c2b00a203bdb938be5c8b888d20fdd1a43cf839d234fa6b",
+    "tools/project-catalog/go.mod": "5c0d8739337042d27bd9c0ecdbd17ca577f46a073679653f450b48f65c8f8100",
+    "tools/project-catalog/go.sum": "12356b6e64eb68f00809203a3d468d9e72c58c6ef94798df946ad305343db8e7",
+    "compat/scan-engine/Cargo.lock": "34679e18806c5cc4f13e720a2cb67ca367823b62f27e480b53e2b55d55bd8de7",
+    "deny.toml": "0d86dd893504d0e5d76c5b2b1228aba198ac41fce4ef5e18d6e49a2a6b218475"
+  },
+  "native_runtime_adoption": false,
+  "policy_exceptions_added": false,
+  "exception_deadline_extended": false,
+  "production_consumer_pin_adoption": false,
+  "release_acceptance": false,
+  "fdeflate": {
+    "version": "0.3.7",
+    "license": "MIT OR Apache-2.0",
+    "rust_version": "1.67.0",
+    "license_file_sha256": {
+      "LICENSE-APACHE": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "LICENSE-MIT": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3"
+    }
+  }
+}

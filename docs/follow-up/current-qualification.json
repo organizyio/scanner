@@ -1,6 +1,6 @@
 {
   "reviewed_at": "2026-10-26",
-  "scanner_main_at_review": "1e27d747799b852da0e0b3e73987fc4d5599715e",
+  "scanner_main_at_review": "82986118edf3c24fab0fa2deb1ef07b2957aa2f2",
   "status": "Implementation merged; recorded host and consumer flows qualified; phase 4 remains incomplete",
   "phases": {
     "1": "implemented",
@@ -47,7 +47,7 @@
   ],
   "historical_register": "platform-results.json",
   "historical_failures": "Retained with exact source/hash evidence; Linux default and Windows observer-detach gates superseded only within current native_evidence scope",
-  "dependency_review": "maintenance-review-2026-10-26.md",
+  "dependency_review": "maintenance-png-review-2026-10-26.md",
   "private_history_included": false,
   "production_pin_adoption": false,
   "runtime_convergence": false,
@@ -58,11 +58,11 @@
   "consumer_evidence": {
     "existing_record": "post-pr10-results.json",
     "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
-    "refresh_candidate": "1e27d747799b852da0e0b3e73987fc4d5599715e",
-    "refresh_record": "https://github.com/organizyio/organizy-scan/pull/9",
+    "refresh_candidate": "82986118edf3c24fab0fa2deb1ef07b2957aa2f2",
+    "refresh_record": "https://github.com/organizyio/scanner/issues/18#issuecomment-6407572436",
     "scope": "Harness runs and source-equivalence do not adopt production pins or qualify GUI/live providers",
-    "refresh_status": "passed for documented implementation flows",
-    "exact_candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40230583741",
+    "refresh_status": "passed; PNG facade checked in actual isolated worker graph, native checks and unchanged-pin rollback passed",
+    "exact_candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40263583377",
     "ci_jobs_passed": 3,
     "prototype": {
       "local_files": 2,
@@ -82,6 +82,38 @@
   },
   "png_qualification": {
     "record": "png-perceptual-hashing.md",
-    "status": "implementation and exact-revision qualification recorded there; no production adoption"
-  }
+    "status": "Issue #18 closed after PR #20 exact-head and reviewed-main consumer qualification; no production adoption",
+    "merge": "82986118edf3c24fab0fa2deb1ef07b2957aa2f2",
+    "issue": "https://github.com/organizyio/scanner/issues/18",
+    "local_scale_cases": 92,
+    "local_recovery_cases": 56,
+    "ci_scale_cases": 96,
+    "checks_passed": 17
+  },
+  "previous_consumer_refresh": {
+    "existing_record": "post-pr10-results.json",
+    "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
+    "refresh_candidate": "1e27d747799b852da0e0b3e73987fc4d5599715e",
+    "refresh_record": "https://github.com/organizyio/organizy-scan/pull/9",
+    "scope": "Harness runs and source-equivalence do not adopt production pins or qualify GUI/live providers",
+    "refresh_status": "passed for documented implementation flows",
+    "exact_candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40230583741",
+    "ci_jobs_passed": 3,
+    "prototype": {
+      "local_files": 2,
+      "inventory_files": 2,
+      "matched": true,
+      "pending_batches": 0
+    },
+    "isolated_organizy": "All eight Scanner package origins verified; worker tests/build and all three required native managed tests passed",
+    "unchanged_pin_rollback": "Fresh locked worker tests/build and all three required native tests passed; original lock, manifest and embedded binary restored",
+    "explicit_skip": "Interactive system-vault test; not required native Scanner tests",
+    "production_pin_changed": false
+  },
+  "png_hardening": {
+    "record": "png-decoding-limits.md",
+    "status": "separate post-PR20 change; baseline and exact-head qualification are distinct",
+    "production_pin_changed": false
+  },
+  "scope": "Register review baseline is the published merge above; post-baseline hardening validation and later reviewed-main consumer qualification are recorded separately, without self-referential commit IDs."
 }
