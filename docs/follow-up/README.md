@@ -157,3 +157,11 @@ remain pending until actual returned evidence is reviewed.
 probe for repeated multiroot, slow-consumer, cancellation and failure-recovery
 runs. Measurements are synthetic observations, not performance improvement,
 GUI qualification, consumer adoption, runtime convergence or release acceptance.
+
+## Mixed workload follow-up
+
+[Mixed workload qualification](mixed-workloads.md) adds large-file hashing,
+DOCX inflation/XML and PDF parsing to the synthetic scale corpus. It explicitly
+checks the existing unsupported PNG perceptual-hash error; [issue #18](https://github.com/organizyio/scanner/issues/18)
+tracks codec qualification separately. No production graph, consumer pin or
+hardware/release acceptance change is included.

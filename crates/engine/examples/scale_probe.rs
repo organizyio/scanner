@@ -5,6 +5,7 @@ use serde_json::json;
 use std::cell::Cell;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 use walker::{FilterOptions, WalkMode};
@@ -12,9 +13,101 @@ use walker::{FilterOptions, WalkMode};
 const PAYLOAD_BYTES: u64 = 256;
 const PAYLOAD_SHA256: &str = "85e62acd750c4eb56b7b6a1d66dca5bfaac5f062608a1a893410d0288936c09a";
 
+struct Class {
+    name: String,
+    extension: String,
+    size: u64,
+    sha256: String,
+}
+struct Fixture {
+    mixed: bool,
+    classes: Vec<Class>,
+    image_error: Option<String>,
+}
+impl Fixture {
+    fn load(root: &Path, mixed: bool) -> Result<Self, Box<dyn std::error::Error>> {
+        if !mixed {
+            return Ok(Self {
+                mixed,
+                classes: vec![Class {
+                    name: "tiny".into(),
+                    extension: "txt".into(),
+                    size: PAYLOAD_BYTES,
+                    sha256: PAYLOAD_SHA256.into(),
+                }],
+                image_error: None,
+            });
+        }
+        let data = std::fs::read(root.join("fixture-spec.json"))?;
+        if data.len() > 16384 {
+            return Err("oversize fixture specification".into());
+        }
+        let value: serde_json::Value = serde_json::from_slice(&data)?;
+        if value["schema"] != 1 || value["profile"] != "mixed" {
+            return Err("fixture profile mismatch".into());
+        }
+        let values = value["classes"]
+            .as_array()
+            .ok_or("missing class specification")?;
+        if values.len() != 8 {
+            return Err("wrong fixture classes".into());
+        }
+        let names = [
+            "empty", "medium", "large", "huge", "image", "document", "pdf", "tiny",
+        ];
+        let mut classes = Vec::new();
+        for (i, v) in values.iter().enumerate() {
+            let name = v["name"].as_str().ok_or("missing class name")?;
+            let extension = v["extension"].as_str().ok_or("missing extension")?;
+            let size = v["size"].as_u64().ok_or("missing class size")?;
+            let sha = v["sha256"].as_str().ok_or("missing class digest")?;
+            if name != names[i]
+                || !["txt", "bin", "png", "docx", "pdf"].contains(&extension)
+                || size > 16 << 20
+                || sha.len() != 64
+                || !sha.bytes().all(|b| b.is_ascii_hexdigit())
+            {
+                return Err("invalid fixture class".into());
+            }
+            classes.push(Class {
+                name: name.into(),
+                extension: extension.into(),
+                size,
+                sha256: sha.into(),
+            });
+        }
+        let image_error = match phash::phash_u64(&root.join("alpha/shard-04/file-4.png")) {
+            Err(error)
+                if matches!(error, phash::PhashError::Image(_))
+                    && error.to_string().to_lowercase().contains("png")
+                    && error.to_string().to_lowercase().contains("not supported") =>
+            {
+                Some(format!("phash: {error}"))
+            }
+            _ => return Err("PNG decoder capability changed; re-review expected outcome".into()),
+        };
+        Ok(Self {
+            mixed,
+            classes,
+            image_error,
+        })
+    }
+
+    fn index(&self, id: u64) -> usize {
+        if self.mixed {
+            (id % 128).min(7) as usize
+        } else {
+            0
+        }
+    }
+}
+
 struct Inventory {
     root: PathBuf,
     limit: u64,
+    fixture: Arc<Fixture>,
+    bytes: u64,
+    classes: Vec<u64>,
     count: u64,
     sum: u128,
     xor: u64,
@@ -22,10 +115,13 @@ struct Inventory {
     started: Instant,
 }
 impl Inventory {
-    fn new(root: &Path, limit: u64) -> Self {
+    fn new(root: &Path, limit: u64, fixture: Arc<Fixture>) -> Self {
         Self {
             root: root.to_owned(),
             limit,
+            classes: vec![0; fixture.classes.len()],
+            fixture,
+            bytes: 0,
             count: 0,
             sum: 0,
             xor: 0,
@@ -45,17 +141,51 @@ impl Inventory {
             .ok_or_else(|| io::Error::other("unknown file"))?
             .parse()
             .map_err(io::Error::other)?;
+        let class_index = self.fixture.index(id);
+        let class = &self.fixture.classes[class_index];
         let expected = PathBuf::from(if id % 2 == 0 { "alpha" } else { "unicode-β" })
             .join(format!("shard-{:02}", id % 32))
-            .join(format!("file-{id}.txt"));
+            .join(format!("file-{id}.{}", class.extension));
         if id >= self.limit
             || relative != expected
-            || record.identity.size != PAYLOAD_BYTES
-            || record.error.is_some()
-            || record.hashes.as_ref().and_then(|h| h.sha256.as_deref()) != Some(PAYLOAD_SHA256)
+            || record.identity.size != class.size
+            || (class.name != "image" && record.error.is_some())
+            || record.hashes.as_ref().and_then(|h| h.sha256.as_deref())
+                != Some(class.sha256.as_str())
         {
             return Err(io::Error::other("fixture record mismatch"));
         }
+        if self.fixture.mixed {
+            if record
+                .format
+                .as_ref()
+                .and_then(|f| f.mime.as_ref())
+                .is_none()
+            {
+                return Err(io::Error::other("missing format extraction"));
+            }
+            let meta = record.meta.as_ref();
+            let valid = match class.name.as_str() {
+                "image" => {
+                    record.error == self.fixture.image_error && meta.and_then(|m| m.phash).is_none()
+                }
+                "document" => meta.and_then(|m| m.docx.as_ref()).is_some_and(|d| {
+                    d.creator.as_deref() == Some("Scanner Synthetic")
+                        && d.last_modified_by.as_deref() == Some("Fixture generator")
+                        && d.revision.as_deref() == Some("007")
+                }),
+                "pdf" => meta.and_then(|m| m.pdf.as_ref()).and_then(|p| p.page_count) == Some(32),
+                _ => true,
+            };
+            if !valid {
+                return Err(io::Error::other(format!(
+                    "fixture extraction mismatch: {}",
+                    class.name
+                )));
+            }
+        }
+        self.bytes += class.size;
+        self.classes[class_index] += 1;
         self.first.get_or_insert_with(|| self.started.elapsed());
         self.count += 1;
         self.sum += u128::from(id);
@@ -69,7 +199,12 @@ impl Inventory {
             2 => self.limit,
             _ => 0,
         };
+        let mut expected = vec![0; self.classes.len()];
+        for id in 0..self.limit {
+            expected[self.fixture.index(id)] += 1;
+        }
         self.count == self.limit
+            && self.classes == expected
             && self.sum == u128::from(self.limit) * u128::from(self.limit - 1) / 2
             && self.xor == xor
     }
@@ -113,10 +248,14 @@ impl Write for Output<'_> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.len() != 6 {
+    if args.len() != 6 && args.len() != 7 {
         return Err(
             "usage: scale_probe FIXTURE MODE FILES DELAY_US STOP_AFTER standard|full".into(),
         );
+    }
+    let profile = args.get(6).map(String::as_str).unwrap_or("small");
+    if !["small", "mixed"].contains(&profile) {
+        return Err("unknown fixture profile".into());
     }
     let root = PathBuf::from(&args[0]).canonicalize()?;
     let mode = args[1].as_str();
@@ -139,6 +278,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         return Err("invalid probe parameters".into());
     }
+    if profile == "mixed" && files < 128 {
+        return Err("mixed profile needs at least 128 files".into());
+    }
+    let fixture = Arc::new(Fixture::load(&root, profile == "mixed")?);
     let walk_mode = match args[5].as_str() {
         "standard" => WalkMode::Standard,
         "full" => WalkMode::Full,
@@ -154,10 +297,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             skip_hidden: false,
             ..Default::default()
         },
+        sniff_format: fixture.mixed,
+        metadata_static: fixture.mixed,
+        phash: fixture.mixed,
         sha256: true,
         ..Default::default()
     };
-    let mut inventory = Inventory::new(&root, files);
+    let mut inventory = Inventory::new(&root, files, fixture.clone());
     let started = inventory.started;
     let requested = Cell::new(None::<Instant>);
     let caller = thread::current().id();
@@ -200,7 +346,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         )
         .and_then(|counts| {
-            if counts != (inventory.count, inventory.count * PAYLOAD_BYTES) {
+            if counts != (inventory.count, inventory.bytes) {
                 return Err(io::Error::other("callback returned inconsistent counts").into());
             }
             Ok(())
@@ -227,7 +373,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let recovery_start = Instant::now();
     if partial {
-        let mut recovered = Inventory::new(&root, files);
+        let mut recovered = Inventory::new(&root, files, fixture.clone());
         scan_with_callbacks(&opts, &mut || false, &mut |_| {}, &mut |r| {
             recovered.accept(r)?;
             Ok(())
@@ -239,7 +385,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "{}",
         json!({"passed": true, "mode": mode, "walk_mode": args[5], "fixture_files": files,
-        "files_delivered": inventory.count, "bytes_delivered": inventory.count * PAYLOAD_BYTES,
+        "files_delivered": inventory.count, "bytes_delivered": inventory.bytes,
+        "profile": profile, "extraction_enabled": fixture.mixed,
+        "expected_unsupported_image_records": if fixture.mixed { inventory.classes[4] } else { 0 },
+        "image_capability": if fixture.mixed { "PNG perceptual decoding unsupported by current locked graph; explicit error records checked" } else { "not exercised" },
+        "delivered_by_class": fixture.classes.iter().zip(&inventory.classes).map(|(c, n)| (c.name.clone(), *n)).collect::<std::collections::BTreeMap<_, _>>(),
         "elapsed_ms": finished.duration_since(started).as_secs_f64() * 1000.0,
         "first_record_ms": inventory.first.map(|v| v.as_secs_f64() * 1000.0),
         "cancel_return_ms": requested.get().map(|v| finished.duration_since(v).as_secs_f64() * 1000.0),

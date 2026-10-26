@@ -17,7 +17,7 @@ probe hash, tool/host metadata and fixture parameters. Output must be a new
 folder outside the checkout. No production or personal folders are scanned.
 Only the harness's temporary synthetic fixture directories are removed.
 
-Each fixture has two disjoint roots (including Unicode), 32 deterministic shards
+The original `small` profile has two disjoint roots (including Unicode), 32 deterministic shards
 and sequential IDs with identical 256-byte payloads. Both standard and full
 walkers execute fast callbacks, delayed callbacks, delayed NDJSON output,
 requested cancellation, callback failure and broken output. Cancellation repeats
@@ -49,6 +49,7 @@ a worst-case cancellation guarantee.
 
 CI runs the same source-built probe on Linux, Windows and macOS with a smaller
 1,024-file fixture, one throughput/failure repeat and three cancellation repeats.
+CI now executes both the small and [mixed workload profile](mixed-workloads.md).
 Only normalized reports are uploaded as CI evidence, not release artifacts.
 This qualifies synthetic preferred-Scanner execution only. Apple Silicon/Retina
 GUI feedback remains pending. Production adoption, runtime convergence and release
@@ -56,6 +57,8 @@ acceptance remain separate.
 
 ## Recorded Intel Mac measurements — 2026-10-26
 
+These are historical PR #17 small-file results; the later mixed-workload follow-up
+changes the harness, not these immutable measurements or their source hashes.
 [Normalized results](scale-results-2026-10-26.json) record 92 passing runs at
 `283f9a198e17e78e758ac283ad776d4a88fd6f32`, with 4,096 and 32,768 files,
 three repeats of each throughput/failure mode and eight cancellation repeats
