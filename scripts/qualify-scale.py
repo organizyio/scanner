@@ -202,7 +202,7 @@ def main():
         / ("scale_probe.exe" if os.name == "nt" else "scale_probe")
     )
     report = {
-        "schema": 2,
+        "schema": 3,
         "source_revision": revision,
         "probe_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "platform": platform.system() + "-" + platform.machine(),
@@ -214,11 +214,10 @@ def main():
         "python": sys.version.split()[0],
         "zlib": zlib.ZLIB_RUNTIME_VERSION,
         "profiles": args.profiles,
-        "known_limitations": [
-            "PNG perceptual decoding is unsupported in the default locked graph; expected error records checked (Scanner issue #18)"
-        ]
+        "known_limitations": [],
+        "png_capability": "PNG decoded and checked against a fixed gradient golden"
         if "mixed" in args.profiles
-        else [],
+        else "not exercised",
         "fixture_specs": [
             {"files": n, **specs[(p, n)]} for p in args.profiles for n in args.files
         ],

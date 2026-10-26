@@ -24,15 +24,15 @@ fn png_encodings_have_exact_gradient_hash_through_facade_and_cli() {
         fs::copy(fixtures.join(name), dir.path().join(name)).unwrap();
     }
     // Uppercase extension, Unicode path, corrupt/truncated PNG, and a valid
-    // unsupported GIF. Failure rows must remain truthful and must not gain a hash.
+    // unsupported JPEG. Failure rows must remain truthful and must not gain a hash.
     fs::copy(fixtures.join("rgb.png"), dir.path().join("画像.PNG")).unwrap();
     let mut corrupt = fs::read(fixtures.join("rgb.png")).unwrap();
     corrupt[50] ^= 0x80;
     fs::write(dir.path().join("corrupt.png"), corrupt).unwrap();
     fs::write(dir.path().join("truncated.png"), b"\x89PNG\r\n\x1a\n").unwrap();
     fs::write(
-        dir.path().join("unsupported.png"),
-        b"GIF89a\x01\0\x01\0\x80\0\0\0\0\0\xff\xff\xff,\0\0\0\0\x01\0\x01\0\0\x02\x02D\x01\0;",
+        dir.path().join("unsupported.jpg"),
+        include_bytes!("fixtures/unsupported.jpg"),
     )
     .unwrap();
     let mut bytes = Vec::new();
@@ -80,7 +80,7 @@ fn check(bytes: &[u8], enabled: bool) {
         let name = Path::new(path).file_name().unwrap().to_str().unwrap();
         assert_eq!(row["schema_version"], 1);
         assert_eq!(row["hashes"]["sha256"].as_str().unwrap().len(), 64);
-        if enabled && ["corrupt.png", "truncated.png", "unsupported.png"].contains(&name) {
+        if enabled && ["corrupt.png", "truncated.png", "unsupported.jpg"].contains(&name) {
             assert!(row["error"].as_str().unwrap().starts_with("phash:"));
             assert!(row["meta"]["phash"].is_null());
         } else {

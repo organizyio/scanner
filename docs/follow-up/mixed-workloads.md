@@ -61,8 +61,9 @@ counts are explicit. Unexpected record/extraction errors fail qualification.
 
 ## Measurements and boundaries
 
-Report schema 2 adds profile-specific fixture specs, host/Python/zlib metadata,
-class counts and explicit image-capability coverage. Existing small-profile
+Historical report schema 2 added profile-specific fixture specs, host/Python/zlib metadata,
+class counts and explicit image-capability coverage. Current schema 3 requires
+qualified PNG counts rather than expected unsupported-image counts. Existing small-profile
 invocations remain valid. Elapsed/first-record/cancellation/recovery metrics and
 POSIX per-child peak RSS retain the original scope. The capability preflight
 occurs before scan timing; RSS includes process initialization and recovery.
