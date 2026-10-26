@@ -93,12 +93,23 @@ recommends MTA for UIA calls and event registration/removal. Actual MTA and STA
 child-process tests require correct opt-in and reject the old runner mode before
 launching an application. Matrix acceptance requires recorded MTA/thread proof.
 
-Earlier STA runs include Invoke errors and an eight-second Quit timeout. They
+Earlier STA and MTA trials include Invoke errors; one STA run exceeded the
+eight-second Quit deadline. They
 remain failed evidence; the timeout's application-level cause was not proven.
 A separate stack-dumping executable is diagnostic only, even when its matrix
 passes. The unchanged production executable must pass a fresh MTA native matrix;
 recorded MTA qualification does not promise behavior for every UIA client or
 broader spoken readers. Detailed completion is recorded in the PR follow-up.
+
+Failure-state capture identified an Add Folder error as native
+`ElementNotEnabledException` (`0x80040200`). The finished live-region update can
+precede the next action-button enablement refresh. The runner now resolves the
+control again while waiting for native `IsEnabled`, with a five-second limit,
+and invokes exactly once. It does not retry an ambiguous dispatched action or
+accept an invocation error. Regression tests cover delayed enablement, permanent
+disablement and exactly one failed Invoke. Error reports retain the exception
+type, HRESULT, action and script stack. Total Quit remains limited to eight
+seconds including eligibility, lookup, invocation and exit.
 
 The original Apple Silicon/Retina handoff is retained unchanged. Returned
 feedback can qualify its recorded baseline only; review the new graph delta

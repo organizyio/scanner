@@ -222,9 +222,16 @@ public class QualificationWindow {
         throw ('Native accessible control unavailable: ' + $name)
     }
     function Invoke-NativeControl([string]$name) {
-        $control = Find-NativeControl $name
-        $invoke = $control.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-        $invoke.Invoke()
+        $script:nativeStage = $name
+        $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::NameProperty, $name)
+        Invoke-QualificationEnabledControl -Resolve {
+            Require-OwnedForeground
+            $element.FindFirst([System.Windows.Automation.TreeScope]::Subtree, $condition)
+        } -Invoke {
+            param($control)
+            $invoke = $control.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+            $invoke.Invoke()
+        }
     }
     function Native-Value($control) {
         $pattern = $null
@@ -532,6 +539,8 @@ public static class ScannerLiveEvents {
       input=$Actions; automation_apartment='MTA'; automation_thread=$automationThreadId; event_registration_thread=[ScannerLiveEvents]::RegistrationThread; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
         ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
 } catch {
+    $failureRecord = $_
+    $failureBase = $failureRecord.Exception.GetBaseException()
     # Preserve the failed stage for supervisor stack capture before owned cleanup.
     # This wait occurs only after failure and never extends qualification limits.
     $expiredOnFailure = Read-QualificationDeadline $out $RunId
@@ -539,7 +548,7 @@ public static class ScannerLiveEvents {
         $diagnosticDeadline = (Get-Date).AddSeconds(60)
         while (-not (Test-Path (Join-Path $out 'diagnostics-complete.json')) -and (Get-Date) -lt $diagnosticDeadline) { Start-Sleep -Milliseconds 100 }
     }
-    @{gui_qualification='pending'; error=$_.Exception.Message; script_stack=$_.ScriptStackTrace; action=$action; qualified=$qualified; release_acceptance=$false} |
+    @{gui_qualification='pending'; error=$failureRecord.Exception.Message; error_type=$failureBase.GetType().FullName; error_hresult=$failureBase.HResult; script_stack=$failureRecord.ScriptStackTrace; action=$action; qualified=$qualified; release_acceptance=$false} |
         ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
     throw
 } finally {

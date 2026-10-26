@@ -121,6 +121,23 @@ try {
         $workerHandle = $worker.Handle
         if (-not $worker.WaitForExit(10000) -or $worker.ExitCode -ne 0) { throw ('UIA apartment contract failed: '+$mode) }
     }
+    # Delayed readiness must be polled before one Invoke, never after it.
+    $state = [pscustomobject]@{reads=0;calls=0}
+    Invoke-QualificationEnabledControl -Resolve {
+        $state.reads++
+        [pscustomobject]@{Current=[pscustomobject]@{IsEnabled=($state.reads -ge 3)}}
+    } -Invoke { param($control); if (-not $control.Current.IsEnabled) { throw 'Invoked a disabled control' }; $state.calls++ }
+    if ($state.reads -ne 3 -or $state.calls -ne 1) { throw 'Native readiness did not precede exactly one action' }
+    $state.calls=0; $rejected=$false
+    try {
+        Invoke-QualificationEnabledControl -Resolve { [pscustomobject]@{Current=[pscustomobject]@{IsEnabled=$true}} } -Invoke { param($control); $state.calls++; throw 'ambiguous-invoke' }
+    } catch { $rejected=$_.Exception.Message -eq 'ambiguous-invoke' }
+    if (-not $rejected -or $state.calls -ne 1) { throw 'Ambiguous native Invoke was retried or accepted' }
+    $state.calls=0; $rejected=$false
+    try {
+        Invoke-QualificationEnabledControl -TimeoutMs 50 -Resolve { [pscustomobject]@{Current=[pscustomobject]@{IsEnabled=$false}} } -Invoke { param($control); $state.calls++ }
+    } catch { $rejected=$true }
+    if (-not $rejected -or $state.calls) { throw 'Permanently disabled control was invoked or accepted' }
     Write-Output 'Cross-process invocation, nonce, contention, persistent-lock and malformed-record gates passed'
 } finally {
     if ($worker -and -not $worker.HasExited) { Stop-Process -Id $worker.Id }

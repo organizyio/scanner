@@ -89,3 +89,21 @@ function Assert-QualificationAutomationThread {
     }
     return [Threading.Thread]::CurrentThread.ManagedThreadId
 }
+
+# Resolve afresh while waiting for native eligibility. Never retry an Invoke:
+# an exception after dispatch is ambiguous and must remain a failed action.
+function Invoke-QualificationEnabledControl {
+    param([scriptblock]$Resolve, [scriptblock]$Invoke,
+          [ValidateRange(1,5000)][int]$TimeoutMs=5000)
+    $wait = [Diagnostics.Stopwatch]::StartNew()
+    do {
+        $control = & $Resolve
+        $enabled = $null -ne $control -and $control.Current.IsEnabled
+        if ($wait.ElapsedMilliseconds -ge $TimeoutMs) { throw 'Native control did not become enabled before its deadline' }
+        if ($enabled) {
+            & $Invoke $control
+            return
+        }
+        Start-Sleep -Milliseconds 25
+    } while ($true)
+}
