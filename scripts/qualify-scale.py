@@ -104,8 +104,8 @@ def validate(value, mode, walk, files, stop, spec=None):
             raise ValueError("Incorrect mixed inventory bytes/counts")
         if not partial and classes != spec["class_counts"]:
             raise ValueError("Missing fixture classes")
-        if value.get("expected_unsupported_image_records") != classes.get("image", 0):
-            raise ValueError("Missing explicit unsupported-image records")
+        if value.get("qualified_png_records") != classes.get("image", 0):
+            raise ValueError("Missing qualified PNG records")
     if (
         value.get("expected_failure_observed") is not mode.endswith("error")
         or value.get("recovery_inventory_verified") is not partial

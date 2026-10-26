@@ -124,7 +124,7 @@ class ScaleQualificationTests(unittest.TestCase):
             delivered_by_class=spec["class_counts"],
             profile="mixed",
             extraction_enabled=True,
-            expected_unsupported_image_records=1,
+            qualified_png_records=1,
             expected_failure_observed=False,
             recovery_inventory_verified=False,
             elapsed_ms=20.0,
@@ -133,6 +133,7 @@ class ScaleQualificationTests(unittest.TestCase):
         )
         scale.validate(value, "fast", "full", 128, 64, spec)
         for key, wrong in [
+            ("qualified_png_records", 0),
             ("profile", "small"),
             ("extraction_enabled", False),
             ("bytes_delivered", 128 * 256),

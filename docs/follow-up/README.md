@@ -161,7 +161,7 @@ GUI qualification, consumer adoption, runtime convergence or release acceptance.
 ## Mixed workload follow-up
 
 [Mixed workload qualification](mixed-workloads.md) adds large-file hashing,
-DOCX inflation/XML and PDF parsing to the synthetic scale corpus. It explicitly
-checks the existing unsupported PNG perceptual-hash error; [issue #18](https://github.com/organizyio/scanner/issues/18)
-tracks codec qualification separately. No production graph, consumer pin or
-hardware/release acceptance change is included.
+DOCX inflation/XML and PDF parsing to the synthetic scale corpus. The original
+unsupported-PNG evidence is retained. [PNG qualification](png-perceptual-hashing.md)
+selects the PNG decoder and requires exact perceptual values in new runs.
+Consumer adoption and hardware/release acceptance remain separate.

@@ -20,13 +20,15 @@
       "current_sha256": "60411b59b21391d02ffb37507c3b1156bbcca2e5b27561b42858ce30302d4602"
     },
     "crates/phash/Cargo.toml": {
-      "phase": 1,
-      "reason": "Owner-authorized dual license for original Rust workspace; package versions and dependency constraints unchanged.",
+      "phase": 5,
+      "reason": "Retain original Rust dual-license grant and package version; issue #18 explicitly pins the existing img_hash image graph to 0.23.14 and enables PNG only. No default codecs or hashing algorithm/API changes.",
       "tests": [
-        "cargo metadata --locked",
-        "make check"
+        "make check",
+        "PNG public facade and CLI golden/negative tests on three CI platforms",
+        "cargo deny with unchanged policy",
+        "pinned Rust 1.88 and consumer qualification"
       ],
-      "current_sha256": "0687fa05918c275c4ae81efd3a0da4c3fc259234c7d0c21574e477f9bd3862cf"
+      "current_sha256": "28d8cef8814f206ad3cc7eda4ba80e7d7777ff99395a27ee0bf3092b60286f31"
     },
     "crates/format/Cargo.toml": {
       "phase": 1,
