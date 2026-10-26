@@ -86,3 +86,21 @@ partial/error runs. Compile/CLI execution on a macOS arm64 CI runner does not
 qualify interactive Apple Silicon/Retina hardware. Those gates stay pending;
 runtime convergence, production adoption, publication and release acceptance
 remain separate.
+
+## Recorded Intel Mac run — 2026-10-26
+
+[Normalized mixed results](mixed-scale-results-2026-10-26.json) retain exact source,
+probe/fixture/harness hashes, host/tool versions and repeated metric ranges.
+All 92 cases passed at 512 and 2,048 files, with three repeats per normal/failure
+mode and eight cancellation repeats per fixture/walker. All 32 cancellation and
+24 injected-failure cases passed their full in-process recovery scans. The source
+remained clean and unchanged throughout qualification. Later result-documentation
+commits do not change the measured probe, fixture recipe or runner.
+
+The 2,048-file corpus includes sixteen 8 MiB binaries, sixteen 1 MiB binaries,
+sixteen compressed DOCX core descriptions, sixteen 32-page PDFs and sixteen
+PNG records with explicitly checked unsupported perceptual-decoder errors. A
+passing mixed run means these declared outcomes were observed, not that every
+image capability is available. Raw logs, complete measurements and negative
+controls remain private. No throughput improvement, blocking-I/O deadline,
+GUI qualification or release acceptance is inferred.
