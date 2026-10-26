@@ -83,6 +83,19 @@ try {
     $rejected=$false
     try { Test-QualificationProcessIdentity $unknown 1 | Out-Null } catch { $rejected=$true }
     if (-not $rejected) { throw 'Unknown live process identity accepted' }
+    # Exercise both actual PowerShell apartment modes, not a mocked flag.
+    foreach ($mode in @('Mta','Sta')) {
+        $call = if ($mode -eq 'Mta') {
+            'Assert-QualificationAutomationThread | Out-Null'
+        } else {
+            'try { Assert-QualificationAutomationThread | Out-Null; exit 1 } catch { exit 0 }'
+        }
+        $code = '$ErrorActionPreference="Stop"; ' + ". '$stageScript'; " + $call
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
+        $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive',('-'+$mode),'-EncodedCommand',$encoded) -PassThru
+        $workerHandle = $worker.Handle
+        if (-not $worker.WaitForExit(10000) -or $worker.ExitCode -ne 0) { throw ('UIA apartment contract failed: '+$mode) }
+    }
     Write-Output 'Cross-process invocation, nonce, contention, persistent-lock and malformed-record gates passed'
 } finally {
     if ($worker -and -not $worker.HasExited) { Stop-Process -Id $worker.Id }

@@ -33,7 +33,7 @@ if (-not $Interactive) {
         $saved = Join-Path $Fixture ('windows-ui/report-previous-' + [guid]::NewGuid().ToString('N') + '.json')
         Move-Item -LiteralPath $report -Destination $saved
     }
-    $argsText = '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $PSCommandPath + '" -Binary "' + $Binary + '" -Fixture "' + $Fixture + '" -Interactive'
+    $argsText = '-NoProfile -Mta -NonInteractive -WindowStyle Hidden -File "' + $PSCommandPath + '" -Binary "' + $Binary + '" -Fixture "' + $Fixture + '" -Interactive'
     if ($CliBinary) { $argsText += ' -CliBinary "' + (Resolve-Path -LiteralPath $CliBinary).Path + '"' }
     $argsText += ' -Actions "' + $Actions + '" -RunId "' + $RunId + '"'
     $argsText += ' -ObserverMode ' + $ObserverMode + ' -ObserverCycles ' + $ObserverCycles
@@ -117,6 +117,7 @@ if (-not $Interactive) {
     exit
 }
 
+$automationThreadId = Assert-QualificationAutomationThread
 $out = Join-Path $Fixture 'windows-ui'
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 $process = $null
@@ -279,15 +280,19 @@ public class QualificationWindow {
             Add-Type -ReferencedAssemblies $references @'
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Windows.Automation;
 public static class ScannerLiveEvents {
     static AutomationElement root;
+    public static int RegistrationThread;
     static AutomationEventHandler handler;
     static AutomationEvent live = AutomationEvent.LookupById(20024);
     public static ConcurrentQueue<string> Messages = new ConcurrentQueue<string>();
     public static bool IsListening { get { return handler != null; } }
     public static void Start(AutomationElement element, int pid) {
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA) throw new InvalidOperationException("UIA event registration requires MTA");
         if (IsListening) throw new InvalidOperationException("Observer already attached");
+        RegistrationThread = Thread.CurrentThread.ManagedThreadId;
         var messages = new ConcurrentQueue<string>();
         Messages = messages;
         root = element;
@@ -301,6 +306,7 @@ public static class ScannerLiveEvents {
     }
     public static void Stop() {
         if (handler != null) {
+            if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA || Thread.CurrentThread.ManagedThreadId != RegistrationThread) throw new InvalidOperationException("UIA removal must use the registration MTA thread");
             try { Automation.RemoveAutomationEventHandler(live, root, handler); }
             catch (ElementNotAvailableException) { }
             finally { handler = null; root = null; }
@@ -523,7 +529,7 @@ public static class ScannerLiveEvents {
     if ((Get-Content -LiteralPath (Join-Path $out 'stderr.txt') -Raw) -match 'Error in Fyne call thread') { throw 'Fyne wrong-thread diagnostic observed' }
     Stop-LiveObserver 'observer-cleanup'
     @{run_id=$RunId; observer_mode=$ObserverMode; system='Windows'; architecture=$env:PROCESSOR_ARCHITECTURE; interactive=$true;
-      input=$Actions; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
+      input=$Actions; automation_apartment='MTA'; automation_thread=$automationThreadId; event_registration_thread=[ScannerLiveEvents]::RegistrationThread; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
         ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
 } catch {
     # Preserve the failed stage for supervisor stack capture before owned cleanup.
@@ -533,7 +539,7 @@ public static class ScannerLiveEvents {
         $diagnosticDeadline = (Get-Date).AddSeconds(60)
         while (-not (Test-Path (Join-Path $out 'diagnostics-complete.json')) -and (Get-Date) -lt $diagnosticDeadline) { Start-Sleep -Milliseconds 100 }
     }
-    @{gui_qualification='pending'; error=$_.Exception.Message; release_acceptance=$false} |
+    @{gui_qualification='pending'; error=$_.Exception.Message; script_stack=$_.ScriptStackTrace; action=$action; qualified=$qualified; release_acceptance=$false} |
         ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
     throw
 } finally {

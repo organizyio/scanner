@@ -82,6 +82,20 @@ while unknown live identities and mismatched start ticks remain rejected.
 Deterministic exit-race regressions protect supervision and owned cleanup. Fresh
 matrix results are recorded in the PR follow-up.
 
+The interactive Windows UIA runner now launches explicitly with `-Mta`, records
+its apartment/thread identity and requires event removal on the registration
+thread. [Microsoft's client-threading guidance](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-threading)
+recommends MTA for UIA calls and event registration/removal. Actual MTA and STA
+child-process tests require correct opt-in and reject the old runner mode before
+launching an application. Matrix acceptance requires recorded MTA/thread proof.
+
+Earlier STA runs include Invoke errors and an eight-second Quit timeout. They
+remain failed evidence; the timeout's application-level cause was not proven.
+A separate stack-dumping executable is diagnostic only, even when its matrix
+passes. The unchanged production executable must pass a fresh MTA native matrix;
+recorded MTA qualification does not promise behavior for every UIA client or
+broader spoken readers. Detailed completion is recorded in the PR follow-up.
+
 The original Apple Silicon/Retina handoff is retained unchanged. Returned
 feedback can qualify its recorded baseline only; review the new graph delta
 before treating it as current. Interactive arm64, actual Retina/display

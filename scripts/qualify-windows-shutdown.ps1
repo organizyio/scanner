@@ -40,6 +40,7 @@ try {
             if ($null -eq $runner.ExitCode -or $runner.ExitCode -ne 0) { throw ('Qualification runner failed: ' + $case.name + '-' + $index) }
             $out = Join-Path $fixture 'windows-ui'
             $report = Get-Content -LiteralPath (Join-Path $out 'report.json') -Raw | ConvertFrom-Json
+            if ($report.automation_apartment -ne 'MTA' -or $report.automation_thread -le 0 -or ($case.mode -ne 'none' -and $report.event_registration_thread -ne $report.automation_thread)) { throw 'UIA client apartment/thread evidence missing' }
             $quit = $report.qualified.quit
             if ($report.error -or -not $quit -or $quit.exit_code -ne 0 -or $quit.forced -or $quit.invoke_error -or $quit.elapsed_ms -ge 8000 -or $quit.observer_mode -ne $case.mode) { throw 'Native Quit acceptance failed' }
             if (Test-Path -LiteralPath (Join-Path $out 'deadline-failure.json')) { throw 'Supervisor deadline failure cannot be qualified' }

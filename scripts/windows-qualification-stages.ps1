@@ -78,3 +78,11 @@ function Test-QualificationProcessIdentity {
         throw $failure
     }
 }
+
+# UIA event registration/removal belongs on one windowless MTA thread.
+function Assert-QualificationAutomationThread {
+    if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne [Threading.ApartmentState]::MTA) {
+        throw 'UI Automation requires an explicit MTA interactive runner'
+    }
+    return [Threading.Thread]::CurrentThread.ManagedThreadId
+}
