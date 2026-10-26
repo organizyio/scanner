@@ -20,9 +20,10 @@ function Write-QualificationStage {
 function Read-QualificationDeadline {
     param([string]$Directory, [string]$RunId)
     $path = Join-Path $Directory 'deadline.json'
-    if (-not [IO.File]::Exists($path)) { return $null }
+    if (-not $script:QualificationObservedRuns) { $script:QualificationObservedRuns = @{} }
+    if (-not [IO.File]::Exists($path) -and -not $script:QualificationObservedRuns.ContainsKey($RunId)) { return $null }
     # Replace can briefly deny even a delete-sharing read on Windows. Retry only
-    # sharing/lock violations, for at most 200ms; never turn failure into "done".
+    # replacement-related missing/sharing/lock violations, for at most 200ms; never turn failure into "done".
     # Deadline evaluation below still uses the original monotonic start time.
     $exchangeWait = [Diagnostics.Stopwatch]::StartNew()
     while ($true) {
@@ -36,7 +37,7 @@ function Read-QualificationDeadline {
         } catch {
             $base = $_.Exception.GetBaseException()
             $code = $base.HResult -band 0xffff
-            if ($base -isnot [IO.IOException] -or $code -notin @(32,33) -or $exchangeWait.ElapsedMilliseconds -ge 200) {
+            if ($base -isnot [IO.IOException] -or $code -notin @(2,32,33) -or $exchangeWait.ElapsedMilliseconds -ge 200) {
                 throw ('Invalid qualification stage record: ' + $_.Exception.Message)
             }
             Start-Sleep -Milliseconds 5
@@ -46,10 +47,12 @@ function Read-QualificationDeadline {
         }
     }
     if ($record.run_id -ne $RunId) { throw 'Qualification stage belongs to another run' }
-    if (-not $record.active) { return $null }
+    $script:QualificationObservedRuns[$RunId] = $true
+    if ($record.active -isnot [bool] -or -not ($record.stage -is [string]) -or -not $record.stage -or $record.runner_pid -le 0 -or $record.runner_start_ticks -le 0) { throw 'Invalid qualification stage identity/state' }
     if ($record.frequency -ne [Diagnostics.Stopwatch]::Frequency -or $record.limit_ms -le 0 -or $record.limit_ms -gt 8000 -or $record.started_ticks -le 0) {
         throw 'Invalid qualification deadline bounds'
     }
+    if (-not $record.active) { return $null }
     $elapsed = ([Diagnostics.Stopwatch]::GetTimestamp() - $record.started_ticks) * 1000.0 / $record.frequency
     if ($elapsed -lt 0) { throw 'Qualification stage timestamp is in the future' }
     if ($elapsed -ge $record.limit_ms) {

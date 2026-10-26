@@ -71,8 +71,12 @@ operation, source equivalence and compilation are distinct claims. Earlier
 Windows, Linux and Intel Mac records retain their original dependency graphs;
 the complete catalog tree is no longer identical to those records.
 
-The Windows deadline-file reader retries only sharing/lock violations for at
-most 200 ms during atomic replacement. Persistent contention, malformed records
+The Windows deadline-file reader retries replacement-related missing-name and
+sharing/lock violations for at most 200 ms during publication. Before the first
+stage, absence means not yet published; after a valid stage is observed,
+persistent disappearance fails closed. All completed and active records require
+valid identity/state/bounds. Concurrent real replacement tests publish 200
+records while the supervisor reads them. Persistent contention, malformed records
 and foreign nonces still fail closed. It evaluates the original monotonic start
 after reading, so no stage receives a new eight-second deadline. Real
 cross-process tests cover an exclusive cross-process lock, preserved expiry after release,

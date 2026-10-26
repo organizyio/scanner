@@ -6,6 +6,7 @@ New-Item -ItemType Directory -Path $directory | Out-Null
 $worker = $null
 try {
     $nonce = [guid]::NewGuid().ToString('N')
+    if (Read-QualificationDeadline $directory $nonce) { throw 'An unpublished first stage was accepted' }
     $start = Write-QualificationStage $directory $nonce 'quit' $true
     if (Read-QualificationDeadline $directory $nonce) { throw 'Fresh stage expired' }
     Write-QualificationStage $directory $nonce 'quit' $false $start | Out-Null
@@ -17,7 +18,7 @@ try {
     # Use a literal variable token, independent of the invoking script's scope.
     $code = ". '$stageScript'; Write-QualificationStage '$directory' '$nonce' 'quit' " + '$true' + ' 0 100 | Out-Null; Start-Sleep -Seconds 10'
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
-    Remove-Item (Join-Path $directory 'deadline.json')
+    # Retain the previous completed stage until the new writer publishes.
     $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru
     $workerHandle = $worker.Handle
     $timer = [Diagnostics.Stopwatch]::StartNew()
@@ -30,6 +31,26 @@ try {
     Stop-Process -Id $worker.Id
     $worker.WaitForExit()
     if (-not (Read-QualificationDeadline $directory $nonce)) { throw 'Expired invocation was accepted after exit' }
+    # Exercise actual File.Replace publication concurrently, including Windows'
+    # transient missing-name state. No malformed/foreign record is tolerated.
+    Write-QualificationStage $directory $nonce 'replace-before' $false | Out-Null
+    $code = '$ErrorActionPreference="Stop"; ' + ". '$stageScript'; " + 'for ($i=0;$i -lt 200;$i++) { Write-QualificationStage ' + "'$directory' '$nonce' " + '("replace-"+$i) $false | Out-Null }'
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
+    $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru
+    $workerHandle = $worker.Handle
+    $timer.Restart(); $reads=0
+    while (-not $worker.WaitForExit(1) -and $timer.ElapsedMilliseconds -lt 10000) {
+        if (Read-QualificationDeadline $directory $nonce) { throw 'Completed replacement stage became active' }
+        $reads++
+    }
+    if (-not $worker.HasExited -or $worker.ExitCode -ne 0 -or $reads -lt 1) { throw 'Concurrent replacement writer/reader did not complete' }
+    $published = Get-Content -LiteralPath (Join-Path $directory 'deadline.json') -Raw | ConvertFrom-Json
+    if ($published.stage -ne 'replace-199' -or $published.run_id -ne $nonce) { throw 'Replacement stress did not publish every stage' }
+    # Once observed, permanent disappearance is a bounded failure, not null.
+    Remove-Item (Join-Path $directory 'deadline.json')
+    $timer.Restart(); $rejected=$false
+    try { Read-QualificationDeadline $directory $nonce | Out-Null } catch { $rejected=$true }
+    if (-not $rejected -or $timer.ElapsedMilliseconds -gt 1500) { throw 'Missing observed stage was silently accepted' }
     # Real exclusive-handle contention must not produce a false completed stage
     # or extend an already expired monotonic deadline.
     $expiredStart = [Diagnostics.Stopwatch]::GetTimestamp() - 9 * [Diagnostics.Stopwatch]::Frequency
@@ -70,6 +91,10 @@ try {
     $rejected = $false
     try { Read-QualificationDeadline $directory $nonce | Out-Null } catch { $rejected = $true }
     if (-not $rejected) { throw 'Malformed stage accepted' }
+    [IO.File]::WriteAllText($path, (@{run_id=$nonce;active=$false} | ConvertTo-Json))
+    $rejected=$false
+    try { Read-QualificationDeadline $directory $nonce | Out-Null } catch { $rejected=$true }
+    if (-not $rejected) { throw 'Incomplete completed-stage record accepted' }
     # Deterministically model exit between HasExited and StartTime reads.
     $raced = [pscustomobject]@{exited=$false}
     $raced | Add-Member ScriptProperty HasExited { $this.exited }
