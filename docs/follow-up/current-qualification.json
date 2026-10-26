@@ -43,7 +43,8 @@
   "unsupported": [
     "Native Wayland",
     "Linux desktops without a readiness observer",
-    "Ambiguous repeated-text anchors, multiline/CRLF, password and oversized entry range actions"
+    "Ambiguous repeated-text anchors, multiline/CRLF, password and oversized entry range actions",
+    "PNG perceptual decoding in the default locked preferred graph; explicit mixed-fixture error checked; Scanner issue #18"
   ],
   "historical_register": "platform-results.json",
   "historical_failures": "Retained with exact source/hash evidence; Linux default and Windows observer-detach gates superseded only within current native_evidence scope",
@@ -77,6 +78,7 @@
   },
   "preparation_followups": {
     "returned_evidence_verifier": "returned-evidence.md; inspection tooling only, no hardware acceptance",
-    "scale_testing": "scale-testing.md; synthetic preferred execution, no GUI or release acceptance"
+    "scale_testing": "scale-testing.md; synthetic preferred execution, no GUI or release acceptance",
+    "mixed_scale_testing": "mixed-workloads.md; large-file hashing and DOCX/PDF extraction; PNG decoding remains unsupported"
   }
 }

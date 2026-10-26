@@ -11,6 +11,10 @@ import platform
 import subprocess
 import tempfile
 import time
+import sys
+import zlib
+
+from scale_fixtures import create, specification
 
 ROOT = Path(__file__).resolve().parents[1]
 MODES = (
@@ -64,7 +68,7 @@ def run_probe(command, stdout, stderr, timeout):
     return value
 
 
-def validate(value, mode, walk, files, stop):
+def validate(value, mode, walk, files, stop, spec=None):
     if (
         value.get("passed") is not True
         or value.get("mode") != mode
@@ -74,11 +78,34 @@ def validate(value, mode, walk, files, stop):
         raise ValueError("Probe identity/result mismatch")
     partial = mode in ("cancel", "callback_error", "output_error")
     count = stop if partial else files
-    if (
-        value.get("files_delivered") != count
-        or value.get("bytes_delivered") != count * 256
-    ):
+    if value.get("files_delivered") != count:
         raise ValueError("Incorrect delivered inventory")
+    if spec is None:
+        if value.get("bytes_delivered") != count * 256:
+            raise ValueError("Incorrect delivered inventory")
+    else:
+        classes = value.get("delivered_by_class")
+        if value.get("profile") != spec["profile"] or value.get(
+            "extraction_enabled"
+        ) is not (spec["profile"] == "mixed"):
+            raise ValueError("Missing profile/extraction proof")
+        if not isinstance(classes, dict) or set(classes) != set(spec["class_counts"]):
+            raise ValueError("Incorrect delivered classes")
+        if any(
+            type(n) is not int or n < 0 or n > spec["class_counts"][k]
+            for k, n in classes.items()
+        ):
+            raise ValueError("Invalid class counts")
+        delivered_bytes = sum(c["size"] * classes[c["name"]] for c in spec["classes"])
+        if (
+            sum(classes.values()) != count
+            or value.get("bytes_delivered") != delivered_bytes
+        ):
+            raise ValueError("Incorrect mixed inventory bytes/counts")
+        if not partial and classes != spec["class_counts"]:
+            raise ValueError("Missing fixture classes")
+        if value.get("expected_unsupported_image_records") != classes.get("image", 0):
+            raise ValueError("Missing explicit unsupported-image records")
     if (
         value.get("expected_failure_observed") is not mode.endswith("error")
         or value.get("recovery_inventory_verified") is not partial
@@ -97,11 +124,8 @@ def validate(value, mode, walk, files, stop):
         raise ValueError("Inconsistent timing/acceptance")
 
 
-def fixture(root, files):
-    for i in range(files):
-        folder = root / ("alpha" if i % 2 == 0 else "unicode-β") / f"shard-{i % 32:02}"
-        folder.mkdir(parents=True, exist_ok=True)
-        (folder / f"file-{i}.txt").write_bytes(b"x" * 256)
+def fixture(root, files, profile="small"):
+    return create(root, files, profile)
 
 
 def main():
@@ -117,10 +141,16 @@ def main():
     parser.add_argument("--cancel-repeats", type=int, default=8)
     parser.add_argument("--delay-us", type=int, default=25)
     parser.add_argument("--timeout", type=float, default=120)
+    parser.add_argument(
+        "--profiles", nargs="+", choices=["small", "mixed"], default=["small"]
+    )
     args = parser.parse_args()
     out = args.output.resolve()
     if (
         out.is_relative_to(ROOT)
+        or len(set(args.files)) != len(args.files)
+        or len(set(args.profiles)) != len(args.profiles)
+        or ("mixed" in args.profiles and min(args.files) < 128)
         or any(n < 2 or n > 1000000 for n in args.files)
         or not 1 <= args.repeats <= 20
         or not 1 <= args.cancel_repeats <= 100
@@ -128,6 +158,15 @@ def main():
         or not 0 < args.timeout <= 1800
     ):
         parser.error("Invalid limits or output inside checkout")
+    specs = {
+        (profile, count): specification(count, profile)
+        for profile in args.profiles
+        for count in args.files
+    }
+    if any(s["total_bytes"] > 512 << 20 for s in specs.values()):
+        parser.error(
+            "Fixture exceeds 512 MiB; choose fewer files for the mixed profile"
+        )
     revision = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
@@ -163,19 +202,37 @@ def main():
         / ("scale_probe.exe" if os.name == "nt" else "scale_probe")
     )
     report = {
-        "schema": 1,
+        "schema": 2,
         "source_revision": revision,
         "probe_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "platform": platform.system() + "-" + platform.machine(),
+        "host": {
+            "os_release": platform.release(),
+            "os_version": platform.version(),
+            "logical_cpus": os.cpu_count(),
+        },
+        "python": sys.version.split()[0],
+        "zlib": zlib.ZLIB_RUNTIME_VERSION,
+        "profiles": args.profiles,
+        "known_limitations": [
+            "PNG perceptual decoding is unsupported in the default locked graph; expected error records checked (Scanner issue #18)"
+        ]
+        if "mixed" in args.profiles
+        else [],
+        "fixture_specs": [
+            {"files": n, **specs[(p, n)]} for p in args.profiles for n in args.files
+        ],
         "rustc": subprocess.check_output(
             ["rustc", "+1.88", "--version"], text=True
         ).strip(),
         "fixture": {
-            "payload_bytes": 256,
-            "payload_sha256": hashlib.sha256(b"x" * 256).hexdigest(),
+            "payload_bytes": 256 if args.profiles == ["small"] else None,
+            "payload_sha256": hashlib.sha256(b"x" * 256).hexdigest()
+            if args.profiles == ["small"]
+            else None,
             "roots": 2,
             "shards": 32,
-            "file_names": "file-N.txt; even IDs alpha, odd IDs unicode-β",
+            "file_names": "file-N.<class extension>; even IDs alpha, odd IDs unicode-β",
         },
         "delay_us": args.delay_us,
         "repeats": args.repeats,
@@ -190,34 +247,46 @@ def main():
         "release_acceptance": False,
     }
     try:
-        for files in args.files:
-            with tempfile.TemporaryDirectory(prefix="fixture-", dir=out) as folder:
-                fixture(Path(folder), files)
-                stop = min(128, files // 2)
-                for walk in ("standard", "full"):
-                    for mode in MODES:
-                        for repeat in range(
-                            args.cancel_repeats if mode == "cancel" else args.repeats
-                        ):
-                            label = f"{files}-{walk}-{mode}-{repeat + 1}"
-                            value = run_probe(
-                                [
-                                    str(binary),
-                                    folder,
-                                    mode,
-                                    str(files),
-                                    str(args.delay_us),
-                                    str(stop),
-                                    walk,
-                                ],
-                                out / (label + ".stdout.json"),
-                                out / (label + ".stderr.log"),
-                                args.timeout,
-                            )
-                            validate(value, mode, walk, files, stop)
-                            value["repeat"] = repeat + 1
-                            report["runs"].append(value)
-                            print(label, "passed", flush=True)
+        for profile in args.profiles:
+            for files in args.files:
+                with tempfile.TemporaryDirectory(prefix="fixture-", dir=out) as folder:
+                    spec = fixture(Path(folder), files, profile)
+                    stop = min(128, files // 2)
+                    for walk in ("standard", "full"):
+                        for mode in MODES:
+                            for repeat in range(
+                                args.cancel_repeats
+                                if mode == "cancel"
+                                else args.repeats
+                            ):
+                                label = f"{profile}-{files}-{walk}-{mode}-{repeat + 1}"
+                                value = run_probe(
+                                    [
+                                        str(binary),
+                                        folder,
+                                        mode,
+                                        str(files),
+                                        str(args.delay_us),
+                                        str(stop),
+                                        walk,
+                                        profile,
+                                    ],
+                                    out / (label + ".stdout.json"),
+                                    out / (label + ".stderr.log"),
+                                    args.timeout,
+                                )
+                                validate(value, mode, walk, files, stop, spec)
+                                value["repeat"] = repeat + 1
+                                report["runs"].append(value)
+                                print(label, "passed", flush=True)
+        if subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip() != revision or subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=ROOT
+        ):
+            raise RuntimeError(
+                "Source changed during qualification; retain failed evidence and rerun cleanly"
+            )
         report["passed"] = True
     finally:
         (out / "report.json").write_text(json.dumps(report, indent=2) + "\n")

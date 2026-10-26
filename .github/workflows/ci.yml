@@ -39,7 +39,7 @@ jobs:
       - name: Bounded scale and failure-recovery qualification (synthetic CLI only)
         run: |
           rustup toolchain install 1.88 --profile minimal --no-self-update
-          python scripts/qualify-scale.py --output "${{ runner.temp }}/scanner-scale" --files 1024 --repeats 1 --cancel-repeats 3
+          python scripts/qualify-scale.py --output "${{ runner.temp }}/scanner-scale" --profiles small mixed --files 1024 --repeats 1 --cancel-repeats 3
       - uses: actions/upload-artifact@v6
         if: always()
         with:
