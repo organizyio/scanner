@@ -35,7 +35,8 @@ try {
     Write-QualificationStage $directory $nonce 'replacement-contention' $true $expiredStart | Out-Null
     $ready = Join-Path $directory 'exclusive-ready'
     $path = Join-Path $directory 'deadline.json'
-    $code = '$s=[IO.File]::Open(' + "'$path'," + '[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None); try { [IO.File]::WriteAllText(' + "'$ready','ready'); Start-Sleep -Milliseconds 100" + ' } finally { $s.Dispose() }'
+    $beginRead = Join-Path $directory 'begin-contended-read'
+    $code = '$s=[IO.File]::Open(' + "'$path'," + '[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None); try { [IO.File]::WriteAllText(' + "'$ready','ready'); " + '$wait=[Diagnostics.Stopwatch]::StartNew(); while (-not [IO.File]::Exists(' + "'$beginRead'" + ') -and $wait.ElapsedMilliseconds -lt 6000) { Start-Sleep -Milliseconds 1 }; if (-not [IO.File]::Exists(' + "'$beginRead'" + ')) { throw "Reader never arrived" }; Start-Sleep -Milliseconds 100' + ' } finally { $s.Dispose() }'
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
     $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru
     $timer.Restart()
@@ -45,6 +46,7 @@ try {
     try { $probe = [IO.File]::OpenRead($path); $probe.Dispose() }
     catch { if (($_.Exception.GetBaseException().HResult -band 0xffff) -eq 32) { $contended = $true } else { throw } }
     if (-not $contended) { throw 'Contention regression did not exercise a denied open' }
+    [IO.File]::WriteAllText($beginRead, 'start')
     $observed = Read-QualificationDeadline $directory $nonce
     if (-not $observed -or $observed.stage -ne 'replacement-contention' -or $observed.elapsed_ms -lt 9000) { throw 'Sharing retry hid or extended the deadline' }
     if (-not $worker.WaitForExit(5000)) { throw 'Contending writer did not release its handle' }
@@ -59,6 +61,19 @@ try {
     $rejected = $false
     try { Read-QualificationDeadline $directory $nonce | Out-Null } catch { $rejected = $true }
     if (-not $rejected) { throw 'Malformed stage accepted' }
+    # Deterministically model exit between HasExited and StartTime reads.
+    $raced = [pscustomobject]@{exited=$false}
+    $raced | Add-Member ScriptProperty HasExited { $this.exited }
+    $raced | Add-Member ScriptProperty StartTime { $this.exited=$true; return $null }
+    if (Test-QualificationProcessIdentity $raced 1) { throw 'Exited process accepted as live' }
+    $live = [pscustomobject]@{HasExited=$false;StartTime=[DateTime]::UtcNow}
+    $ticks = $live.StartTime.ToUniversalTime().Ticks
+    if (-not (Test-QualificationProcessIdentity $live $ticks)) { throw 'Live matching identity rejected' }
+    if (Test-QualificationProcessIdentity $live ($ticks+1)) { throw 'Foreign process identity accepted' }
+    $unknown = [pscustomobject]@{HasExited=$false;StartTime=$null}
+    $rejected=$false
+    try { Test-QualificationProcessIdentity $unknown 1 | Out-Null } catch { $rejected=$true }
+    if (-not $rejected) { throw 'Unknown live process identity accepted' }
     Write-Output 'Cross-process invocation, nonce, contention, persistent-lock and malformed-record gates passed'
 } finally {
     if ($worker -and -not $worker.HasExited) { Stop-Process -Id $worker.Id }

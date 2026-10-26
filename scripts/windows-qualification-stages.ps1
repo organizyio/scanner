@@ -58,3 +58,23 @@ function Read-QualificationDeadline {
     }
     return $null
 }
+
+# A process can exit between Get-Process and reading StartTime. Exited is not
+# owned/live; unavailable identity on a still-live process remains an error.
+function Test-QualificationProcessIdentity {
+    param($Process, [long]$StartedTicks)
+    if ($null -eq $Process) { return $false }
+    try {
+        if ($Process.HasExited) { return $false }
+        $started = $Process.StartTime
+        if ($null -eq $started) {
+            if ($Process.HasExited) { return $false }
+            throw 'Live process start time unavailable'
+        }
+        return $started.ToUniversalTime().Ticks -eq $StartedTicks
+    } catch {
+        $failure = $_
+        if ($Process.HasExited) { return $false }
+        throw $failure
+    }
+}

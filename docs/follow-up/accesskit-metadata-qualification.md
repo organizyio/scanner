@@ -77,7 +77,9 @@ and foreign nonces still fail closed. It evaluates the original monotonic start
 after reading, so no stage receives a new eight-second deadline. Real
 cross-process tests cover a brief exclusive lock, an already expired stage,
 persistent contention and malformed input. The earlier matrix sharing conflict
-remains failed evidence even though its native Quit completed promptly. Fresh
+remains failed evidence even though its native Quit completed promptly. Process identity checks also handle exit between lookup and reading StartTime,
+while unknown live identities and mismatched start ticks remain rejected.
+Deterministic exit-race regressions protect supervision and owned cleanup. Fresh
 matrix results are recorded in the PR follow-up.
 
 The original Apple Silicon/Retina handoff is retained unchanged. Returned

@@ -63,7 +63,7 @@ if (-not $Interactive) {
                     $gdb = if ($DebuggerPath) { @{Source=$DebuggerPath} } else { Get-Command gdb.exe -ErrorAction SilentlyContinue }
                     foreach ($target in $targets) {
                         $observed = Get-Process -Id $target.id -ErrorAction SilentlyContinue
-                        if ($gdb -and $observed -and $observed.StartTime.ToUniversalTime().Ticks -eq $target.ticks) {
+                        if ($gdb -and (Test-QualificationProcessIdentity $observed $target.ticks)) {
                             $debugger = $null
                             try {
                                 $debugger = Start-Process -FilePath $gdb.Source -ArgumentList @('-nx','-batch','-iex','"set auto-load off"','-iex','"set auto-solib-add off"','-ex','"set pagination off"','-ex','"thread apply all bt"','-p',([string]$target.id)) -PassThru -RedirectStandardOutput (Join-Path $Fixture ('windows-ui/' + $target.name + '-timeout-stacks.txt')) -RedirectStandardError (Join-Path $Fixture ('windows-ui/' + $target.name + '-debugger-stderr.txt'))
@@ -87,7 +87,7 @@ if (-not $Interactive) {
                 $runnerRecord = Get-Content -LiteralPath $runnerFile -Raw | ConvertFrom-Json
                 if ($runnerRecord.run_id -ne $RunId) { throw 'Runner belongs to another run' }
                 $runnerProcess = Get-Process -Id $runnerRecord.pid -ErrorAction SilentlyContinue
-                $runnerLive = $runnerProcess -and $runnerProcess.StartTime.ToUniversalTime().Ticks -eq $runnerRecord.start_ticks
+                $runnerLive = Test-QualificationProcessIdentity $runnerProcess $runnerRecord.start_ticks
             }
         } while ((-not (Test-Path -LiteralPath $report) -or $runnerLive) -and (Get-Date) -lt $deadline)
         if ($runnerLive) { throw 'Interactive qualification timed out' }
@@ -108,7 +108,7 @@ if (-not $Interactive) {
             $owned = Get-Content -LiteralPath $pidFile -Raw | ConvertFrom-Json
             if ($owned.run_id -eq $RunId) {
                 $left = Get-Process -Id $owned.pid -ErrorAction SilentlyContinue
-                if ($left -and $left.Path -eq $Binary -and $left.StartTime.ToUniversalTime().Ticks -eq $owned.start_ticks) {
+                if ((Test-QualificationProcessIdentity $left $owned.start_ticks) -and $left.Path -eq $Binary) {
                     Stop-Process -Id $left.Id
                 }
             }
