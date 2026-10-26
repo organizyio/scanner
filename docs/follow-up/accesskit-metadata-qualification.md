@@ -49,6 +49,23 @@ This narrow replacement does not resolve zbus 6 migration.
 ## Qualification boundaries
 
 Implementation source snapshot: `eedf8c0d49c8ff86d12e16d8d109887d189a17be`.
+[Scoped results](accesskit-metadata-results.json) record five guarded Linux
+replays (attached/detached observers and silent Orca), registry wire positive and
+broken-emitter negative controls, and the available Intel Mac's native
+AX/keyboard/error/profile/lifecycle/restart/checkpoint/Quit replay. Screenshots
+were reviewed privately. Host settings were not changed; Linux used the
+installed graphics library with a task-local development link, not a software
+rendering override. Windows native and exact-head CI results are recorded with
+[PR #22](https://github.com/organizyio/scanner/pull/22).
+
+The clean frozen-source scale rerun passed 112 small/mixed cases and 64 recovery
+checks at 128 and 4,096 files. Peak RSS is an observed value, not a ceiling. A
+prior run was rejected when its source guard detected a harness commit during
+qualification; it remains private failed evidence. Windows fixture byte
+reproduction is enforced by disabling Git text conversion for PDF/DOCX/TIFF.
+Pinned root/native checks, 68 Python tests, deterministic fixtures, history and
+whitespace checks passed locally; all latest-head CI gates are required.
+
 Native evidence and exact-head CI results are recorded with this PR. Native
 operation, source equivalence and compilation are distinct claims. Earlier
 Windows, Linux and Intel Mac records retain their original dependency graphs;

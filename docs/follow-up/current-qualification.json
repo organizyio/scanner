@@ -14,7 +14,8 @@
       "record": "linux-default-results.json",
       "status": "default accelerated rendering qualified on recorded live GNOME/Xwayland host",
       "runs": 5,
-      "scope": "Readiness sampled; actual window-manager foreground verified before and after captures; application/rendering defaults unchanged"
+      "scope": "Readiness sampled; actual window-manager foreground verified before and after captures; application/rendering defaults unchanged",
+      "accesskit_refresh": "accesskit-metadata-results.json"
     },
     "windows-x86_64": {
       "record": "windows-shutdown-results.json",
@@ -23,7 +24,8 @@
     },
     "macos-x86_64-1x": {
       "record": "linux-macos-results.json",
-      "status": "recorded AX/keyboard/lifecycle/filesystem scope qualified; actual active-reader barrier and checkpoint shutdown passed"
+      "status": "recorded AX/keyboard/lifecycle/filesystem scope qualified; actual active-reader barrier and checkpoint shutdown passed",
+      "accesskit_refresh": "accesskit-metadata-results.json"
     }
   },
   "pending": [
@@ -122,9 +124,11 @@
     "metadata_budgets": "metadata-decoding-limits.md",
     "implementation_source": "eedf8c0d49c8ff86d12e16d8d109887d189a17be",
     "wire_harness_source": "37edefaf2d6d0cc8201ea14aeb94c21324853d84",
-    "status": "Native replay and exact-head checks recorded with the implementation PR; reviewed-main consumer result follows merge",
+    "status": "Five Linux and one Intel Mac native replay passed; Windows and exact-head CI completion recorded with PR; reviewed-main consumer qualification follows merge",
     "native_advisory_deadline": "before 2026-11-24",
     "arm64_retina_qualified": false,
-    "production_pin_changed": false
+    "production_pin_changed": false,
+    "results": "accesskit-metadata-results.json",
+    "implementation_pr": "https://github.com/organizyio/scanner/pull/22"
   }
 }
