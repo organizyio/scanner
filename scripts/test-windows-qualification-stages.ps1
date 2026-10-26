@@ -19,6 +19,7 @@ try {
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
     Remove-Item (Join-Path $directory 'deadline.json')
     $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru
+    $workerHandle = $worker.Handle
     $timer = [Diagnostics.Stopwatch]::StartNew()
     $expired = $null
     do { Start-Sleep -Milliseconds 10; $expired = Read-QualificationDeadline $directory $nonce }
@@ -36,9 +37,10 @@ try {
     $ready = Join-Path $directory 'exclusive-ready'
     $path = Join-Path $directory 'deadline.json'
     $beginRead = Join-Path $directory 'begin-contended-read'
-    $code = '$s=[IO.File]::Open(' + "'$path'," + '[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None); try { [IO.File]::WriteAllText(' + "'$ready','ready'); " + '$wait=[Diagnostics.Stopwatch]::StartNew(); while (-not [IO.File]::Exists(' + "'$beginRead'" + ') -and $wait.ElapsedMilliseconds -lt 6000) { Start-Sleep -Milliseconds 1 }; if (-not [IO.File]::Exists(' + "'$beginRead'" + ')) { throw "Reader never arrived" }; Start-Sleep -Milliseconds 100' + ' } finally { $s.Dispose() }'
+    $code = '$s=[IO.File]::Open(' + "'$path'," + '[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None); try { [IO.File]::WriteAllText(' + "'$ready','ready'); " + '$wait=[Diagnostics.Stopwatch]::StartNew(); while (-not [IO.File]::Exists(' + "'$beginRead'" + ') -and $wait.ElapsedMilliseconds -lt 6000) { Start-Sleep -Milliseconds 1 }; if (-not [IO.File]::Exists(' + "'$beginRead'" + ')) { throw "Reader never arrived" }; ' + ' } finally { $s.Dispose() }'
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
     $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru
+    $workerHandle = $worker.Handle
     $timer.Restart()
     while (-not (Test-Path $ready) -and $timer.ElapsedMilliseconds -lt 6000) { Start-Sleep -Milliseconds 1 }
     if (-not (Test-Path $ready)) { throw 'Contending writer did not start' }
@@ -46,10 +48,17 @@ try {
     try { $probe = [IO.File]::OpenRead($path); $probe.Dispose() }
     catch { if (($_.Exception.GetBaseException().HResult -band 0xffff) -eq 32) { $contended = $true } else { throw } }
     if (-not $contended) { throw 'Contention regression did not exercise a denied open' }
-    [IO.File]::WriteAllText($beginRead, 'start')
+    # Keep the cross-process lock held while exercising bounded rejection.
+    # Do not assume a child sleeping 100ms is rescheduled within the 200ms
+    # reader budget on loaded CI hosts.
+    $timer.Restart(); $rejected=$false
+    try { Read-QualificationDeadline $directory $nonce | Out-Null }
+    catch { $rejected=$true }
+    if (-not $rejected -or $timer.ElapsedMilliseconds -gt 1500) { throw 'Cross-process contention did not fail within its bound' }
+    [IO.File]::WriteAllText($beginRead, 'release')
+    if (-not $worker.WaitForExit(5000) -or $worker.ExitCode -ne 0) { throw 'Contending writer did not release its handle' }
     $observed = Read-QualificationDeadline $directory $nonce
-    if (-not $observed -or $observed.stage -ne 'replacement-contention' -or $observed.elapsed_ms -lt 9000) { throw 'Sharing retry hid or extended the deadline' }
-    if (-not $worker.WaitForExit(5000)) { throw 'Contending writer did not release its handle' }
+    if (-not $observed -or $observed.stage -ne 'replacement-contention' -or $observed.elapsed_ms -lt 9000) { throw 'Sharing failure hid or extended the original deadline' }
     # Persistent contention remains a bounded failure, never a null/success.
     $held = [IO.File]::Open($path,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
     $timer.Restart(); $rejected = $false

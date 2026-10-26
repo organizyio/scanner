@@ -75,7 +75,7 @@ The Windows deadline-file reader retries only sharing/lock violations for at
 most 200 ms during atomic replacement. Persistent contention, malformed records
 and foreign nonces still fail closed. It evaluates the original monotonic start
 after reading, so no stage receives a new eight-second deadline. Real
-cross-process tests cover a brief exclusive lock, an already expired stage,
+cross-process tests cover an exclusive cross-process lock, preserved expiry after release,
 persistent contention and malformed input. The earlier matrix sharing conflict
 remains failed evidence even though its native Quit completed promptly. Process identity checks also handle exit between lookup and reading StartTime,
 while unknown live identities and mismatched start ticks remain rejected.
