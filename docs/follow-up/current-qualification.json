@@ -112,8 +112,9 @@
   },
   "png_hardening": {
     "record": "png-decoding-limits.md",
-    "status": "separate post-PR20 change; baseline and exact-head qualification are distinct",
-    "production_pin_changed": false
+    "status": "Budgeted implementation and hash/error compatibility covered by linked PR checks; subsequent merged-main consumer result recorded in the PR follow-up",
+    "production_pin_changed": false,
+    "implementation_pr": "https://github.com/organizyio/scanner/pull/21"
   },
   "scope": "Register review baseline is the published merge above; post-baseline hardening validation and later reviewed-main consumer qualification are recorded separately, without self-referential commit IDs."
 }

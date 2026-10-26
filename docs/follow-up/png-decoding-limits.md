@@ -62,7 +62,7 @@ consolidation verification and three-platform scale/component CI are required.
 and narrow inout lock update. [PR #20's initial decoder evidence](png-perceptual-hashing.md)
 and [its consumer completion](https://github.com/organizyio/scanner/issues/18#issuecomment-6407572436)
 remain historical. The qualification register records that published baseline
-separately from this follow-up. This PR's checks and follow-up consumer result
+separately from this follow-up. [PR #21's checks and follow-up consumer result](https://github.com/organizyio/scanner/pull/21)
 record the new candidate; the consumer resolver requires a reviewed main commit,
 so its final exact-candidate run follows merge. Temporary worker patches/tests,
 lock changes and embedded binaries must be restored; production pins stay fixed.
