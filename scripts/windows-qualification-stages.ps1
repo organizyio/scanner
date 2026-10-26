@@ -21,13 +21,30 @@ function Read-QualificationDeadline {
     param([string]$Directory, [string]$RunId)
     $path = Join-Path $Directory 'deadline.json'
     if (-not [IO.File]::Exists($path)) { return $null }
-    try {
-        $stream = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
-        $reader = [IO.StreamReader]::new($stream)
-        try { $record = $reader.ReadToEnd() | ConvertFrom-Json }
-        finally { $reader.Dispose() }
+    # Replace can briefly deny even a delete-sharing read on Windows. Retry only
+    # sharing/lock violations, for at most 200ms; never turn failure into "done".
+    # Deadline evaluation below still uses the original monotonic start time.
+    $exchangeWait = [Diagnostics.Stopwatch]::StartNew()
+    while ($true) {
+        $reader = $null
+        $stream = $null
+        try {
+            $stream = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+            $reader = [IO.StreamReader]::new($stream)
+            $record = $reader.ReadToEnd() | ConvertFrom-Json
+            break
+        } catch {
+            $base = $_.Exception.GetBaseException()
+            $code = $base.HResult -band 0xffff
+            if ($base -isnot [IO.IOException] -or $code -notin @(32,33) -or $exchangeWait.ElapsedMilliseconds -ge 200) {
+                throw ('Invalid qualification stage record: ' + $_.Exception.Message)
+            }
+            Start-Sleep -Milliseconds 5
+        } finally {
+            if ($reader) { $reader.Dispose() }
+            elseif ($stream) { $stream.Dispose() }
+        }
     }
-    catch { throw ('Invalid qualification stage record: ' + $_.Exception.Message) }
     if ($record.run_id -ne $RunId) { throw 'Qualification stage belongs to another run' }
     if (-not $record.active) { return $null }
     if ($record.frequency -ne [Diagnostics.Stopwatch]::Frequency -or $record.limit_ms -le 0 -or $record.limit_ms -gt 8000 -or $record.started_ticks -le 0) {

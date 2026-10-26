@@ -71,6 +71,15 @@ operation, source equivalence and compilation are distinct claims. Earlier
 Windows, Linux and Intel Mac records retain their original dependency graphs;
 the complete catalog tree is no longer identical to those records.
 
+The Windows deadline-file reader retries only sharing/lock violations for at
+most 200 ms during atomic replacement. Persistent contention, malformed records
+and foreign nonces still fail closed. It evaluates the original monotonic start
+after reading, so no stage receives a new eight-second deadline. Real
+cross-process tests cover a brief exclusive lock, an already expired stage,
+persistent contention and malformed input. The earlier matrix sharing conflict
+remains failed evidence even though its native Quit completed promptly. Fresh
+matrix results are recorded in the PR follow-up.
+
 The original Apple Silicon/Retina handoff is retained unchanged. Returned
 feedback can qualify its recorded baseline only; review the new graph delta
 before treating it as current. Interactive arm64, actual Retina/display

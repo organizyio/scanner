@@ -29,7 +29,37 @@ try {
     Stop-Process -Id $worker.Id
     $worker.WaitForExit()
     if (-not (Read-QualificationDeadline $directory $nonce)) { throw 'Expired invocation was accepted after exit' }
-    Write-Output 'Cross-process blocked-invocation, completed-stage and nonce deadline gates passed'
+    # Real exclusive-handle contention must not produce a false completed stage
+    # or extend an already expired monotonic deadline.
+    $expiredStart = [Diagnostics.Stopwatch]::GetTimestamp() - 9 * [Diagnostics.Stopwatch]::Frequency
+    Write-QualificationStage $directory $nonce 'replacement-contention' $true $expiredStart | Out-Null
+    $ready = Join-Path $directory 'exclusive-ready'
+    $path = Join-Path $directory 'deadline.json'
+    $code = '$s=[IO.File]::Open(' + "'$path'," + '[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None); try { [IO.File]::WriteAllText(' + "'$ready','ready'); Start-Sleep -Milliseconds 100" + ' } finally { $s.Dispose() }'
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code))
+    $worker = Start-Process powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -PassThru
+    $timer.Restart()
+    while (-not (Test-Path $ready) -and $timer.ElapsedMilliseconds -lt 6000) { Start-Sleep -Milliseconds 1 }
+    if (-not (Test-Path $ready)) { throw 'Contending writer did not start' }
+    $contended = $false
+    try { $probe = [IO.File]::OpenRead($path); $probe.Dispose() }
+    catch { if (($_.Exception.GetBaseException().HResult -band 0xffff) -eq 32) { $contended = $true } else { throw } }
+    if (-not $contended) { throw 'Contention regression did not exercise a denied open' }
+    $observed = Read-QualificationDeadline $directory $nonce
+    if (-not $observed -or $observed.stage -ne 'replacement-contention' -or $observed.elapsed_ms -lt 9000) { throw 'Sharing retry hid or extended the deadline' }
+    if (-not $worker.WaitForExit(5000)) { throw 'Contending writer did not release its handle' }
+    # Persistent contention remains a bounded failure, never a null/success.
+    $held = [IO.File]::Open($path,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+    $timer.Restart(); $rejected = $false
+    try { Read-QualificationDeadline $directory $nonce | Out-Null }
+    catch { $rejected = $true }
+    finally { $held.Dispose() }
+    if (-not $rejected -or $timer.ElapsedMilliseconds -gt 1500) { throw 'Persistent sharing conflict was not rejected promptly' }
+    [IO.File]::WriteAllText($path, '{malformed')
+    $rejected = $false
+    try { Read-QualificationDeadline $directory $nonce | Out-Null } catch { $rejected = $true }
+    if (-not $rejected) { throw 'Malformed stage accepted' }
+    Write-Output 'Cross-process invocation, nonce, contention, persistent-lock and malformed-record gates passed'
 } finally {
     if ($worker -and -not $worker.HasExited) { Stop-Process -Id $worker.Id }
     Remove-Item -LiteralPath $directory -Recurse -Force
