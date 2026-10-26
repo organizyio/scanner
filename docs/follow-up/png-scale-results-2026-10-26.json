@@ -1,0 +1,143 @@
+{
+  "schema": 3,
+  "source_revision": "5f9bde443e11de4f10bb077665b38ab0495e8e95",
+  "probe_sha256": "34170097374b7618f2bdf3f2efa35ff4fecd87f7d198f3529543af7b1162ddb1",
+  "platform": "Darwin-x86_64",
+  "python": "3.14.6",
+  "zlib": "1.2.12",
+  "rustc": "rustc 1.88.0 (6b00bc388 2025-06-23)",
+  "profiles": [
+    "mixed"
+  ],
+  "repeats": 3,
+  "cancel_repeats": 8,
+  "passed": true,
+  "interpretation": "Synthetic observations, not improvement claims or a worst-case blocking-I/O bound. RSS includes probe/runtime and recovery; queue bounds are proved separately by deterministic tests.",
+  "source_sha256": {
+    "Cargo.lock": "78a0d79115b3d824cacc506c66d123284104272bff6f32984ad814647fdd0902",
+    "crates/phash/Cargo.toml": "28d8cef8814f206ad3cc7eda4ba80e7d7777ff99395a27ee0bf3092b60286f31",
+    "crates/phash/src/phash.rs": "06e04cacf1798d4d30776b3d6742b3d3a276888217ea6c3883b8eba6a72eacc5",
+    "crates/engine/examples/scale_probe.rs": "2f8e11b377014115ad46169f20f613e9a1fb2e3d494f2b69a34ff0a9a8be17ca",
+    "scripts/qualify-scale.py": "91440620de6a70e22d91a94bc1fc193483eafd6dd7f07a189683e704704574ab",
+    "scripts/scale_fixtures.py": "95e0943bd78c0a273ea9e6be1804f9c4d61d963a9b8c7051bb6b132e61a8c6bf"
+  },
+  "cases": 92,
+  "recovery_cases": 56,
+  "png_wrong_pixels_with_matching_digest_rejected": true,
+  "summary": [
+    {
+      "files": 512,
+      "walker": "standard",
+      "cases": 23,
+      "fast_elapsed_ms": {
+        "min": 77.111842,
+        "median": 78.413167,
+        "max": 82.073554
+      },
+      "fast_first_record_ms": {
+        "min": 2.779998,
+        "median": 2.836052,
+        "max": 6.639595
+      },
+      "fast_peak_rss_bytes": {
+        "min": 26886144,
+        "median": 27262976,
+        "max": 27451392
+      },
+      "cancel_return_ms": {
+        "min": 2.7166590000000004,
+        "median": 4.37054,
+        "max": 4.959141000000001
+      },
+      "full_recovery_cases": 14,
+      "full_scan_png_records": 4
+    },
+    {
+      "files": 512,
+      "walker": "full",
+      "cases": 23,
+      "fast_elapsed_ms": {
+        "min": 264.843259,
+        "median": 268.95268500000003,
+        "max": 278.164299
+      },
+      "fast_first_record_ms": {
+        "min": 0.578952,
+        "median": 0.591363,
+        "max": 0.596746
+      },
+      "fast_peak_rss_bytes": {
+        "min": 9981952,
+        "median": 10125312,
+        "max": 10141696
+      },
+      "cancel_return_ms": {
+        "min": 0.068702,
+        "median": 0.0803025,
+        "max": 0.101226
+      },
+      "full_recovery_cases": 14,
+      "full_scan_png_records": 4
+    },
+    {
+      "files": 2048,
+      "walker": "standard",
+      "cases": 23,
+      "fast_elapsed_ms": {
+        "min": 187.244886,
+        "median": 190.899609,
+        "max": 195.812451
+      },
+      "fast_first_record_ms": {
+        "min": 1.902261,
+        "median": 1.997703,
+        "max": 2.0302089999999997
+      },
+      "fast_peak_rss_bytes": {
+        "min": 48349184,
+        "median": 49881088,
+        "max": 50647040
+      },
+      "cancel_return_ms": {
+        "min": 2.351779,
+        "median": 3.450301,
+        "max": 5.473196
+      },
+      "full_recovery_cases": 14,
+      "full_scan_png_records": 16
+    },
+    {
+      "files": 2048,
+      "walker": "full",
+      "cases": 23,
+      "fast_elapsed_ms": {
+        "min": 1031.3911170000001,
+        "median": 1036.697915,
+        "max": 1218.584822
+      },
+      "fast_first_record_ms": {
+        "min": 0.608944,
+        "median": 0.629387,
+        "max": 0.667697
+      },
+      "fast_peak_rss_bytes": {
+        "min": 10616832,
+        "median": 10665984,
+        "max": 10752000
+      },
+      "cancel_return_ms": {
+        "min": 0.07593,
+        "median": 0.0968135,
+        "max": 0.13006199999999998
+      },
+      "full_recovery_cases": 14,
+      "full_scan_png_records": 16
+    }
+  ],
+  "all_fixture_encodings": "Public facade/CLI regressions; alpha values vary, luma hashing unchanged",
+  "macos_arm64_retina_qualified": false,
+  "production_pin_adoption": false,
+  "runtime_convergence": false,
+  "release_publication": false,
+  "release_acceptance": false
+}

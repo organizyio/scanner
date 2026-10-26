@@ -131,3 +131,12 @@ reviewed metadata upgrade and its qualification boundaries.
 separate recorded native/consumer evidence from unavailable hardware, production
 adoption, runtime convergence and release acceptance. Historical source evidence
 and failed runs remain retained.
+
+### Preferred perceptual hashing
+
+`scanfs --phash` and `ScanOptions.phash` support PNG in the default locked build.
+RGB/RGBA, grayscale, indexed transparency, 16-bit and Adam7 fixtures are qualified.
+Other image codecs are not enabled by default; corrupt/unsupported image inputs
+retain per-record `phash:` errors with no perceptual value. Successful traversal
+can therefore include file errors. The 8×8 gradient algorithm and integer/schema
+representation are unchanged. See [capability and qualification](docs/follow-up/png-perceptual-hashing.md).

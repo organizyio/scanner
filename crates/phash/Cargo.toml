@@ -11,4 +11,6 @@ name = "phash"
 
 [dependencies]
 img_hash = "3"
+# Activate only PNG on the exact image graph used by img_hash.
+image = { version = "=0.23.14", default-features = false, features = ["png"] }
 thiserror = "2"

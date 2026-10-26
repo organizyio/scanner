@@ -1,15 +1,11 @@
 # Mixed workload scale qualification
 
-This follow-up exercises preferred Scanner's existing hashing and metadata paths.
-It changes test tooling only. The production Rust/Go implementations, schemas,
-facade signatures, dependency manifests/locks and consumer pins remain unchanged.
-
-**PNG perceptual decoding remains unsupported in the default locked graph.**
-The mixed probe verifies its explicit `phash:` error and absent perceptual value;
-it does not count that as successful image decoding. [Issue #18](https://github.com/organizyio/scanner/issues/18)
-tracks selecting and qualifying image decoder features separately. An embedding
-consumer's feature graph may differ. Future codec enablement requires reviewing
-the fixture expectation and rerunning affected qualification.
+This follow-up exercises preferred Scanner's hashing and metadata paths.
+The original PR #19 tooling and unsupported-PNG evidence are preserved below.
+[PNG decoder qualification](png-perceptual-hashing.md) changes the current
+locked graph and probe to require a successful, fixed perceptual hash. The
+production hash algorithm, schemas, facade signatures and consumer pins stay
+unchanged. An embedding consumer's feature graph may differ.
 
 ## Workload and use
 
@@ -38,7 +34,7 @@ Unicode multiroot recipe. Actual sizes, hashes and counts are in `fixture_specs`
 | Medium | 64 KiB binary | SHA-256 and byte count |
 | Large | 1 MiB binary | SHA-256 and byte count |
 | Huge | 8 MiB binary | SHA-256 and byte count |
-| Image | Valid 1024×768 RGB PNG gradient | SHA-256/format and the known unsupported perceptual-decoder error |
+| Image | Valid 1024×768 RGB PNG gradient | SHA-256/format and exact PNG perceptual value `13089050091743192493` |
 | Document | DOCX with a 512 KiB uncompressed core description | ZIP inflation/XML parsing and exact creator, modifier and revision values |
 | PDF | Valid synthetic 32-page document | Exact parsed page count |
 | Tiny | 256-byte text | Original hash/size checks |
@@ -60,13 +56,14 @@ The probe retains a fixed eight-class descriptor/count table rather than all
 records. Full completion checks totals, class counts and ID sum/XOR fingerprints;
 these remain characterization checks, not a collision-free set proof. Partial
 results report actual delivered bytes and class counts; the Python supervisor
-cross-checks them against the generated specification and bounds. Known PNG error
+cross-checks them against the generated specification and bounds. Qualified PNG
 counts are explicit. Unexpected record/extraction errors fail qualification.
 
 ## Measurements and boundaries
 
-Report schema 2 adds profile-specific fixture specs, host/Python/zlib metadata,
-class counts and explicit unsupported-image coverage. Existing small-profile
+Historical report schema 2 added profile-specific fixture specs, host/Python/zlib metadata,
+class counts and explicit image-capability coverage. Current schema 3 requires
+qualified PNG counts rather than expected unsupported-image counts. Existing small-profile
 invocations remain valid. Elapsed/first-record/cancellation/recovery metrics and
 POSIX per-child peak RSS retain the original scope. The capability preflight
 occurs before scan timing; RSS includes process initialization and recovery.
@@ -87,7 +84,7 @@ qualify interactive Apple Silicon/Retina hardware. Those gates stay pending;
 runtime convergence, production adoption, publication and release acceptance
 remain separate.
 
-## Recorded Intel Mac run — 2026-10-26
+## Historical Intel Mac run — 2026-10-26 (before PNG enablement)
 
 [Normalized mixed results](mixed-scale-results-2026-10-26.json) retain exact source,
 probe/fixture/harness hashes, host/tool versions and repeated metric ranges.

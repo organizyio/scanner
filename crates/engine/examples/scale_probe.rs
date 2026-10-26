@@ -22,7 +22,6 @@ struct Class {
 struct Fixture {
     mixed: bool,
     classes: Vec<Class>,
-    image_error: Option<String>,
 }
 impl Fixture {
     fn load(root: &Path, mixed: bool) -> Result<Self, Box<dyn std::error::Error>> {
@@ -35,7 +34,6 @@ impl Fixture {
                     size: PAYLOAD_BYTES,
                     sha256: PAYLOAD_SHA256.into(),
                 }],
-                image_error: None,
             });
         }
         let data = std::fs::read(root.join("fixture-spec.json"))?;
@@ -76,21 +74,12 @@ impl Fixture {
                 sha256: sha.into(),
             });
         }
-        let image_error = match phash::phash_u64(&root.join("alpha/shard-04/file-4.png")) {
-            Err(error)
-                if matches!(error, phash::PhashError::Image(_))
-                    && error.to_string().to_lowercase().contains("png")
-                    && error.to_string().to_lowercase().contains("not supported") =>
-            {
-                Some(format!("phash: {error}"))
-            }
-            _ => return Err("PNG decoder capability changed; re-review expected outcome".into()),
-        };
-        Ok(Self {
-            mixed,
-            classes,
-            image_error,
-        })
+        // Fixed golden independently characterized from raw synthetic pixels;
+        // the probe must not derive its expectation from this decoder at runtime.
+        if phash::phash_u64(&root.join("alpha/shard-04/file-4.png"))? != 13089050091743192493 {
+            return Err("PNG perceptual hash golden mismatch".into());
+        }
+        Ok(Self { mixed, classes })
     }
 
     fn index(&self, id: u64) -> usize {
@@ -167,7 +156,8 @@ impl Inventory {
             let meta = record.meta.as_ref();
             let valid = match class.name.as_str() {
                 "image" => {
-                    record.error == self.fixture.image_error && meta.and_then(|m| m.phash).is_none()
+                    record.error.is_none()
+                        && meta.and_then(|m| m.phash) == Some(13089050091743192493)
                 }
                 "document" => meta.and_then(|m| m.docx.as_ref()).is_some_and(|d| {
                     d.creator.as_deref() == Some("Scanner Synthetic")
@@ -387,8 +377,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json!({"passed": true, "mode": mode, "walk_mode": args[5], "fixture_files": files,
         "files_delivered": inventory.count, "bytes_delivered": inventory.bytes,
         "profile": profile, "extraction_enabled": fixture.mixed,
-        "expected_unsupported_image_records": if fixture.mixed { inventory.classes[4] } else { 0 },
-        "image_capability": if fixture.mixed { "PNG perceptual decoding unsupported by current locked graph; explicit error records checked" } else { "not exercised" },
+        "qualified_png_records": if fixture.mixed { inventory.classes[4] } else { 0 },
+        "image_capability": if fixture.mixed { "PNG decoded; fixed gradient perceptual hash checked" } else { "not exercised" },
         "delivered_by_class": fixture.classes.iter().zip(&inventory.classes).map(|(c, n)| (c.name.clone(), *n)).collect::<std::collections::BTreeMap<_, _>>(),
         "elapsed_ms": finished.duration_since(started).as_secs_f64() * 1000.0,
         "first_record_ms": inventory.first.map(|v| v.as_secs_f64() * 1000.0),

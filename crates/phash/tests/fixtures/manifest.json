@@ -1,0 +1,38 @@
+{
+  "rgb.png": {
+    "sha256": "7cd7d38b559de3c4300e28c24b05ace10907aad7e484c52594eb4d3642cd1077",
+    "phash_u64": 18374966859414961920
+  },
+  "rgba.png": {
+    "sha256": "a66e52c75d5dfebe29d573b5c4650d7a66b103faddc72fe3d1d6b664d4d26914",
+    "phash_u64": 18374966859414961920
+  },
+  "gray.png": {
+    "sha256": "43a0f336aab65b933ccb1693eb278aca83e91367b5f57eb37c425d2dbfc91a89",
+    "phash_u64": 18374966859414961920
+  },
+  "gray-alpha.png": {
+    "sha256": "9693ef24a2d3c7a4660f22f7038f95a542a2509c6b61bfa89cdb6073d47f554f",
+    "phash_u64": 18374966859414961920
+  },
+  "indexed.png": {
+    "sha256": "8f7e5161804d5744b57b1ac7a0f5aeb0358995a8dc2d4b57e4184dd5b3129078",
+    "phash_u64": 18374966859414961920
+  },
+  "gray16.png": {
+    "sha256": "4e4b87f29d5e54dd051580bad17e7d4b687ac5dbc6c027321061e7389e59eff0",
+    "phash_u64": 18374966859414961920
+  },
+  "rgb16.png": {
+    "sha256": "93363aaf4a6908c002983907c9d374c9a4a0ffa56791a2a0a2c9b8944c4b10b3",
+    "phash_u64": 18374966859414961920
+  },
+  "adam7.png": {
+    "sha256": "b6d99b4056542b16d37ec34b0732f71f724a79cd2d52b097f58ba417810bad0e",
+    "phash_u64": 18374966859414961920
+  },
+  "constant.png": {
+    "sha256": "b4b3ceef41fa7169d21414482ce4eae55b085e1b86442198fc1212a97c065e78",
+    "phash_u64": 0
+  }
+}
