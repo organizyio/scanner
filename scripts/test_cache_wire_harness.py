@@ -32,3 +32,32 @@ class CacheWireHarness(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class RegistryVerification(unittest.TestCase):
+    def test_archive_hash_and_extracted_bytes_must_both_match(self):
+        import hashlib
+        import io
+        import tarfile
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / 'crate-1.0'
+            root.mkdir()
+            (root / 'source.rs').write_bytes(b'reviewed')
+            archive = Path(temp) / 'crate.crate'
+            with tarfile.open(archive, 'w:gz') as tar:
+                info = tarfile.TarInfo('crate-1.0/source.rs')
+                info.size = 8
+                tar.addfile(info, io.BytesIO(b'reviewed'))
+            digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+            wire.verify_registry_source(root, archive, digest)
+            (root / '.cargo-ok').write_text('{}')
+            wire.verify_registry_source(root, archive, digest)
+            with self.assertRaises(ValueError):
+                wire.verify_registry_source(root, archive, '0' * 64)
+            (root / 'source.rs').write_bytes(b'modified')
+            with self.assertRaises(ValueError):
+                wire.verify_registry_source(root, archive, digest)
+            (root / 'source.rs').write_bytes(b'reviewed')
+            (root / 'extra.rs').write_text('unreviewed')
+            with self.assertRaises(ValueError):
+                wire.verify_registry_source(root, archive, digest)

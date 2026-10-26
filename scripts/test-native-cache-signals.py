@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tarfile
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +33,35 @@ def instrument(source, test, negative=False):
     if negative:
         source = source.replace(needle, "                    body,")
     return source + "\n" + test
+
+
+def verify_registry_source(original, archive, expected):
+    # Cargo caches do not consistently include vendor-only .cargo-checksum.json.
+    # Verify the locked archive itself, then every extracted upstream file.
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != expected:
+        raise ValueError("Registry archive checksum changed")
+    names = set()
+    with tarfile.open(archive, "r:gz") as contents:
+        for member in contents.getmembers():
+            path = Path(member.name)
+            if (path.is_absolute() or ".." in path.parts or
+                    not path.parts or path.parts[0] != original.name or
+                    member.issym() or member.islnk()):
+                raise ValueError("Unsafe registry archive path")
+            if member.isdir():
+                continue
+            if not member.isfile() or member.size > 16 * 1024 * 1024:
+                raise ValueError("Unexpected registry archive member")
+            relative = Path(*path.parts[1:])
+            if relative in names:
+                raise ValueError("Duplicate registry archive member")
+            names.add(relative)
+            file = original / relative
+            if file.is_symlink() or not file.is_file() or file.read_bytes() != contents.extractfile(member).read():
+                raise ValueError("Registry source drift: " + str(relative))
+    actual = {p.relative_to(original) for p in original.rglob("*") if p.is_file() or p.is_symlink()}
+    if actual - names - {Path(".cargo-ok"), Path(".cargo-checksum.json")}:
+        raise ValueError("Unexpected registry source files")
 
 
 def main():
@@ -68,12 +98,8 @@ def main():
     ):
         raise ValueError("Unreviewed cache-emitter package")
     original = Path(package["manifest_path"]).parent
-    checksums = json.loads((original / ".cargo-checksum.json").read_text())
-    if checksums["package"] != expected["checksum"]:
-        raise ValueError("Registry archive checksum changed")
-    for name, digest in checksums["files"].items():
-        if hashlib.sha256((original / name).read_bytes()).hexdigest() != digest:
-            raise ValueError("Registry source drift: " + name)
+    archive = original.parents[2] / "cache" / original.parent.name / (original.name + ".crate")
+    verify_registry_source(original, archive, expected["checksum"])
     production = (original / "src/atspi/bus.rs").read_text()
     test = (NATIVE / "tests/cache_wire.rs.inc").read_text()
     if hashlib.sha256(test.encode()).hexdigest() != retirement["wire_test_sha256"]:
