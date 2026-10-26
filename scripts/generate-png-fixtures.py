@@ -27,7 +27,7 @@ def png(color, depth=8, interlaced=False, constant=False):
         if color == 3:
             return bytes([v])
         values = ([v] if color in (0, 4) else [v] * 3) + (
-            [255] if color in (4, 6) else []
+            [(x * 31 + y * 11) % 256] if color in (4, 6) else []
         )
         assert len(values) == channels
         return b"".join(
@@ -54,7 +54,7 @@ def png(color, depth=8, interlaced=False, constant=False):
     )
     palette = (
         chunk(b"PLTE", bytes(v for n in range(256) for v in (n, n, n)))
-        + chunk(b"tRNS", bytes([255] * 256))
+        + chunk(b"tRNS", bytes(range(256)))
         if color == 3
         else b""
     )

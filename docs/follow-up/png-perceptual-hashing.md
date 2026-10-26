@@ -17,7 +17,8 @@ uses only Python's standard library and records source-file digests in
 fixtures need no resize: alternating ascending/descending grayscale rows have
 eight true/false comparisons, hence `0xff00ff00ff00ff00`; a constant image hashes
 to zero. RGB/RGBA, gray/gray-alpha, indexed with transparency, gray/RGB 16-bit and
-Adam7 encode that same pixel oracle. This is representative coverage, not an
+Adam7 encode that same pixel oracle. Alpha-bearing fixtures vary alpha samples;
+the existing luminance hash ignores alpha and is not a rendered-compositing hash. This is representative coverage, not an
 exhaustive claim about all PNG encodings, color management or hostile inputs.
 
 `cargo test --locked -p scanner-phash --test png` checks the public hash function.
@@ -56,8 +57,18 @@ established here. Existing extraction/cancellation limits still apply.
 
 ## Evidence and gates
 
-Local and exact-head CI evidence and the subsequent reviewed-main consumer run
-are recorded with the results of this change. Required CI exercises facade/CLI
+[Normalized Intel Mac measurements](png-scale-results-2026-10-26.json) record
+92 passing cases at 512/2,048 files, with 56 full recovery scans and exact
+source/tool/probe hashes. A negative control replaced PNG pixels and updated its
+size/digest: the fixed hash oracle still rejected it. These results use source
+`5f9bde443e11de4f10bb077665b38ab0495e8e95`; subsequent commits refine test
+transparency fixtures and documentation only, leaving the measured graph,
+production sources, probe, fixture recipe and harness unchanged.
+
+[PR #20](https://github.com/organizyio/scanner/pull/20) records exact-head CI.
+[Issue #18](https://github.com/organizyio/scanner/issues/18) remains open until the
+subsequent reviewed-main consumer qualification is recorded; its closing evidence
+records the candidate and consumer run without adopting production pins. Required CI exercises facade/CLI
 fixtures and source-built mixed probes on Linux, Windows and macOS; compatibility
 integration and the catalog matrix remain required. Consumer qualification uses
 an explicit reviewed-main candidate, temporary crate patches and unchanged-pin
