@@ -1,6 +1,6 @@
 {
   "reviewed_at": "2026-10-26",
-  "scanner_main_at_review": "82986118edf3c24fab0fa2deb1ef07b2957aa2f2",
+  "scanner_main_at_review": "960ed1faf7f5e158f5345ce36e24108d18c619a6",
   "status": "Implementation merged; recorded host and consumer flows qualified; phase 4 remains incomplete",
   "phases": {
     "1": "implemented",
@@ -47,14 +47,13 @@
   ],
   "historical_register": "platform-results.json",
   "historical_failures": "Retained with exact source/hash evidence; Linux default and Windows observer-detach gates superseded only within current native_evidence scope",
-  "dependency_review": "maintenance-png-review-2026-10-26.md",
+  "dependency_review": "accesskit-metadata-qualification.md",
   "private_history_included": false,
   "production_pin_adoption": false,
   "runtime_convergence": false,
   "release_publication": false,
   "release_acceptance": false,
-  "catalog_toolkit_tree": "02125a61b9dfe5c29729b2431a560e00a04702ec",
-  "source_equivalence": "Entire catalog/native/toolkit tree equals native-tested b81f822 (Windows) and f1c0958 (Linux/Intel Mac application). PR #15 changed Linux qualification guards, not application code.",
+  "source_equivalence": "Historical records retain their tested catalog/native graph. The current AccessKit replacement changes the native dependency graph and removes its runtime vendor adaptation; scoped replay is recorded separately. Fyne adaptation and production pins are unchanged.",
   "consumer_evidence": {
     "existing_record": "post-pr10-results.json",
     "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
@@ -116,5 +115,16 @@
     "production_pin_changed": false,
     "implementation_pr": "https://github.com/organizyio/scanner/pull/21"
   },
-  "scope": "Register review baseline is the published merge above; post-baseline hardening validation and later reviewed-main consumer qualification are recorded separately, without self-referential commit IDs."
+  "scope": "Register review baseline is the published merge above; post-baseline hardening validation and later reviewed-main consumer qualification are recorded separately, without self-referential commit IDs.",
+  "historical_catalog_toolkit_tree": "02125a61b9dfe5c29729b2431a560e00a04702ec",
+  "accesskit_metadata_followup": {
+    "record": "accesskit-metadata-qualification.md",
+    "metadata_budgets": "metadata-decoding-limits.md",
+    "implementation_source": "eedf8c0d49c8ff86d12e16d8d109887d189a17be",
+    "wire_harness_source": "37edefaf2d6d0cc8201ea14aeb94c21324853d84",
+    "status": "Native replay and exact-head checks recorded with the implementation PR; reviewed-main consumer result follows merge",
+    "native_advisory_deadline": "before 2026-11-24",
+    "arm64_retina_qualified": false,
+    "production_pin_changed": false
+  }
 }

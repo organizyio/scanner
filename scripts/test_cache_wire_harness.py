@@ -29,10 +29,6 @@ class CacheWireHarness(unittest.TestCase):
         with self.assertRaises(ValueError):
             wire.packages({"package": [a, dict(a, source="foreign")]})
 
-
-if __name__ == "__main__":
-    unittest.main()
-
 class RegistryVerification(unittest.TestCase):
     def test_archive_hash_and_extracted_bytes_must_both_match(self):
         import hashlib
@@ -61,3 +57,7 @@ class RegistryVerification(unittest.TestCase):
             (root / 'extra.rs').write_text('unreviewed')
             with self.assertRaises(ValueError):
                 wire.verify_registry_source(root, archive, digest)
+
+
+if __name__ == "__main__":
+    unittest.main()
