@@ -15,6 +15,9 @@ class PngFixtures(unittest.TestCase):
     def test_limit_headers_are_reproducible(self):
         self.check_generator("generate-png-limit-fixtures.py")
 
+    def test_metadata_controls_are_reproducible(self):
+        self.check_generator("generate-metadata-fixtures.py")
+
     def check_generator(self, name):
         source = Path(__file__).with_name(name)
         spec = importlib.util.spec_from_file_location("png_fixtures", source)
@@ -25,7 +28,10 @@ class PngFixtures(unittest.TestCase):
             module.ROOT = Path(tmp)
             module.main()
             manifest = json.loads((tracked / "manifest.json").read_text())
-            self.assertEqual(set(manifest), {p.name for p in tracked.glob("*.png")})
+            self.assertEqual(
+                set(manifest),
+                {p.name for p in tracked.iterdir() if p.name != "manifest.json"},
+            )
             for name, row in manifest.items():
                 with self.subTest(name=name):
                     self.assertEqual(

@@ -7,13 +7,12 @@ license = "MIT"
 publish = false
 
 [workspace]
-exclude = ["vendor/accesskit_unix"]
 
 [lib]
 crate-type = ["staticlib"]
 
 [dependencies]
-accesskit = "=0.25.1"
+accesskit = "=0.25.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
@@ -24,8 +23,7 @@ accesskit_macos = "=0.27.1"
 accesskit_windows = "=0.35.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-accesskit_unix = "=0.24.0"
+accesskit_unix = "=0.24.1"
 
-# Narrow public upstream cache-signal fix; see vendor/provenance.json.
-[patch.crates-io]
-accesskit_unix = { path = "vendor/accesskit_unix" }
+[dev-dependencies]
+accesskit_consumer = "=0.39.2"
