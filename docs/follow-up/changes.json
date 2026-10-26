@@ -21,14 +21,14 @@
     },
     "crates/phash/Cargo.toml": {
       "phase": 5,
-      "reason": "Retain original Rust dual-license grant and package version; issue #18 explicitly pins the existing img_hash image graph to 0.23.14 and enables PNG only. No default codecs or hashing algorithm/API changes.",
+      "reason": "Retain original dual-license grant and package version; replace the unlimited image PNG wrapper with exact PNG 0.18.1 decoder, retaining image 0.23.14 types without legacy codec features. Remove obsolete PNG dependency nodes; preserve hashing API/algorithm.",
       "tests": [
-        "make check",
-        "PNG public facade and CLI golden/negative tests on three CI platforms",
-        "cargo deny with unchanged policy",
-        "pinned Rust 1.88 and consumer qualification"
+        "make check; pinned Rust 1.88",
+        "PNG dimension/encoded/decoded budget and malformed-input regressions",
+        "unchanged gradient goldens through facade and CLI on three platforms",
+        "unchanged-policy cargo deny and reviewed-main consumer qualification"
       ],
-      "current_sha256": "28d8cef8814f206ad3cc7eda4ba80e7d7777ff99395a27ee0bf3092b60286f31"
+      "current_sha256": "dd8e262a8be5ecdb15ad9c8b8a452df951fcf99695958ed2a74862e7475b05f3"
     },
     "crates/format/Cargo.toml": {
       "phase": 1,
@@ -373,14 +373,14 @@
     },
     "Cargo.lock": {
       "phase": 5,
-      "reason": "Security maintenance: replace vulnerable ZIP dependency with reviewed MIT zip 9.0.5 under Rust 1.88; read-only DOCX API and existing license grants retained.",
+      "reason": "Retain the previously reviewed ZIP security maintenance. Replace legacy PNG 0.16.8 graph with reviewed PNG 0.18.1/fdeflate, remove five obsolete dependency nodes, and replace yanked inout 0.2.3 with reviewed non-yanked 0.2.5. No compatibility lock or production consumer pin changes.",
       "tests": [
-        "pinned Rust 1.88 preferred/compatibility metadata tests",
-        "read-only stored/deflated DOCX characterization and malicious member non-extraction",
-        "cargo deny with unchanged policy",
-        "full component and consumer requalification"
+        "make check; pinned Rust 1.88",
+        "PNG dimension/encoded/decoded budget and malformed-input regressions",
+        "unchanged gradient goldens through facade and CLI on three platforms",
+        "unchanged-policy cargo deny and reviewed-main consumer qualification"
       ],
-      "current_sha256": "ee04c04ab2d732862620e8b2702affc973fe5ff58ae44675bf23871ff512fd71"
+      "current_sha256": "3c84afb312ca67493d736027e3cc69e4853d209c3e30b956b9b3bc3d408d0c33"
     },
     "compat/scan-engine/Cargo.lock": {
       "phase": 5,
@@ -445,6 +445,28 @@
         "consolidation verification"
       ],
       "current_sha256": "129c39b5720f35943eb7cb63b472ce9fa8ae300a9e7b73f48401f4af5f7b47d4"
+    },
+    "crates/phash/src/lib.rs": {
+      "phase": 5,
+      "reason": "Add a private PNG budget module; existing facade exports and error variants unchanged.",
+      "tests": [
+        "make check; pinned Rust 1.88",
+        "PNG dimension/encoded/decoded budget and malformed-input regressions",
+        "unchanged gradient goldens through facade and CLI on three platforms",
+        "unchanged-policy cargo deny and reviewed-main consumer qualification"
+      ],
+      "current_sha256": "ffd07353bc5c52adb315fdec6e8435e4665198c9a6df094351f9c92d73f818cc"
+    },
+    "crates/phash/src/phash.rs": {
+      "phase": 5,
+      "reason": "Route PNG only to bounded decoding; retain unsupported-path fallback, gradient/resizing configuration, u64 conversion and public signatures.",
+      "tests": [
+        "make check; pinned Rust 1.88",
+        "PNG dimension/encoded/decoded budget and malformed-input regressions",
+        "unchanged gradient goldens through facade and CLI on three platforms",
+        "unchanged-policy cargo deny and reviewed-main consumer qualification"
+      ],
+      "current_sha256": "f74d6fc6dd57d966a3b5a1cad3ecc4c2da6fbabb3a6dd1bf112aa6763f2da30a"
     }
   }
 }

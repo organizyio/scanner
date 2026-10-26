@@ -1,6 +1,6 @@
 # Native Linux dependency maintenance dispositions
 
-Reviewed 2026-10-24; [publication/source refresh 2026-10-26](maintenance-review-2026-10-26.md) retains the same scope and deadline. Re-review **before 2026-11-24** and before any release.
+Reviewed 2026-10-24; [latest publication/source refresh](maintenance-png-review-2026-10-26.md) retains the same scope and deadline. Re-review **before 2026-11-24** and before any release.
 
 RustSec marks [zvariant](https://rustsec.org/advisories/RUSTSEC-2026-0370.html),
 [zbus_names](https://rustsec.org/advisories/RUSTSEC-2026-0371.html) and
@@ -9,14 +9,15 @@ informational **unmaintained**, with no patched versions. Upstream merged their
 APIs into zbus 6 ([upstream migration record](https://github.com/z-galaxy/zbus/issues/2043)). These are maintenance notices, not reported exploitable
 vulnerabilities. They still require a tracked migration.
 
-Published [`accesskit_unix 0.24.0`](https://crates.io/crates/accesskit_unix)
-and [`accesskit_atspi_common 0.21.0`](https://crates.io/crates/accesskit_atspi_common) retain the
-zbus 5 / zvariant 5 types. AccessKit Unix has no newer published version as of
-this review. The newer atspi 0.30 alone cannot replace that shared type graph.
-Forcing zbus 6 or replacing only a transitive package is not a compatible lock
-refresh. Retain the qualified native graph and reviewed cache backport while
-awaiting an upstream-compatible AccessKit/AT-SPI release. Do not infer GUI or
-release acceptance from that disposition.
+Published [`accesskit_unix 0.24.1`](https://crates.io/crates/accesskit_unix/0.24.1)
+and [`accesskit_atspi_common 0.21.1`](https://crates.io/crates/accesskit_atspi_common/0.21.1)
+retain zbus 5 / zvariant 5 types. The new Unix archive includes the upstream
+cache-signal fix #819, superseding the earlier latest-publication observation.
+It is a source-reviewed replacement candidate requiring wire/native replay;
+its publication does not itself retire the qualified vendor adaptation or
+resolve the three maintenance notices. Forcing zbus 6 or replacing only one
+transitive package is not a compatible lock refresh. Keep the native graph,
+review cutoff and qualification boundaries unchanged.
 
 The native-only `deny.toml` adds precisely these three informational IDs. Root
 and compatibility policies remain unchanged; ZIP vulnerability advisories are

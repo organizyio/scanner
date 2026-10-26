@@ -14,6 +14,8 @@ fn known_pixels_have_exact_gradient_without_codec_oracle() {
         "indexed.png",
         "gray16.png",
         "rgb16.png",
+        "gray-alpha16.png",
+        "rgba16.png",
         "adam7.png",
     ] {
         assert_eq!(

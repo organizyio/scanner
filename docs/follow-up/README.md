@@ -37,19 +37,22 @@ shutdown, PR #14 replayed Linux/Intel Mac, and PR #15 established live Linux
 desktop/foreground proof. They are not current unresolved defects on those
 qualified hosts. The Linux application and rendering defaults were unchanged.
 
-[Dependency maintenance review](maintenance-review-2026-10-26.md) records current
+[Latest dependency review](maintenance-png-review-2026-10-26.md) records current
 published sources and keeps the existing adaptations and November 24 review
 cutoff. Consumer refresh results are tracked separately from GUI qualification.
-[The consumer refresh](https://github.com/organizyio/organizy-scan/pull/9)
-records three passing [exact-candidate CI jobs](https://github.com/organizyio/organizy-scan/actions/runs/40230583741)
-at Scanner `1e27d74`, source-built compatibility integration and two reconciled
-prototype files with zero pending batches. Isolated published Organizy resolves
-all eight Scanner packages to that candidate; worker tests/build, all three
-required native managed tests and unchanged-pin rollback passed. Exact private
-consumer refs and raw evidence stay private. The unrelated interactive vault
-test remains an explicit skip; live providers and other Organizy consumer
-platforms are outside the report. macOS-arm64 CI CLI execution cannot qualify
-the pending interactive hardware gate.
+[The latest consumer completion](https://github.com/organizyio/scanner/issues/18#issuecomment-6407572436)
+records Scanner `82986118edf3c24fab0fa2deb1ef07b2957aa2f2`: three passing exact-candidate
+CI jobs, required embedded-engine integration and two reconciled prototype files
+with zero pending batches. Isolated published Organizy resolved all eight Scanner
+packages to that candidate; worker tests/build, PNG facade checks in the real
+worker graph, all three native managed tests and unchanged-pin rollback passed.
+The [previous refresh](https://github.com/organizyio/organizy-scan/pull/9) and its
+original evidence remain historical. Exact private refs and raw evidence stay
+private. The unrelated interactive vault test remains an explicit skip; live
+providers and other Organizy consumer platforms are outside that report.
+[PNG decoding limits](png-decoding-limits.md) is a separate follow-up with its own
+validation and reviewed-main consumer result. macOS-arm64 CI CLI execution cannot
+qualify the pending interactive hardware gate.
 
 Production adoption, runtime convergence, publication and release acceptance
 remain excluded.
@@ -165,3 +168,11 @@ DOCX inflation/XML and PDF parsing to the synthetic scale corpus. The original
 unsupported-PNG evidence is retained. [PNG qualification](png-perceptual-hashing.md)
 selects the PNG decoder and requires exact perceptual values in new runs.
 Consumer adoption and hardware/release acceptance remain separate.
+
+## PNG resource hardening
+
+[PNG decoding limits](png-decoding-limits.md) bounds encoded input, dimensions
+and decoded output while preserving hash goldens, error variants and consumer
+pins. The [fresh dependency review](maintenance-png-review-2026-10-26.md) records
+published AccessKit candidates separately from the unchanged qualified native
+graph and review deadline.

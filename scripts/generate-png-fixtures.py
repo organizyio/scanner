@@ -79,6 +79,8 @@ def main():
         "indexed.png": png(3),
         "gray16.png": png(0, 16),
         "rgb16.png": png(2, 16),
+        "gray-alpha16.png": png(4, 16),
+        "rgba16.png": png(6, 16),
         "adam7.png": png(2, interlaced=True),
         "constant.png": png(2, constant=True),
     }

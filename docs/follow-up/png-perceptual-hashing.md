@@ -1,12 +1,16 @@
-# PNG perceptual hashing — issue #18
+# Historical PNG enablement — issue #18
 
-The preferred default build explicitly enables **PNG only** on the existing
+PR #20 enabled **PNG only** on the then-current
 `img_hash 3.2.0` / `image 0.23.14` graph. The direct image requirement is exact,
 with default features disabled. JPEG, GIF, WebP, TIFF and HEIC are not qualified
 or enabled by this change. Downstream feature unification can add codecs; that
 is not a promise made by this default build. Compatibility components, facade
 signatures, record schemas, package versions and production consumer pins remain
 unchanged. No image parser or hashing implementation is replaced.
+
+Current decoding is described in [PNG resource hardening](png-decoding-limits.md),
+which preserves these hash fixtures and original evidence while replacing the
+initial unlimited reader and legacy PNG graph. This record describes PR #20.
 
 ## Contract and fixtures
 
@@ -66,9 +70,8 @@ transparency fixtures and documentation only, leaving the measured graph,
 production sources, probe, fixture recipe and harness unchanged.
 
 [PR #20](https://github.com/organizyio/scanner/pull/20) records exact-head CI.
-[Issue #18](https://github.com/organizyio/scanner/issues/18) remains open until the
-subsequent reviewed-main consumer qualification is recorded; its closing evidence
-records the candidate and consumer run without adopting production pins. Required CI exercises facade/CLI
+[Issue #18 closed after reviewed-main consumer qualification](https://github.com/organizyio/scanner/issues/18#issuecomment-6407572436),
+recording the candidate and consumer run without adopting production pins. Required CI exercises facade/CLI
 fixtures and source-built mixed probes on Linux, Windows and macOS; compatibility
 integration and the catalog matrix remain required. Consumer qualification uses
 an explicit reviewed-main candidate, temporary crate patches and unchanged-pin

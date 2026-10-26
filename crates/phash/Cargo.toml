@@ -11,6 +11,7 @@ name = "phash"
 
 [dependencies]
 img_hash = "3"
-# Activate only PNG on the exact image graph used by img_hash.
-image = { version = "=0.23.14", default-features = false, features = ["png"] }
+# Retain img_hash pixel/resizing types; decode PNG through the budgeted reader.
+image = { version = "=0.23.14", default-features = false }
+png = "=0.18.1"
 thiserror = "2"

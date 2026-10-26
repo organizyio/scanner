@@ -139,4 +139,7 @@ RGB/RGBA, grayscale, indexed transparency, 16-bit and Adam7 fixtures are qualifi
 Other image codecs are not enabled by default; corrupt/unsupported image inputs
 retain per-record `phash:` errors with no perceptual value. Successful traversal
 can therefore include file errors. The 8×8 gradient algorithm and integer/schema
-representation are unchanged. See [capability and qualification](docs/follow-up/png-perceptual-hashing.md).
+representation are unchanged. PNG extraction limits encoded input to 32 MiB,
+each dimension to 16,384 pixels and decoded output to 64 MiB. Oversized images
+retain per-record errors. See [decoding limits](docs/follow-up/png-decoding-limits.md)
+and [initial capability qualification](docs/follow-up/png-perceptual-hashing.md).
