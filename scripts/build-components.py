@@ -113,10 +113,10 @@ def dependency_notices(out, component, gui=False):
                 retained.append(path.name)
         if not retained:
             raise RuntimeError('Required upstream notice missing for ' + name)
-        if component == 'catalog' and gui and source == ROOT / 'tools/project-catalog/native-a11y/vendor/accesskit_unix':
-            provenance = ROOT / 'tools/project-catalog/native-a11y/vendor/provenance.json'
-            shutil.copy2(provenance, out / 'third-party' / name / 'SCANNER-UPSTREAM-PATCH.json')
-            retained.append('SCANNER-UPSTREAM-PATCH.json')
+        if component == 'catalog' and gui and name == 'accesskit_unix-0.24.1':
+            provenance = ROOT / 'docs/follow-up/accesskit-vendor-retirement.json'
+            shutil.copy2(provenance, out / 'third-party' / name / 'SCANNER-UPSTREAM-RETIREMENT.json')
+            retained.append('SCANNER-UPSTREAM-RETIREMENT.json')
         index.append({'package': name, 'license_notice_files': retained})
     if packages:
         (out / 'third-party').mkdir(exist_ok=True)

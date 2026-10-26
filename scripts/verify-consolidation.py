@@ -70,8 +70,20 @@ def verify_vendor(directory, register):
         if name in added:
             assert expected == added[name], 'Added vendor hash: ' + name
 
-vendor = ROOT / 'tools/project-catalog/native-a11y/vendor'
-verify_vendor(vendor / 'accesskit_unix', json.loads((vendor / 'provenance.json').read_text()))
+retirement = json.loads((ROOT / 'docs/follow-up/accesskit-vendor-retirement.json').read_text())
+retired = retirement['retired_baseline']
+subprocess.run(['git', 'merge-base', '--is-ancestor', retired, 'HEAD'], cwd=ROOT, check=True)
+assert git('rev-parse', retired + ':tools/project-catalog/native-a11y/vendor/accesskit_unix') == retirement['retired_tree']
+original_provenance = subprocess.check_output(['git', 'show', retired + ':tools/project-catalog/native-a11y/vendor/provenance.json'], cwd=ROOT)
+assert hashlib.sha256(original_provenance).hexdigest() == retirement['retired_provenance_sha256']
+assert json.loads(original_provenance) == retirement['retired_provenance']
+assert not (ROOT / 'tools/project-catalog/native-a11y/vendor').exists(), 'Retired vendor copy reintroduced'
+import tomllib
+native_lock = tomllib.loads((ROOT / 'tools/project-catalog/native-a11y/Cargo.lock').read_text())
+published = [p for p in native_lock['package'] if p['name'] == 'accesskit_unix']
+assert len(published) == 1 and all(published[0][k] == retirement['replacement'][k] for k in ['name', 'version', 'source', 'checksum'])
+assert 'patch' not in tomllib.loads((ROOT / 'tools/project-catalog/native-a11y/Cargo.toml').read_text()), 'Native runtime patch reintroduced'
+assert hashlib.sha256((ROOT / 'tools/project-catalog/native-a11y/tests/cache_wire.rs.inc').read_bytes()).hexdigest() == retirement['wire_test_sha256']
 verify_vendor(ROOT / 'tools/project-catalog/third_party/fyne', json.loads((ROOT / 'tools/project-catalog/third_party/fyne-provenance.json').read_text()))
 for component in ('scan-engine', 'scan-fs'):
     assert not (ROOT / 'compat' / component / '.git').exists()

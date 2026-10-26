@@ -1,15 +1,22 @@
+use crate::limits::*;
 use crate::types::ExifMeta;
 use exif::{In, Reader as ExifReader, Tag, Value};
-use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
 /// Best-effort EXIF extraction.
 pub fn read_exif(path: &Path) -> Option<ExifMeta> {
-    let file = File::open(path).ok()?;
-    let mut bufreader = BufReader::new(&file);
+    let bytes = read_file(path, MAX_EXIF_CONTAINER)?;
+    let mut bufreader = BufReader::new(MetadataInput::new(&bytes, MAX_EXIF_RAW as u64));
     let exifreader = ExifReader::new();
     let exif = exifreader.read_from_container(&mut bufreader).ok()?;
+    if exif.buf().len() > MAX_EXIF_RAW || exif.fields().len() > MAX_EXIF_FIELDS {
+        return None;
+    }
+    let mut remaining = MAX_EXIF_VALUES;
+    for field in exif.fields() {
+        remaining = remaining.checked_sub(value_units(&field.value)?)?;
+    }
 
     let mut info = ExifMeta::default();
 
@@ -64,6 +71,23 @@ pub fn read_exif(path: &Path) -> Option<ExifMeta> {
     } else {
         Some(info)
     }
+}
+
+fn value_units(value: &Value) -> Option<usize> {
+    Some(match value {
+        Value::Byte(v) | Value::Undefined(v, _) => v.len(),
+        Value::Ascii(v) => v.iter().try_fold(v.len(), |n, s| n.checked_add(s.len()))?,
+        Value::Short(v) => v.len(),
+        Value::Long(v) => v.len(),
+        Value::Rational(v) => v.len().checked_mul(2)?,
+        Value::SByte(v) => v.len(),
+        Value::SShort(v) => v.len(),
+        Value::SLong(v) => v.len(),
+        Value::SRational(v) => v.len().checked_mul(2)?,
+        Value::Float(v) => v.len(),
+        Value::Double(v) => v.len(),
+        Value::Unknown(_, _, _) => 1,
+    })
 }
 
 fn is_known_tag(tag: Tag) -> bool {
@@ -158,5 +182,89 @@ mod tests {
         let lon = parse_gps_decimal("79 deg 58 min 56 sec".to_string(), Some("E")).unwrap();
         assert!(lat > 0.0);
         assert!(lon > 0.0);
+    }
+}
+
+#[cfg(test)]
+mod resource_tests {
+    use super::*;
+    use exif::{experimental::Writer, Context, Field};
+    fn tiff(fields: &[Field]) -> Vec<u8> {
+        let mut writer = Writer::new();
+        for f in fields {
+            writer.push_field(f);
+        }
+        let mut bytes = std::io::Cursor::new(Vec::new());
+        writer.write(&mut bytes, true).unwrap();
+        bytes.into_inner()
+    }
+    fn extra(tag: u16, value: Value) -> Field {
+        Field {
+            tag: Tag(Context::Tiff, tag),
+            ifd_num: In::PRIMARY,
+            value,
+        }
+    }
+    fn read(bytes: &[u8]) -> Option<ExifMeta> {
+        let f = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(f.path(), bytes).unwrap();
+        read_exif(f.path())
+    }
+    #[test]
+    fn numeric_types_unknown_tags_and_camera_values_are_preserved() {
+        let fields = [
+            Field {
+                tag: Tag::Make,
+                ifd_num: In::PRIMARY,
+                value: Value::Ascii(vec![b"Synthetic".to_vec()]),
+            },
+            extra(50000, Value::Long(vec![u32::MAX])),
+            extra(50001, Value::Byte(vec![0, 255])),
+            extra(
+                50002,
+                Value::Rational(vec![
+                    exif::Rational { num: 1, denom: 0 },
+                    exif::Rational { num: 3, denom: 2 },
+                ]),
+            ),
+        ];
+        let m = read(&tiff(&fields)).unwrap();
+        assert_eq!(m.camera.as_deref(), Some("\"Synthetic\""));
+        assert!(m
+            .extra
+            .values()
+            .any(|v| *v == serde_json::json!([4294967295u64])));
+        assert!(m.extra.values().any(|v| *v == serde_json::json!([0, 255])));
+        assert!(m
+            .extra
+            .values()
+            .any(|v| *v == serde_json::json!([null, 1.5])));
+    }
+    #[test]
+    fn fields_and_values_are_declined_whole_instead_of_truncated() {
+        let exact = tiff(&[extra(50000, Value::Undefined(vec![7; MAX_EXIF_VALUES], 0))]);
+        assert!(read(&exact).is_some());
+        let over = tiff(&[extra(
+            50000,
+            Value::Undefined(vec![7; MAX_EXIF_VALUES + 1], 0),
+        )]);
+        assert!(read(&over).is_none());
+        let fields: Vec<_> = (0..MAX_EXIF_FIELDS + 1)
+            .map(|n| extra(10000 + n as u16, Value::Short(vec![1])))
+            .collect();
+        assert!(read(&tiff(&fields)).is_none());
+        assert!(read(&tiff(&fields[..MAX_EXIF_FIELDS])).is_some());
+        assert!(read(&exact).is_some());
+    }
+    #[test]
+    fn raw_data_and_forged_value_counts_cannot_escape_parser_read_budget() {
+        let data = tiff(&[extra(50000, Value::Undefined(vec![7; MAX_EXIF_RAW + 1], 0))]);
+        assert!(read(&data).is_none());
+        let mut forged = tiff(&[extra(50000, Value::Long(vec![1, 2]))]);
+        forged[14..18].copy_from_slice(&u32::MAX.to_le_bytes());
+        assert!(read(&forged).is_none());
+        for end in 0..24 {
+            assert!(read(&forged[..end]).is_none());
+        }
     }
 }

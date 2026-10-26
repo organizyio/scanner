@@ -887,3 +887,65 @@ mod tests {
         assert_eq!(tree.nodes.len(), 1);
     }
 }
+
+#[cfg(test)]
+mod upgraded_consumer_tests {
+    use accesskit::{Node, NodeId, Role, TreeId, TreeInfo, TreeUpdate};
+    fn value(role: Role, text: &str, runs: bool) -> (String, Option<(String, usize, usize)>) {
+        let mut window = Node::new(Role::Window);
+        window.set_children(vec![NodeId(1)]);
+        let mut input = Node::new(role);
+        input.set_value(text);
+        let mut nodes = vec![(NodeId(0), window)];
+        if runs {
+            input.set_children(vec![NodeId(2)]);
+            let mut run = Node::new(Role::TextRun);
+            run.set_value(text);
+            run.set_character_lengths(vec![2, 4, 1, 1]);
+            run.set_word_starts(vec![0, 3]);
+            nodes.push((NodeId(2), run));
+        }
+        nodes.push((NodeId(1), input));
+        let tree = accesskit_consumer::Tree::new(
+            TreeUpdate {
+                nodes,
+                tree: Some(TreeInfo::new(NodeId(0))),
+                tree_id: TreeId::ROOT,
+                focus: NodeId(1),
+            },
+            false,
+        );
+        let node = tree
+            .state()
+            .node_by_tree_local_id(NodeId(1), TreeId::ROOT)
+            .unwrap();
+        let range = if runs {
+            let r = node.document_range();
+            Some((
+                r.text(),
+                r.end().to_global_usv_index(),
+                r.end().to_global_utf16_index(),
+            ))
+        } else {
+            None
+        };
+        (node.value().unwrap(), range)
+    }
+    #[test]
+    fn ordinary_unicode_text_and_range_offsets_survive_consumer_patch() {
+        assert_eq!(value(Role::TextInput, "é🙂 x", false).0, "é🙂 x");
+        assert_eq!(
+            value(Role::TextInput, "é🙂 x", true),
+            ("é🙂 x".into(), Some(("é🙂 x".into(), 4, 5)))
+        );
+    }
+    #[test]
+    fn upstream_password_role_masking_does_not_imply_gui_password_support() {
+        assert_eq!(value(Role::PasswordInput, "é🙂 x", false).0, "••••");
+        assert_eq!(
+            value(Role::PasswordInput, "é🙂 x", true),
+            ("••••".into(), Some(("••••".into(), 4, 4)))
+        );
+        assert_eq!(value(Role::PasswordInput, "***", false).0, "***");
+    }
+}

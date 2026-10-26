@@ -13,11 +13,13 @@ Published [`accesskit_unix 0.24.1`](https://crates.io/crates/accesskit_unix/0.24
 and [`accesskit_atspi_common 0.21.1`](https://crates.io/crates/accesskit_atspi_common/0.21.1)
 retain zbus 5 / zvariant 5 types. The new Unix archive includes the upstream
 cache-signal fix #819, superseding the earlier latest-publication observation.
-It is a source-reviewed replacement candidate requiring wire/native replay;
-its publication does not itself retire the qualified vendor adaptation or
-resolve the three maintenance notices. Forcing zbus 6 or replacing only one
-transitive package is not a compatible lock refresh. Keep the native graph,
-review cutoff and qualification boundaries unchanged.
+[The replacement qualification](accesskit-metadata-qualification.md) records
+source/license review, private-bus positive/negative controls and native replay.
+The runtime vendor adaptation is retired in favor of the published crate; the
+separate Fyne adaptation remains. This does not resolve the three maintenance
+notices. Forcing zbus 6 or replacing only one transitive package is not a
+compatible lock refresh. Keep the advisory versions, review cutoff and hardware
+qualification boundaries unchanged.
 
 The native-only `deny.toml` adds precisely these three informational IDs. Root
 and compatibility policies remain unchanged; ZIP vulnerability advisories are

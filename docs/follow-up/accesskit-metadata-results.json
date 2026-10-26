@@ -1,0 +1,101 @@
+{
+  "reviewed_at": "2026-10-26",
+  "implementation_source": "eedf8c0d49c8ff86d12e16d8d109887d189a17be",
+  "wire_harness_source": "37edefaf2d6d0cc8201ea14aeb94c21324853d84",
+  "linux": {
+    "runtime_source": "37edefaf2d6d0cc8201ea14aeb94c21324853d84",
+    "binary_sha256": "32bb8c72417ced826b669844848dfdbe1ee01d179606dcda3c0df6635dafbc66",
+    "evidence_archive_sha256": "256a0c88d645a4b749bf5d6ce2438bfcfba4b1ff2ab692a7da9e24f1c63c562c",
+    "scope": "Ubuntu GNOME/Xwayland, default accelerated rendering, private memory-only accessibility bus, actual window-manager foreground, silent Orca only",
+    "runs": [
+      {
+        "case": "attached-1",
+        "report_sha256": "0b7b0bc8d84bddd8606b464a779f24312532e915a3722c6a7f8d54f211cf0a84",
+        "native_quit_ms": 405.616923,
+        "observer_mode": "attached",
+        "desktop_ready_throughout": true,
+        "host_settings_unchanged": true
+      },
+      {
+        "case": "detached-1",
+        "report_sha256": "01702ba86b9af533b34c9c0a097580c3fcfaee6574efd0247346a3231e4d832d",
+        "native_quit_ms": 415.064075,
+        "observer_mode": "detach-before-quit",
+        "desktop_ready_throughout": true,
+        "host_settings_unchanged": true
+      },
+      {
+        "case": "orca",
+        "report_sha256": "7d002fb64d6b866a0252a50d56e8da5228d2c1fb0217a38eb81af0d2b57a631d",
+        "native_quit_ms": 405.794612,
+        "observer_mode": "attached",
+        "desktop_ready_throughout": true,
+        "host_settings_unchanged": true
+      },
+      {
+        "case": "attached-2",
+        "report_sha256": "fa32908a8d8ce29bf7b936ac4f8482a49c9da7976ffa198a864bac3357fe8915",
+        "native_quit_ms": 405.641048,
+        "observer_mode": "attached",
+        "desktop_ready_throughout": true,
+        "host_settings_unchanged": true
+      },
+      {
+        "case": "detached-2",
+        "report_sha256": "08e6dd28d4bd33a95202ed877f907fa5acd270e0b63bc9624e52cb8b9ba733c8",
+        "native_quit_ms": 412.5533,
+        "observer_mode": "detach-before-quit",
+        "desktop_ready_throughout": true,
+        "host_settings_unchanged": true
+      }
+    ],
+    "wire_positive_passed": true,
+    "broken_emitter_negative_control_rejected": true
+  },
+  "macos_intel_1x": {
+    "runtime_source": "eedf8c0d49c8ff86d12e16d8d109887d189a17be",
+    "binary_sha256": "ce71073ab192537b370caf2e555a78e8eb62e1ddca6e609065fa0515919f5c68",
+    "report_sha256": "5f2eb642b80fec9cc69cb59df329888a1698a068a227b2aac68d325e9ed54ccb",
+    "passed": true,
+    "unicode": true,
+    "keyboard": true,
+    "folder_error_recovery": true,
+    "profiles": true,
+    "pause_resume_cancel": true,
+    "settings_restart_checkpoint": true,
+    "native_quit_ms": 4566.276350000408,
+    "forced_cleanup": false
+  },
+  "windows": {
+    "status": "Fresh native replay and exact-head CI results recorded in PR follow-up; earlier evidence remains scoped to its original graph",
+    "record": "https://github.com/organizyio/scanner/pull/22"
+  },
+  "scale": {
+    "source": "202443791bb612ba381b0c8fee2c27a7ebe5f775",
+    "passed": true,
+    "cases": 112,
+    "recovery_cases": 64,
+    "profiles": [
+      "small",
+      "mixed"
+    ],
+    "file_counts": [
+      128,
+      4096
+    ],
+    "maximum_observed_peak_rss_bytes": 52727808,
+    "interpretation": "Synthetic observations only; not a worst-case resource guarantee or improvement claim",
+    "report_sha256": "191c19d1fedfaaab64534f179b3eb165ba0ce63e5d5d1c027f2d0e98f79e53f6",
+    "earlier_run": "Retained privately as rejected because source identity changed during qualification; not accepted evidence"
+  },
+  "private_raw_evidence_published": false,
+  "pending": [
+    "interactive macOS arm64",
+    "actual Retina and display transitions",
+    "broader spoken-reader usability (deferred)"
+  ],
+  "consumer_qualification": "Exact merged-main results follow merge in the PR; production pins unchanged",
+  "runtime_convergence": false,
+  "release_publication": false,
+  "release_acceptance": false
+}

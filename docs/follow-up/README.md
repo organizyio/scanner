@@ -18,7 +18,7 @@ Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only a
 
 [The current register](current-qualification.json) identifies superseding evidence
 without rewriting historical runs or their hashes. Scanner main at review is
-`1e27d747799b852da0e0b3e73987fc4d5599715e` (PR #15). Phases 1–3 are
+`960ed1faf7f5e158f5345ce36e24108d18c619a6` (PR #21). Phases 1–3 are
 implemented; phase 5 has scoped candidate evidence and an unchanged production
 pin. Phase 4 remains incomplete.
 
@@ -37,9 +37,10 @@ shutdown, PR #14 replayed Linux/Intel Mac, and PR #15 established live Linux
 desktop/foreground proof. They are not current unresolved defects on those
 qualified hosts. The Linux application and rendering defaults were unchanged.
 
-[Latest dependency review](maintenance-png-review-2026-10-26.md) records current
-published sources and keeps the existing adaptations and November 24 review
-cutoff. Consumer refresh results are tracked separately from GUI qualification.
+[Latest dependency review](maintenance-png-review-2026-10-26.md) records published sources at its baseline. The
+[AccessKit replacement qualification](accesskit-metadata-qualification.md)
+records the later graph delta and vendor retirement; Fyne adaptation and the
+November 24 review cutoff remain. Consumer refresh results are tracked separately from GUI qualification.
 [The latest consumer completion](https://github.com/organizyio/scanner/issues/18#issuecomment-6407572436)
 records Scanner `82986118edf3c24fab0fa2deb1ef07b2957aa2f2`: three passing exact-candidate
 CI jobs, required embedded-engine integration and two reconciled prototype files
@@ -176,3 +177,17 @@ and decoded output while preserving hash goldens, error variants and consumer
 pins. The [fresh dependency review](maintenance-png-review-2026-10-26.md) records
 published AccessKit candidates separately from the unchanged qualified native
 graph and review deadline.
+
+## AccessKit replacement and metadata resource hardening
+
+[The published AccessKit follow-up](accesskit-metadata-qualification.md) records
+registry provenance, upstream cache-wire correction, ordinary/password consumer
+regressions and native replay. The runtime vendor source is replaced by its
+published fix; immutable historical provenance and regression evidence remain.
+The native zbus maintenance deadline is unchanged. Old host records retain their
+original dependency graph; unavailable Apple Silicon/Retina gates stay pending.
+
+[Preferred metadata budgets](metadata-decoding-limits.md) bound encoded input,
+DOCX expansion/XML, PDF page traversal and EXIF export without changing public
+signatures or schemas. Parser limits are not aggregate RSS/CPU guarantees.
+Compatibility implementations and production consumer pins remain unchanged.

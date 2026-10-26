@@ -184,5 +184,53 @@
     "path": "licenses/upstream/objc2-encode-4.1.0/Cargo.toml.published",
     "sha256": "cf9a8cc812710344d7fe618a5e615530baeeceae5c2826b9d5bb557dc419f159",
     "selection": "Exact published package metadata retains the author list and MIT license declaration; this file is provenance, not a replacement build manifest."
+  },
+  {
+    "package": "accesskit-0.25.2",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-MIT",
+    "path": "licenses/upstream/accesskit-0.25.2/LICENSE-MIT",
+    "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+  },
+  {
+    "package": "accesskit-0.25.2",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-APACHE",
+    "path": "licenses/upstream/accesskit-0.25.2/LICENSE-APACHE",
+    "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+  },
+  {
+    "package": "accesskit_consumer-0.39.2",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-MIT",
+    "path": "licenses/upstream/accesskit_consumer-0.39.2/LICENSE-MIT",
+    "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+  },
+  {
+    "package": "accesskit_consumer-0.39.2",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-APACHE",
+    "path": "licenses/upstream/accesskit_consumer-0.39.2/LICENSE-APACHE",
+    "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+  },
+  {
+    "package": "accesskit_atspi_common-0.21.1",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-MIT",
+    "path": "licenses/upstream/accesskit_atspi_common-0.21.1/LICENSE-MIT",
+    "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+  },
+  {
+    "package": "accesskit_atspi_common-0.21.1",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-APACHE",
+    "path": "licenses/upstream/accesskit_atspi_common-0.21.1/LICENSE-APACHE",
+    "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+  },
+  {
+    "package": "accesskit_unix-0.24.1",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-MIT",
+    "path": "licenses/upstream/accesskit_unix-0.24.1/LICENSE-MIT",
+    "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+  },
+  {
+    "package": "accesskit_unix-0.24.1",
+    "source": "https://github.com/AccessKit/accesskit/blob/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-APACHE",
+    "path": "licenses/upstream/accesskit_unix-0.24.1/LICENSE-APACHE",
+    "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
   }
 ]

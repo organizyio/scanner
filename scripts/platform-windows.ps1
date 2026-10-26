@@ -33,7 +33,7 @@ if (-not $Interactive) {
         $saved = Join-Path $Fixture ('windows-ui/report-previous-' + [guid]::NewGuid().ToString('N') + '.json')
         Move-Item -LiteralPath $report -Destination $saved
     }
-    $argsText = '-NoProfile -NonInteractive -WindowStyle Hidden -File "' + $PSCommandPath + '" -Binary "' + $Binary + '" -Fixture "' + $Fixture + '" -Interactive'
+    $argsText = '-NoProfile -Mta -NonInteractive -WindowStyle Hidden -File "' + $PSCommandPath + '" -Binary "' + $Binary + '" -Fixture "' + $Fixture + '" -Interactive'
     if ($CliBinary) { $argsText += ' -CliBinary "' + (Resolve-Path -LiteralPath $CliBinary).Path + '"' }
     $argsText += ' -Actions "' + $Actions + '" -RunId "' + $RunId + '"'
     $argsText += ' -ObserverMode ' + $ObserverMode + ' -ObserverCycles ' + $ObserverCycles
@@ -63,7 +63,7 @@ if (-not $Interactive) {
                     $gdb = if ($DebuggerPath) { @{Source=$DebuggerPath} } else { Get-Command gdb.exe -ErrorAction SilentlyContinue }
                     foreach ($target in $targets) {
                         $observed = Get-Process -Id $target.id -ErrorAction SilentlyContinue
-                        if ($gdb -and $observed -and $observed.StartTime.ToUniversalTime().Ticks -eq $target.ticks) {
+                        if ($gdb -and (Test-QualificationProcessIdentity $observed $target.ticks)) {
                             $debugger = $null
                             try {
                                 $debugger = Start-Process -FilePath $gdb.Source -ArgumentList @('-nx','-batch','-iex','"set auto-load off"','-iex','"set auto-solib-add off"','-ex','"set pagination off"','-ex','"thread apply all bt"','-p',([string]$target.id)) -PassThru -RedirectStandardOutput (Join-Path $Fixture ('windows-ui/' + $target.name + '-timeout-stacks.txt')) -RedirectStandardError (Join-Path $Fixture ('windows-ui/' + $target.name + '-debugger-stderr.txt'))
@@ -87,7 +87,7 @@ if (-not $Interactive) {
                 $runnerRecord = Get-Content -LiteralPath $runnerFile -Raw | ConvertFrom-Json
                 if ($runnerRecord.run_id -ne $RunId) { throw 'Runner belongs to another run' }
                 $runnerProcess = Get-Process -Id $runnerRecord.pid -ErrorAction SilentlyContinue
-                $runnerLive = $runnerProcess -and $runnerProcess.StartTime.ToUniversalTime().Ticks -eq $runnerRecord.start_ticks
+                $runnerLive = Test-QualificationProcessIdentity $runnerProcess $runnerRecord.start_ticks
             }
         } while ((-not (Test-Path -LiteralPath $report) -or $runnerLive) -and (Get-Date) -lt $deadline)
         if ($runnerLive) { throw 'Interactive qualification timed out' }
@@ -108,7 +108,7 @@ if (-not $Interactive) {
             $owned = Get-Content -LiteralPath $pidFile -Raw | ConvertFrom-Json
             if ($owned.run_id -eq $RunId) {
                 $left = Get-Process -Id $owned.pid -ErrorAction SilentlyContinue
-                if ($left -and $left.Path -eq $Binary -and $left.StartTime.ToUniversalTime().Ticks -eq $owned.start_ticks) {
+                if ((Test-QualificationProcessIdentity $left $owned.start_ticks) -and $left.Path -eq $Binary) {
                     Stop-Process -Id $left.Id
                 }
             }
@@ -117,6 +117,7 @@ if (-not $Interactive) {
     exit
 }
 
+$automationThreadId = Assert-QualificationAutomationThread
 $out = Join-Path $Fixture 'windows-ui'
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 $process = $null
@@ -221,9 +222,16 @@ public class QualificationWindow {
         throw ('Native accessible control unavailable: ' + $name)
     }
     function Invoke-NativeControl([string]$name) {
-        $control = Find-NativeControl $name
-        $invoke = $control.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-        $invoke.Invoke()
+        $script:nativeStage = $name
+        $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::NameProperty, $name)
+        Invoke-QualificationEnabledControl -Resolve {
+            Require-OwnedForeground
+            $element.FindFirst([System.Windows.Automation.TreeScope]::Subtree, $condition)
+        } -Invoke {
+            param($control)
+            $invoke = $control.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+            $invoke.Invoke()
+        }
     }
     function Native-Value($control) {
         $pattern = $null
@@ -279,15 +287,19 @@ public class QualificationWindow {
             Add-Type -ReferencedAssemblies $references @'
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Windows.Automation;
 public static class ScannerLiveEvents {
     static AutomationElement root;
+    public static int RegistrationThread;
     static AutomationEventHandler handler;
     static AutomationEvent live = AutomationEvent.LookupById(20024);
     public static ConcurrentQueue<string> Messages = new ConcurrentQueue<string>();
     public static bool IsListening { get { return handler != null; } }
     public static void Start(AutomationElement element, int pid) {
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA) throw new InvalidOperationException("UIA event registration requires MTA");
         if (IsListening) throw new InvalidOperationException("Observer already attached");
+        RegistrationThread = Thread.CurrentThread.ManagedThreadId;
         var messages = new ConcurrentQueue<string>();
         Messages = messages;
         root = element;
@@ -301,6 +313,7 @@ public static class ScannerLiveEvents {
     }
     public static void Stop() {
         if (handler != null) {
+            if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA || Thread.CurrentThread.ManagedThreadId != RegistrationThread) throw new InvalidOperationException("UIA removal must use the registration MTA thread");
             try { Automation.RemoveAutomationEventHandler(live, root, handler); }
             catch (ElementNotAvailableException) { }
             finally { handler = null; root = null; }
@@ -523,9 +536,11 @@ public static class ScannerLiveEvents {
     if ((Get-Content -LiteralPath (Join-Path $out 'stderr.txt') -Raw) -match 'Error in Fyne call thread') { throw 'Fyne wrong-thread diagnostic observed' }
     Stop-LiveObserver 'observer-cleanup'
     @{run_id=$RunId; observer_mode=$ObserverMode; system='Windows'; architecture=$env:PROCESSOR_ARCHITECTURE; interactive=$true;
-      input=$Actions; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
+      input=$Actions; automation_apartment='MTA'; automation_thread=$automationThreadId; event_registration_thread=[ScannerLiveEvents]::RegistrationThread; qualified=$qualified; accessible_controls=$controls; gui_qualification='pending-review'; release_acceptance=$false} |
         ConvertTo-Json -Depth 6 | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
 } catch {
+    $failureRecord = $_
+    $failureBase = $failureRecord.Exception.GetBaseException()
     # Preserve the failed stage for supervisor stack capture before owned cleanup.
     # This wait occurs only after failure and never extends qualification limits.
     $expiredOnFailure = Read-QualificationDeadline $out $RunId
@@ -533,7 +548,7 @@ public static class ScannerLiveEvents {
         $diagnosticDeadline = (Get-Date).AddSeconds(60)
         while (-not (Test-Path (Join-Path $out 'diagnostics-complete.json')) -and (Get-Date) -lt $diagnosticDeadline) { Start-Sleep -Milliseconds 100 }
     }
-    @{gui_qualification='pending'; error=$_.Exception.Message; release_acceptance=$false} |
+    @{gui_qualification='pending'; error=$failureRecord.Exception.Message; error_type=$failureBase.GetType().FullName; error_hresult=$failureBase.HResult; script_stack=$failureRecord.ScriptStackTrace; action=$action; qualified=$qualified; release_acceptance=$false} |
         ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $out 'report.json')
     throw
 } finally {

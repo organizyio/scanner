@@ -7,6 +7,7 @@ param(
     [string]$DebuggerPath=''
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'windows-qualification-stages.ps1')
 $Binary = (Resolve-Path -LiteralPath $Binary).Path
 if (Test-Path -LiteralPath $Directory) { throw 'Shutdown matrix requires a new evidence directory' }
 New-Item -ItemType Directory -Path $Directory | Out-Null
@@ -39,6 +40,7 @@ try {
             if ($null -eq $runner.ExitCode -or $runner.ExitCode -ne 0) { throw ('Qualification runner failed: ' + $case.name + '-' + $index) }
             $out = Join-Path $fixture 'windows-ui'
             $report = Get-Content -LiteralPath (Join-Path $out 'report.json') -Raw | ConvertFrom-Json
+            if ($report.automation_apartment -ne 'MTA' -or $report.automation_thread -le 0 -or ($case.mode -ne 'none' -and $report.event_registration_thread -ne $report.automation_thread)) { throw 'UIA client apartment/thread evidence missing' }
             $quit = $report.qualified.quit
             if ($report.error -or -not $quit -or $quit.exit_code -ne 0 -or $quit.forced -or $quit.invoke_error -or $quit.elapsed_ms -ge 8000 -or $quit.observer_mode -ne $case.mode) { throw 'Native Quit acceptance failed' }
             if (Test-Path -LiteralPath (Join-Path $out 'deadline-failure.json')) { throw 'Supervisor deadline failure cannot be qualified' }
@@ -46,7 +48,7 @@ try {
             if ($case.cycles -and ($report.qualified.observer_cycles.count -ne 10 -or -not $report.qualified.observer_cycles.reattached_events_verified)) { throw 'Observer reattachment did not preserve events' }
             $owned = Get-Content -LiteralPath (Join-Path $out 'process.json') -Raw | ConvertFrom-Json
             $left = Get-Process -Id $owned.pid -ErrorAction SilentlyContinue
-            if ($left -and $left.Path -eq $Binary -and $left.StartTime.ToUniversalTime().Ticks -eq $owned.start_ticks) { throw 'Owned GUI process remains after native Quit' }
+            if ((Test-QualificationProcessIdentity $left $owned.start_ticks) -and $left.Path -eq $Binary) { throw 'Owned GUI process remains after native Quit' }
             if (Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskName -eq ('ScannerQualification-' + $owned.run_id) }) { throw 'Owned interactive task remains after qualification' }
             $timings = @(Get-Content (Join-Path $out 'stage-timings.jsonl') | ForEach-Object { $_ | ConvertFrom-Json })
             $results += @{case=$case.name; iteration=$index; run_id=$owned.run_id; quit=$quit; stages=$timings; observer_cycles=$case.cycles}
@@ -63,7 +65,7 @@ try {
         Stop-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue
         Unregister-ScheduledTask -TaskName $task -Confirm:$false -ErrorAction SilentlyContinue
         $left = Get-Process -Id $owned.pid -ErrorAction SilentlyContinue
-        if ($left -and $left.Path -eq $Binary -and $left.StartTime.ToUniversalTime().Ticks -eq $owned.start_ticks) { Stop-Process -Id $left.Id }
+        if ((Test-QualificationProcessIdentity $left $owned.start_ticks) -and $left.Path -eq $Binary) { Stop-Process -Id $left.Id }
     }
     @{source_revision=$SourceRevision; binary_sha256=$ExpectedBinarySha256;
       matrix_passed=$passed; observations=$results; release_acceptance=$false;

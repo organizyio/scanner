@@ -1,0 +1,32 @@
+{
+  "valid.docx": {
+    "sha256": "83cd97591a78e56f9190ff65a5360a70d413360ee6846183e4beb7942d1b1c3c",
+    "bytes": 260,
+    "metadata_expected": true
+  },
+  "core-budget.docx": {
+    "sha256": "aea8c748ab8bc10c07fa3d5acac7bebe8cc1a3c0fc47ee5e1aed31ebabc8bf68",
+    "bytes": 2332,
+    "metadata_expected": false
+  },
+  "valid.pdf": {
+    "sha256": "b552ef7e88b05f6f24dbb9e83078a51ec2961b922d64dde6a83ae692cd0a8fdc",
+    "bytes": 329,
+    "metadata_expected": true
+  },
+  "cycle.pdf": {
+    "sha256": "cbca97bf4156438ec0868ba2acb81fec3c5df462f7ff07e5a3cfd03b35c7893d",
+    "bytes": 335,
+    "metadata_expected": false
+  },
+  "valid.tiff": {
+    "sha256": "6302956bcf6ca015dbe02777c795381e0abc0b7cc0e4e39901d12974af981626",
+    "bytes": 60,
+    "metadata_expected": true
+  },
+  "values-budget.tiff": {
+    "sha256": "2c8b8e5e54fb6e24c0a26dd3d6df1f559913036fde3da1d693ddce3c8c024602",
+    "bytes": 262171,
+    "metadata_expected": false
+  }
+}

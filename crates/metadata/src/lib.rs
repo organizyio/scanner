@@ -3,6 +3,7 @@
 mod audio;
 mod document;
 mod exif;
+mod limits;
 mod types;
 mod video;
 
