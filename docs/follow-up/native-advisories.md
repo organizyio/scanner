@@ -1,6 +1,6 @@
 # Native Linux dependency maintenance dispositions
 
-Reviewed 2026-10-24; [latest publication/source refresh](maintenance-png-review-2026-10-26.md) retains the same scope and deadline. Re-review **before 2026-11-24** and before any release.
+Reviewed 2026-10-24; [latest publication/source refresh](maintenance-review-2026-10-30.md) retains the same scope and deadline. Re-review **before 2026-11-24** and before any release.
 
 RustSec marks [zvariant](https://rustsec.org/advisories/RUSTSEC-2026-0370.html),
 [zbus_names](https://rustsec.org/advisories/RUSTSEC-2026-0371.html) and

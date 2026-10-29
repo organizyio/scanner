@@ -44,16 +44,17 @@ shutdown, PR #14 replayed Linux/Intel Mac, and PR #15 established live Linux
 desktop/foreground proof. They are not current unresolved defects on those
 qualified hosts. The Linux application and rendering defaults were unchanged.
 
-[Latest dependency review](maintenance-png-review-2026-10-26.md) records published sources at its baseline. The
+[Latest dependency review](maintenance-review-2026-10-30.md) records published sources at its baseline. The
 [AccessKit replacement qualification](accesskit-metadata-qualification.md)
 records the later graph delta and vendor retirement; Fyne adaptation and the
 November 24 review cutoff remain. Consumer refresh results are tracked separately from GUI qualification.
-[The latest consumer completion](https://github.com/organizyio/scanner/issues/18#issuecomment-6407572436)
-records Scanner `82986118edf3c24fab0fa2deb1ef07b2957aa2f2`: three passing exact-candidate
-CI jobs, required embedded-engine integration and two reconciled prototype files
-with zero pending batches. Isolated published Organizy resolved all eight Scanner
-packages to that candidate; worker tests/build, PNG facade checks in the real
-worker graph, all three native managed tests and unchanged-pin rollback passed.
+[The reconciled consumer evidence](consumer-evidence-2026-10-30.md) selects
+Scanner `fcb049522e3043ad71c7f8e5d0a3669beadbaa39`: three successful exact-candidate
+CI jobs, real embedded-engine and fixture reconciliation checks, all eight
+Scanner package origins in isolated published Organizy, metadata/PNG controls,
+required native managed tests and unchanged-pin rollback. Source object equality
+through reviewed main justifies reuse; no new run or production adoption is
+claimed.
 The [previous refresh](https://github.com/organizyio/organizy-scan/pull/9) and its
 original evidence remain historical. Exact private refs and raw evidence stay
 private. The unrelated interactive vault test remains an explicit skip; live
