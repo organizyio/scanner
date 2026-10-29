@@ -1,12 +1,12 @@
 {
-  "reviewed_at": "2026-10-29",
-  "scanner_main_at_review": "fcb049522e3043ad71c7f8e5d0a3669beadbaa39",
+  "reviewed_at": "2026-10-30",
+  "scanner_main_at_review": "92100f46ce0bd1c93a0145df080874e62866b634",
   "status": "Implementation merged; recorded host and consumer flows qualified; phase 4 remains incomplete",
   "phases": {
     "1": "implemented",
     "2": "implemented",
     "3": "implemented",
-    "4": "incomplete: unavailable hardware and broader reader gates",
+    "4": "incomplete: display transitions and deferred broader spoken-reader gates",
     "5": "scoped candidate qualification; no production adoption"
   },
   "native_evidence": {
@@ -32,17 +32,22 @@
       "record": "macos-ax-latency.md",
       "revision": "c16955e76e4768c74d77fa3b4b3ac1a80c0af58d",
       "status": "returned baseline build/20 checks/full flow/main 2x pointer passed; Settings setup/capture timed out; shutdown 3/16 passed, 12 not run; current graph requires rerun",
-      "raw_evidence": "private; independently checksum/integrity verified"
+      "raw_evidence": "private; independently checksum/integrity verified",
+      "historical": true,
+      "superseded_by": "macos-arm64-retina-results.json"
+    },
+    "macos-arm64-2x": {
+      "record": "macos-arm64-retina-results.json",
+      "revision": "92100f46ce0bd1c93a0145df080874e62866b634",
+      "status": "native arm64 build/20 checks, serial AX latency, full GUI flow, 16 shutdown cases and Main/Settings actual 2x pointer checks passed",
+      "scope": "Recorded M1 host, macOS 27.0.1 (26A434), one built-in 2x display; no display-transition or broader reader acceptance",
+      "raw_evidence": "private; trusted profile, archive integrity and scoped image/report review recorded"
     }
   },
   "pending": [
     {
-      "gate": "macos-arm64-interactive",
-      "status": "returned baseline partial; rerun updated event loop and current SDK graph with new kit"
-    },
-    {
-      "gate": "actual-Retina-2x-and-display-transitions",
-      "status": "baseline main actual 2x passed; Settings real click requires rerun; 2x/1x same-process transitions pending absent 1x display"
+      "gate": "same-process-2x-1x-2x-display-transitions",
+      "status": "pending: no physical 1x display available"
     },
     {
       "gate": "broader-spoken-reader-usability",
@@ -62,7 +67,7 @@
   "runtime_convergence": false,
   "release_publication": false,
   "release_acceptance": false,
-  "source_equivalence": "Historical records retain their tested graph. PR #24 changes macOS event-loop servicing; its Intel replay is scoped separately and cannot qualify the returned Apple Silicon baseline or current arm64 candidate.",
+  "source_equivalence": "The M1 rerun directly tests published Scanner 92100f46ce0bd1c93a0145df080874e62866b634, including the updated AccessKit graph and macOS event-loop fix. Historical records retain their original tested revisions. This register refresh changes documentation only.",
   "consumer_evidence": {
     "existing_record": "post-pr10-results.json",
     "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
@@ -133,16 +138,21 @@
     "wire_harness_source": "37edefaf2d6d0cc8201ea14aeb94c21324853d84",
     "status": "Five Linux and one Intel Mac native replay passed; Windows and exact-head CI completion recorded with PR; reviewed-main consumer qualification follows merge",
     "native_advisory_deadline": "before 2026-11-24",
-    "arm64_retina_qualified": false,
+    "arm64_retina_qualified": true,
     "production_pin_changed": false,
     "results": "accesskit-metadata-results.json",
-    "implementation_pr": "https://github.com/organizyio/scanner/pull/22"
+    "implementation_pr": "https://github.com/organizyio/scanner/pull/22",
+    "arm64_retina_scope": "Supplemental qualification at 92100f46ce0bd1c93a0145df080874e62866b634; static Main/Settings 2x only; original PR #22 evidence remains unchanged.",
+    "arm64_retina_results": "macos-arm64-retina-results.json",
+    "display_transitions_qualified": false
   },
   "macos_event_loop_followup": {
     "pull_request": "https://github.com/organizyio/scanner/pull/24",
     "record": "macos-ax-latency.md",
     "intel_host": "macOS 15.8.1 (24H32), x86_64, actual 1x",
     "shutdown_cases_passed": 16,
-    "release_acceptance": false
+    "release_acceptance": false,
+    "arm64_retina_results": "macos-arm64-retina-results.json",
+    "arm64_shutdown_cases_passed": 16
   }
 }

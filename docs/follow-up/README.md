@@ -14,21 +14,28 @@ Owner-approved implementation specification, 2026-10-15. Sole owner: @ArmanAvane
 
 Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only after exact-head checks pass. Missing native evidence keeps qualification pending rather than converting compilation into acceptance. Runtime convergence and publishing/releases are excluded.
 
-## Current qualification — 2026-10-29
+<a id="current-qualification"></a>
+<a id="current-qualification--2026-10-26"></a>
+<a id="current-qualification--2026-10-29"></a>
+
+## Current qualification — 2026-10-30
 
 [The current register](current-qualification.json) identifies superseding evidence
 without rewriting historical runs or their hashes. Scanner main at review is
-`fcb049522e3043ad71c7f8e5d0a3669beadbaa39` (PR #22). Phases 1–3 are
+`92100f46ce0bd1c93a0145df080874e62866b634` (PR #24). Phases 1–3 are
 implemented; phase 5 has scoped candidate evidence and an unchanged production
-pin. Phase 4 remains incomplete.
+pin. Phase 4 remains incomplete because display transitions and deferred broader
+spoken-reader gates remain. The M1 review closes the tested arm64 and static
+Retina 2x gates; original partial/failed evidence remains historical.
 
 | Host or gate | Current qualification | Remaining boundary |
 | --- | --- | --- |
 | Linux x86_64, GNOME/Xwayland | [Five guarded default accelerated runs](linux-default-rendering.md), including Settings keyboard/native close, lifecycle/restart, attached/detached observers and silent Orca | Only this live desktop/renderer; other desktops need readiness observers; native Wayland unsupported |
 | Windows x86_64 | [26 native shutdown runs](windows-shutdown.md), UIA controls/text, keyboard, Settings, restart and observer ordering | Recorded host scope; broader spoken-reader usability unqualified |
 | Intel macOS, actual 1x | [Native AX flow, shutdown matrix and actual active-I/O checkpoint shutdown](linux-macos-replay.md) | Does not qualify arm64 or Retina |
-| macOS arm64 | [Returned baseline partially passes; event-loop fix and rerun kit](macos-ax-latency.md) | Updated graph and complete shutdown/Settings pointer replay pending |
-| Actual Retina 2x and display transitions | Baseline main-window real 2x click passed; Settings click requires rerun | 2x/1x transitions pending without 1x display |
+| macOS arm64 | [Reviewed M1 rerun](macos-arm64-retina.md): native build/20 checks, full GUI flow, serial AX latency and 16 shutdown cases passed | Recorded host/revision only; broader spoken-reader usability remains unqualified |
+| Actual Retina 2x | [Main and Settings real pointer clicks passed](macos-arm64-retina.md), including picker open/Cancel return | Static 2x on the recorded M1 built-in display |
+| Same-process 2x/1x/2x display transitions | Not run: no physical 1x display available | Pending; static 2x results do not close this gate |
 | Broader spoken-reader usability | Native protocol evidence only | Unqualified; additional spoken testing deferred |
 
 The older Linux GPU/default-presentation failure and Windows observer-detach
@@ -185,7 +192,9 @@ registry provenance, upstream cache-wire correction, ordinary/password consumer
 regressions and native replay. The runtime vendor source is replaced by its
 published fix; immutable historical provenance and regression evidence remain.
 The native zbus maintenance deadline is unchanged. Old host records retain their
-original dependency graph; unavailable Apple Silicon/Retina gates stay pending.
+original dependency graph. The [later reviewed M1 rerun](macos-arm64-retina.md)
+closes the tested arm64/static-2x gates at its published revision; display
+transitions and broader spoken-reader usability remain separate.
 
 [Preferred metadata budgets](metadata-decoding-limits.md) bound encoded input,
 DOCX expansion/XML, PDF page traversal and EXIF export without changing public

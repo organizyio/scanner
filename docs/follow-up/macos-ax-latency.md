@@ -51,3 +51,17 @@ capture/timing attempts remain private evidence; they were not rewritten.
 The source-pinned rerun kit and verifier profile are generated only after merge.
 The full action budget remains 20 seconds and Quit remains 8 seconds. Arm64
 performance and current-graph Retina pointer acceptance need the external rerun.
+
+## Reviewed M1 rerun — 2026-10-30
+
+[The returned M1/Retina evidence](macos-arm64-retina.md) directly tests merged
+`92100f46ce0bd1c93a0145df080874e62866b634`. Native arm64 build and all 20 checks,
+serial AX latency, full GUI flow and all 16 shutdown cases passed. Both Main
+and Settings actual 2× pointer clicks opened their pickers and returned after
+Cancel. Median AX reads were 0.017–0.021 ms and gate snapshots 15–31 ms.
+
+This supersedes the earlier pending arm64/static-2× gates only for that recorded
+host and revision. The initial failed evidence remains unchanged. Same-process
+2×↔1× transitions are still pending without a physical 1× display; broader
+spoken-reader usability is unqualified/deferred. Runtime convergence, production
+adoption and release acceptance remain separate.

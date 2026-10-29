@@ -1,0 +1,321 @@
+{
+  "reviewed_at": "2026-10-30",
+  "source": "92100f46ce0bd1c93a0145df080874e62866b634",
+  "host": {
+    "model": "MacBookPro17,1",
+    "processor": "Apple M1",
+    "architecture": "arm64",
+    "macos": "27.0.1",
+    "build": "26A434",
+    "actual_display_scale": 2,
+    "display_count": 1
+  },
+  "scope": "Accepted evidence for this recorded host, revision and static 2x display operation; phase 4 remains incomplete.",
+  "provenance": {
+    "archive_sha256": "903451e8a8b8a4632893e74674936cb59e1abe124ae6246539451c461df8f339",
+    "archive_members_verified": 827,
+    "png_files_verified": 52,
+    "source_status_clean": true,
+    "native_binaries_arm64_only": true,
+    "binary_sha256": "5031791bb61633c63d180081f19b2ad2eba205f67eb9ce93c67d82a06ab363ca",
+    "trusted_kit": {
+      "qualify.py": "83d468ef173fdc2075dc820c9056ea1e101fbb91cf87027627e519cfa57c0262",
+      "display-probe.swift": "85cabef5c186e9f6807c653863a2bb10ba6a0d54651a5bb021891132a8b987da"
+    },
+    "evidence_origin": "External AI operator in the signed-in graphical session; archive reports reviewed offline, without independent live host access."
+  },
+  "build_and_checks": {
+    "passed": 20,
+    "total": 20,
+    "filesystem_scope_note": "POSIX advisory locks do not qualify Windows mandatory-sharing denial."
+  },
+  "serial_ax_latency": {
+    "passed": true,
+    "samples": [
+      {
+        "attribute_calls": 216,
+        "median_ms": 0.021249987185001373,
+        "p95_ms": 0.1110415905714035,
+        "snapshot_ms": 30.94845835585147,
+        "window_count": 1
+      },
+      {
+        "attribute_calls": 224,
+        "median_ms": 0.017208396457135677,
+        "p95_ms": 0.06062490865588188,
+        "snapshot_ms": 23.477750015445054,
+        "window_count": 1
+      },
+      {
+        "attribute_calls": 224,
+        "median_ms": 0.017750076949596405,
+        "p95_ms": 0.052708317525684834,
+        "snapshot_ms": 15.171833336353302,
+        "window_count": 1
+      },
+      {
+        "attribute_calls": 432,
+        "median_ms": 0.020041712559759617,
+        "p95_ms": 0.08962501306086779,
+        "snapshot_ms": 16.802874975837767,
+        "window_count": 2
+      }
+    ],
+    "all_latency_files": {
+      "count": 94,
+      "max_median_ms": 0.11558330152183771,
+      "max_snapshot_ms": 150.06158337928355
+    }
+  },
+  "full_gui_flow": {
+    "passed": true,
+    "unicode": true,
+    "folder_error_recovery": true,
+    "profile_switch_restore": true,
+    "tree_keyboard": true,
+    "pause_resume_cancel": true,
+    "settings_restart_checkpoint": true,
+    "native_quit_exit": 0,
+    "quit_ms": 817.1882919268683,
+    "forced_cleanup": false,
+    "release_acceptance": false
+  },
+  "shutdown": {
+    "passed": true,
+    "cases": 16,
+    "runs": [
+      {
+        "observer_mode": "attached",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1041.225166991353,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "attached",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 945.3393330331892,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "attached",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 995.8484170492738,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "attached",
+        "scenario": "settings",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1051.495916908607,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "attached",
+        "scenario": "modal",
+        "quit_method": "cmd+q",
+        "quit_ms": 737.0819160714746,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "detach-before-quit",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1056.0483750887215,
+        "observer_detach_ms": 75.85491705685854,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "detach-before-quit",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1026.5232080128044,
+        "observer_detach_ms": 172.9522499954328,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "detach-before-quit",
+        "scenario": "idle",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1042.245415970683,
+        "observer_detach_ms": 42.6833329256624,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "detach-before-quit",
+        "scenario": "settings",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1028.1394590856507,
+        "observer_detach_ms": 70.26350009255111,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "detach-before-quit",
+        "scenario": "modal",
+        "quit_method": "cmd+q",
+        "quit_ms": 890.4832080006599,
+        "observer_detach_ms": 181.8449579877779,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "none",
+        "scenario": "idle",
+        "quit_method": "cmd+q",
+        "quit_ms": 805.1114999689162,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "none",
+        "scenario": "idle",
+        "quit_method": "cmd+q",
+        "quit_ms": 815.1152089703828,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "none",
+        "scenario": "idle",
+        "quit_method": "cmd+q",
+        "quit_ms": 752.8365419711918,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "none",
+        "scenario": "settings",
+        "quit_method": "cmd+q",
+        "quit_ms": 794.8447080561891,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "none",
+        "scenario": "modal",
+        "quit_method": "cmd+q",
+        "quit_ms": 809.331167023629,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": false
+      },
+      {
+        "observer_mode": "attached",
+        "scenario": "active",
+        "quit_method": "axpress:Quit",
+        "quit_ms": 1014.7857919801027,
+        "observer_detach_ms": null,
+        "exit_code": 0,
+        "forced": false,
+        "active_extraction_waited": true
+      }
+    ]
+  },
+  "retina_pointer": {
+    "same_manual_process": true,
+    "windows": [
+      {
+        "title": "Scanner",
+        "actual_backing_scale": 2,
+        "window_fraction": 1,
+        "foreground_owned": true,
+        "control": "Add Folder",
+        "ax_center_hit_matches": true,
+        "actual_pointer_click": true,
+        "passed": true,
+        "picker_open_and_cancel_return_reviewed": true
+      },
+      {
+        "title": "Settings",
+        "actual_backing_scale": 2,
+        "window_fraction": 1,
+        "foreground_owned": true,
+        "control": "Browse root 1",
+        "ax_center_hit_matches": true,
+        "actual_pointer_click": true,
+        "passed": true,
+        "picker_open_and_cancel_return_reviewed": true
+      }
+    ]
+  },
+  "review": {
+    "image_overviews": 52,
+    "full_size_samples": 7,
+    "method": "Contact-sheet overview of every image plus full-size folder-error, tree, Unicode and Main/Settings pointer-state samples. Operator reports full review of 52 screenshots.",
+    "verifier_status": "needs_review",
+    "remaining_verifier_flags": {
+      "same_process_display_transitions": "expected missing hardware",
+      "operator_review": {
+        "pending_case": "display-transitions",
+        "passed_notes_without_evidence_refs": [
+          "unexpected-behaviour-review",
+          "screenshot-privacy-review",
+          "previous-run-retained"
+        ]
+      }
+    },
+    "interpretation": "The pending transition case and incomplete references in freeform operator notes keep the aggregate verifier result incomplete; canonical application checks pass. Original reports and verifier output are retained unchanged.",
+    "environment_caveat": "An unrelated system prompt was reported untouched. Reported click centers were outside its stated bounds. Window-only captures do not independently establish whole-desktop unobscuredness; foreground, hit tests and resulting picker states support the scoped pointer checks."
+  },
+  "layout_followups": [
+    "long paths clipped without ellipsis",
+    "paths wrap midword",
+    "Settings right-edge spacing"
+  ],
+  "pending": [
+    {
+      "gate": "same-process-2x-1x-2x-display-transitions",
+      "status": "pending: no physical 1x display available"
+    },
+    {
+      "gate": "broader-spoken-reader-usability",
+      "status": "unqualified; additional spoken testing deferred"
+    }
+  ],
+  "historical_baseline": {
+    "source": "c16955e76e4768c74d77fa3b4b3ac1a80c0af58d",
+    "record": "macos-ax-latency.md",
+    "status": "Original partial/failed evidence retained; later rerun supersedes only the tested gates."
+  },
+  "raw_evidence_published": false,
+  "private_history_included": false,
+  "production_pin_adoption": false,
+  "runtime_convergence": false,
+  "release_publication": false,
+  "release_acceptance": false
+}
