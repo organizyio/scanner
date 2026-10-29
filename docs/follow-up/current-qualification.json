@@ -1,6 +1,6 @@
 {
   "reviewed_at": "2026-10-30",
-  "scanner_main_at_review": "92100f46ce0bd1c93a0145df080874e62866b634",
+  "scanner_main_at_review": "0ddb02e67c2aae3780f83f22d083a5e4383e3040",
   "status": "Implementation merged; recorded host and consumer flows qualified; phase 4 remains incomplete",
   "phases": {
     "1": "implemented",
@@ -20,7 +20,8 @@
     "windows-x86_64": {
       "record": "windows-shutdown-results.json",
       "status": "recorded UIA/keyboard/lifecycle and observer-ordering scope qualified",
-      "shutdown_runs": 26
+      "shutdown_runs": 26,
+      "client_contract": "Recorded MTA harness; legacy STA/arbitrary clients remain unqualified; see Windows UIA client review"
     },
     "macos-x86_64-1x": {
       "record": "linux-macos-results.json",
@@ -67,7 +68,7 @@
   "runtime_convergence": false,
   "release_publication": false,
   "release_acceptance": false,
-  "source_equivalence": "The M1 rerun directly tests published Scanner 92100f46ce0bd1c93a0145df080874e62866b634, including the updated AccessKit graph and macOS event-loop fix. Historical records retain their original tested revisions. This register refresh changes documentation only.",
+  "source_equivalence": "The M1 rerun directly tests published Scanner 92100f46ce0bd1c93a0145df080874e62866b634. Later catalog layout/root-boundary validation is recorded separately with exact source trees and host scope. Historical passes retain their original revisions; pending gates remain pending.",
   "consumer_evidence": {
     "existing_record": "post-pr10-results.json",
     "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
@@ -177,5 +178,12 @@
       "explicit_skip": "Interactive system-vault test; not required native Scanner tests",
       "production_pin_changed": false
     }
-  ]
+  ],
+  "native_layout_followup": {
+    "record": "catalog-layout-2026-10-30.json",
+    "implementation_source": "a96410b3d45517a01688e265cf8664f613933bfd",
+    "m1_static_2x_evidence_relabelled": false,
+    "display_transitions": "pending",
+    "legacy_client_review": "windows-uia-client-review-2026-10-30.json"
+  }
 }
