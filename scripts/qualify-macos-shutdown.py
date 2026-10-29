@@ -52,8 +52,11 @@ def run_case(args, name, mode, scenario):
             raise RuntimeError("AX observer PID mismatch")
 
     def action(label, keys, title="Scanner", timeout=20):
+        command = [str(args.helper), str(gui.pid), str(root / label), keys, title]
+        if label == "active":
+            command.append("--expect:running | files=")
         subprocess.run(
-            [str(args.helper), str(gui.pid), str(root / label), keys, title],
+            command,
             check=True,
             timeout=timeout,
             stdout=(root / (label + ".stdout.txt")).open("w"),

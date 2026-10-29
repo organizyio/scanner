@@ -1,6 +1,6 @@
 {
-  "reviewed_at": "2026-10-26",
-  "scanner_main_at_review": "960ed1faf7f5e158f5345ce36e24108d18c619a6",
+  "reviewed_at": "2026-10-29",
+  "scanner_main_at_review": "fcb049522e3043ad71c7f8e5d0a3669beadbaa39",
   "status": "Implementation merged; recorded host and consumer flows qualified; phase 4 remains incomplete",
   "phases": {
     "1": "implemented",
@@ -25,17 +25,24 @@
     "macos-x86_64-1x": {
       "record": "linux-macos-results.json",
       "status": "recorded AX/keyboard/lifecycle/filesystem scope qualified; actual active-reader barrier and checkpoint shutdown passed",
-      "accesskit_refresh": "accesskit-metadata-results.json"
+      "accesskit_refresh": "accesskit-metadata-results.json",
+      "event_loop_refresh": "macos-ax-latency.md"
+    },
+    "macos-arm64-baseline": {
+      "record": "macos-ax-latency.md",
+      "revision": "c16955e76e4768c74d77fa3b4b3ac1a80c0af58d",
+      "status": "returned baseline build/20 checks/full flow/main 2x pointer passed; Settings setup/capture timed out; shutdown 3/16 passed, 12 not run; current graph requires rerun",
+      "raw_evidence": "private; independently checksum/integrity verified"
     }
   },
   "pending": [
     {
       "gate": "macos-arm64-interactive",
-      "status": "pending external feedback"
+      "status": "returned baseline partial; rerun updated event loop and current SDK graph with new kit"
     },
     {
       "gate": "actual-Retina-2x-and-display-transitions",
-      "status": "pending external feedback"
+      "status": "baseline main actual 2x passed; Settings real click requires rerun; 2x/1x same-process transitions pending absent 1x display"
     },
     {
       "gate": "broader-spoken-reader-usability",
@@ -55,7 +62,7 @@
   "runtime_convergence": false,
   "release_publication": false,
   "release_acceptance": false,
-  "source_equivalence": "Historical records retain their tested catalog/native graph. The current AccessKit replacement changes the native dependency graph and removes its runtime vendor adaptation; scoped replay is recorded separately. Fyne adaptation and production pins are unchanged.",
+  "source_equivalence": "Historical records retain their tested graph. PR #24 changes macOS event-loop servicing; its Intel replay is scoped separately and cannot qualify the returned Apple Silicon baseline or current arm64 candidate.",
   "consumer_evidence": {
     "existing_record": "post-pr10-results.json",
     "existing_candidate": "3540db4466d24fc475b1ebe9f6f46e6664af5cb2",
@@ -130,5 +137,12 @@
     "production_pin_changed": false,
     "results": "accesskit-metadata-results.json",
     "implementation_pr": "https://github.com/organizyio/scanner/pull/22"
+  },
+  "macos_event_loop_followup": {
+    "pull_request": "https://github.com/organizyio/scanner/pull/24",
+    "record": "macos-ax-latency.md",
+    "intel_host": "macOS 15.8.1 (24H32), x86_64, actual 1x",
+    "shutdown_cases_passed": 16,
+    "release_acceptance": false
   }
 }

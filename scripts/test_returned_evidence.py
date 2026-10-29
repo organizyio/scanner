@@ -352,6 +352,22 @@ class ReturnedEvidenceTests(unittest.TestCase):
             self.write()["coverage"]["retina_pointer/Scanner"], "consistent"
         )
 
+    def test_trusted_profile_requires_exact_local_authority(self):
+        profile = Path(self.tmp.name) / "profile.json"
+        valid = {"revision": v.REVISION, "kit": v.KIT}
+        profile.write_text(json.dumps(valid))
+        self.assertEqual(v.trusted_profile(profile), valid)
+        for bad in [{}, dict(valid, revision="main"), dict(valid, kit={"evil.py": "a"*64}), dict(valid, extra=True)]:
+            profile.write_text(json.dumps(bad))
+            with self.assertRaises(v.Invalid):
+                v.trusted_profile(profile)
+
+    def test_ax_only_cannot_satisfy_visual_flow(self):
+        self.put("automated/arm64-native/flow/ax-only.json", {"visual_qualification": False})
+        self.write()
+        result = v.verify(self.path)
+        self.assertEqual(result["coverage"]["no_ax_only_capture"], "missing_or_inconsistent")
+
     def test_different_session_cannot_supply_missing_display_transition(self):
         self.docs["evidence/manual/s/session.json"]["binary_sha256"] = "b" * 64
         self.assertEqual(

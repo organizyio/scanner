@@ -15,6 +15,12 @@ guard CommandLine.arguments.count >= 3,
 let output = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
 try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 let application = AXUIElementCreateApplication(pid)
+let actionDeadline = ProcessInfo.processInfo.systemUptime + 19
+let options = Array(CommandLine.arguments.dropFirst(5))
+guard options.allSatisfy({ $0 == "--ax-only" || $0.hasPrefix("--expect:") }),
+      options.filter({ $0.hasPrefix("--expect:") }).count <= 1 else { fail("unsupported observation option") }
+let expected = options.first(where: { $0.hasPrefix("--expect:") }).map { String($0.dropFirst(9)) }
+
 var stages: [[String: Any]] = []
 func mark(_ name: String) {
     stages.append(["stage": name, "monotonic_seconds": ProcessInfo.processInfo.systemUptime])
@@ -26,9 +32,16 @@ let owned = windows.filter { $0[kCGWindowOwnerPID as String] as? Int32 == pid &&
 let targetTitle = CommandLine.arguments.count > 4 ? CommandLine.arguments[4] : "Scanner"
 guard ["Scanner", "Settings"].contains(targetTitle) else { fail("unsupported synthetic window title") }
 let targetWindows = owned.filter { $0[kCGWindowName as String] as? String == targetTitle }
+var attributeMilliseconds: [Double] = []
 func value(_ element: AXUIElement, _ attribute: String) -> CFTypeRef? {
     var result: CFTypeRef?
-    return AXUIElementCopyAttributeValue(element, attribute as CFString, &result) == .success ? result : nil
+    let start = ProcessInfo.processInfo.systemUptime
+    let status = AXUIElementCopyAttributeValue(element, attribute as CFString, &result)
+    attributeMilliseconds.append((ProcessInfo.processInfo.systemUptime - start) * 1000)
+    if attribute == kAXWindowsAttribute && status != .success {
+        FileHandle.standardError.write(Data(("AXWindows request failed: \(status.rawValue)\n").utf8))
+    }
+    return status == .success ? result : nil
 }
 func inspect(_ element: AXUIElement, _ depth: Int = 0) -> [String: Any] {
     var record: [String: Any] = [:]
@@ -45,7 +58,21 @@ func inspect(_ element: AXUIElement, _ depth: Int = 0) -> [String: Any] {
 guard AXIsProcessTrusted() else { fail("Accessibility permission unavailable; qualification pending") }
 func inspectWindows() -> [String: Any] {
     let appWindows = value(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
-    return ["AXRole": "AXApplication", "children": appWindows.map { inspect($0) }]
+    attributeMilliseconds = []
+    let start = ProcessInfo.processInfo.systemUptime
+    let result: [String: Any] = ["AXRole": "AXApplication", "children": appWindows.map { inspect($0) }]
+    let samples = attributeMilliseconds.sorted()
+    guard !samples.isEmpty else { fail("no native accessibility attribute samples") }
+    let record: [String: Any] = [
+        "pid": pid, "attribute_calls": samples.count,
+        "median_ms": samples[samples.count / 2],
+        "p95_ms": samples[min(samples.count - 1, Int(Double(samples.count) * 0.95))],
+        "snapshot_ms": (ProcessInfo.processInfo.systemUptime - start) * 1000,
+        "window_count": appWindows.count,
+    ]
+    try? JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("accessibility-latency-\(stages.count).json"), options: .atomic)
+    return result
 }
 let quitOnly = CommandLine.arguments.count > 3 && ["cmd+q", "axpress:Quit"].contains(CommandLine.arguments[3])
 if !quitOnly {
@@ -173,8 +200,29 @@ if CommandLine.arguments.count > 3 {
         fail("owned native quit did not terminate the app within eight seconds")
     }
 }
-try JSONSerialization.data(withJSONObject: inspectWindows(), options: [.prettyPrinted, .sortedKeys])
+func containsText(_ record: [String: Any], _ text: String) -> Bool {
+    if record.values.contains(where: { ($0 as? String)?.contains(text) == true }) { return true }
+    return (record["children"] as? [[String: Any]] ?? []).contains(where: { containsText($0, text) })
+}
+var after = inspectWindows()
+var observations = 0
+while let expected = expected, !containsText(after, expected) {
+    try JSONSerialization.data(withJSONObject: after, options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("observation-\(observations).json"))
+    guard ProcessInfo.processInfo.systemUptime < actionDeadline else { fail("expected state missing within original action budget") }
+    RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+    after = inspectWindows()
+    observations += 1
+}
+try JSONSerialization.data(withJSONObject: after, options: [.prettyPrinted, .sortedKeys])
     .write(to: output.appendingPathComponent("accessibility-after.json"))
+// Explicit diagnostic mode: AX/lifecycle evidence is separate from screenshots.
+// Full qualification and Retina helpers never request this mode.
+if options.contains("--ax-only") {
+    try JSONSerialization.data(withJSONObject: ["screenshots": "not_requested", "visual_qualification": false], options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("ax-only.json"))
+    exit(0)
+}
 // Wait for this owned app's Stage Manager transition; never capture a thumbnail.
 var currentWindows: [[String: Any]] = []
 var visible = false

@@ -201,7 +201,8 @@ def zip_envelope(path):
     )
 
 
-def inspect_archive(path):
+def inspect_archive(path, kit=None):
+    kit = KIT if kit is None else kit
     """Stream/hash bounded members; retain only bounded JSON and PNG geometry."""
     documents, hashes, pictures, names, total = {}, {}, {}, set(), 0
     json_total = 0
@@ -273,14 +274,14 @@ def inspect_archive(path):
         "Malformed checksum manifest",
     )
     require(manifest == expected, "Manifest membership/hash mismatch")
-    for name, value in KIT.items():
+    for name, value in kit.items():
         require(
             hashes.get(ROOT + "handoff-kit/" + name) == value,
             "Unreviewed handoff helper",
         )
     require(
         {n for n in hashes if n.startswith(ROOT + "handoff-kit/")}
-        == {ROOT + "handoff-kit/" + n for n in KIT},
+        == {ROOT + "handoff-kit/" + n for n in kit},
         "Unexpected handoff helper",
     )
     return documents, hashes, pictures
@@ -297,7 +298,22 @@ def finite_ms(value):
     return type(value) in (int, float) and math.isfinite(value) and 0 <= value < 8000
 
 
-def verify(path, archive_sha256=None):
+def trusted_profile(path):
+    # Authority comes from an explicitly supplied LOCAL profile prepared by us,
+    # never a profile read from the returned archive.
+    require(path.stat().st_size <= 4096, "Trusted profile exceeds limit")
+    profile = load_json(path.read_bytes())
+    require(isinstance(profile, dict) and set(profile) == {"revision", "kit"}, "Invalid trusted profile")
+    require(isinstance(profile["revision"], str) and re.fullmatch("[0-9a-f]{40}", profile["revision"]), "Invalid profile revision")
+    kit = profile["kit"]
+    require(isinstance(kit, dict) and set(kit) == set(KIT), "Invalid profile helper names")
+    require(all(isinstance(v, str) and SHA.fullmatch(v) for v in kit.values()), "Invalid profile helper digest")
+    return profile
+
+
+def verify(path, archive_sha256=None, profile=None):
+    revision = REVISION if profile is None else profile["revision"]
+    kit = KIT if profile is None else profile["kit"]
     if archive_sha256 is not None:
         require(
             isinstance(archive_sha256, str) and SHA.fullmatch(archive_sha256),
@@ -313,7 +329,7 @@ def verify(path, archive_sha256=None):
         require(
             digest.hexdigest() == archive_sha256, "External archive digest mismatch"
         )
-    documents, hashes, pictures = inspect_archive(path)
+    documents, hashes, pictures = inspect_archive(path, kit)
     prefix = ROOT + "evidence/"
 
     def doc(name):
@@ -328,11 +344,11 @@ def verify(path, archive_sha256=None):
     summary, host, build = doc("SUMMARY.json"), doc("host.json"), doc("build.json")
     check(
         "reviewed_source",
-        summary.get("source") == REVISION
-        and build.get("source") == REVISION
+        summary.get("source") == revision
+        and build.get("source") == revision
         and summary.get("origin") == "https://github.com/organizyio/scanner.git"
         and summary.get("source_validation_error", "missing") is None
-        and doc("source-status.json").get("revision") == REVISION
+        and doc("source-status.json").get("revision") == revision
         and doc("source-status.json").get("status") == "",
     )
     check(
@@ -441,6 +457,19 @@ def verify(path, archive_sha256=None):
     good = []
     for name in accepted:
         base = name.removeprefix(prefix).removesuffix("accepted.json")
+        if profile is not None:
+            latency = doc(base + "ax-latency/report.json")
+            samples = latency.get("samples", [])
+            check("serial_ax_latency/" + PurePosixPath(base).name,
+                  latency.get("passed") is True and latency.get("source") == revision
+                  and latency.get("binary_sha256") == gui
+                  and latency.get("forced_cleanup") is False
+                  and isinstance(samples, list) and bool(samples)
+                  and all(isinstance(x, dict) and type(x.get("median_ms")) in (int, float)
+                          and 0 <= x["median_ms"] < 10
+                          and type(x.get("snapshot_ms")) in (int, float) and 0 <= x["snapshot_ms"] < 5000
+                          and x.get("attribute_calls", 0) >= 20 for x in samples)
+                  and any(isinstance(x, dict) and x.get("window_count", 0) >= 2 for x in samples))
         a, f, m = (
             doc(base + "accepted.json"),
             doc(base + "flow/report.json"),
@@ -451,9 +480,9 @@ def verify(path, archive_sha256=None):
             isinstance(gui, str)
             and SHA.fullmatch(gui)
             and a.get("passed") is True
-            and a.get("source") == REVISION
+            and a.get("source") == revision
             and a.get("gui_sha256") == gui
-            and f.get("source") == REVISION
+            and f.get("source") == revision
             and f.get("binary_sha256") == gui
             and f.get("passed") is True
             and finite_ms(f.get("quit_ms"))
@@ -472,7 +501,7 @@ def verify(path, archive_sha256=None):
                 )
             )
             and m.get("passed") is True
-            and m.get("source") == REVISION
+            and m.get("source") == revision
             and m.get("binary_sha256") == gui
             and isinstance(runs, list)
             and len(runs) == 16
@@ -566,7 +595,7 @@ def verify(path, archive_sha256=None):
                 if (
                     session.get("pid") == record["pid"]
                     and session.get("binary_sha256") == gui
-                    and session.get("source") == REVISION
+                    and session.get("source") == revision
                     and isinstance(session.get("identity"), str)
                     and bool(session["identity"])
                     and type(exited.get("exit_code")) is int
@@ -622,6 +651,7 @@ def verify(path, archive_sha256=None):
             for v in operator.values()
         ),
     )
+    check("no_ax_only_capture", not any(n.endswith("/ax-only.json") and any(part in n for part in ["/flow/", "/shutdown/", "/manual/"]) for n in hashes))
     check(
         "no_forced_cleanup", not any(n.endswith("/forced-cleanup.json") for n in hashes)
     )
@@ -629,7 +659,7 @@ def verify(path, archive_sha256=None):
         "schema": 1,
         "archive_integrity": "verified",
         "external_digest_checked": archive_sha256 is not None,
-        "expected_source": REVISION,
+        "expected_source": revision,
         "members_hashed": len(hashes),
         "png_files": len(pictures),
         "coverage": coverage,
@@ -663,12 +693,13 @@ def main():
         required=True,
         help="New private JSON report; never overwritten",
     )
+    parser.add_argument("--trusted-profile", type=Path, help="Locally reviewed rerun-kit profile; NEVER use a profile supplied inside returned evidence")
     args = parser.parse_args()
     if args.report.resolve().is_relative_to(Path(__file__).resolve().parents[1]):
         parser.error("Keep returned evidence reports outside the public checkout")
     code = 2
     try:
-        result = verify(args.archive, args.archive_sha256)
+        result = verify(args.archive, args.archive_sha256, trusted_profile(args.trusted_profile) if args.trusted_profile else None)
         code = 0 if result["status"] == "ready_for_human_review" else 3
     except (
         Invalid,

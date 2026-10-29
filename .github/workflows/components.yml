@@ -147,6 +147,12 @@ jobs:
         env:
           CGO_ENABLED: '1'
         run: go test -mod=readonly -race ./internal/async
+      - name: macOS ready-event selection regression
+        if: runner.os == 'macOS'
+        working-directory: tools/project-catalog/third_party/fyne
+        env:
+          CGO_ENABLED: '1'
+        run: go test -mod=readonly internal/driver/glfw/mainloop.go internal/driver/glfw/mainloop_darwin.go internal/driver/glfw/mainloop_test.go -count=1
       - name: Native GUI semantic and lifecycle regression tests
         working-directory: tools/project-catalog
         env:
