@@ -36,3 +36,18 @@ full flow, all 16 shutdown cases, and actual main/Settings 2× pointer clicks.
 Retain the earlier failed run. No retry or longer timeout turns it into a pass.
 Display transitions stay pending without 1× hardware. Runtime convergence,
 production pin adoption and release acceptance remain separate decisions.
+
+## Local replay — 2026-10-29
+
+On macOS 15.8.1 (24H32), Intel x86_64 with an actual 1× display, the full
+screenshot-backed Unicode/folder/profile/tree/pause/resume/cancel/restart flow
+passed after the asynchronous-state observation correction. All 16 shutdown
+cases passed with natural zero exits and no forced cleanup, including attached
+Settings, modal, detached/no-observer and active-read checkpoint cases. Quit
+took 0.739–1.023 seconds across that matrix. Representative main, Settings,
+Unicode and keyboard-focus captures were visually inspected. Earlier failed
+capture/timing attempts remain private evidence; they were not rewritten.
+
+The source-pinned rerun kit and verifier profile are generated only after merge.
+The full action budget remains 20 seconds and Quit remains 8 seconds. Arm64
+performance and current-graph Retina pointer acceptance need the external rerun.

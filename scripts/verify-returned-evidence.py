@@ -462,7 +462,7 @@ def verify(path, archive_sha256=None, profile=None):
             samples = latency.get("samples", [])
             check("serial_ax_latency/" + PurePosixPath(base).name,
                   latency.get("passed") is True and latency.get("source") == revision
-                  and latency.get("binary_sha256") == build.get("binaries", {}).get("scan-gui", {}).get("sha256")
+                  and latency.get("binary_sha256") == gui
                   and latency.get("forced_cleanup") is False
                   and isinstance(samples, list) and bool(samples)
                   and all(isinstance(x, dict) and type(x.get("median_ms")) in (int, float)

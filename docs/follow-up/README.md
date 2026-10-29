@@ -14,11 +14,11 @@ Owner-approved implementation specification, 2026-10-15. Sole owner: @ArmanAvane
 
 Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only after exact-head checks pass. Missing native evidence keeps qualification pending rather than converting compilation into acceptance. Runtime convergence and publishing/releases are excluded.
 
-## Current qualification — 2026-10-26
+## Current qualification — 2026-10-29
 
 [The current register](current-qualification.json) identifies superseding evidence
 without rewriting historical runs or their hashes. Scanner main at review is
-`960ed1faf7f5e158f5345ce36e24108d18c619a6` (PR #21). Phases 1–3 are
+`fcb049522e3043ad71c7f8e5d0a3669beadbaa39` (PR #22). Phases 1–3 are
 implemented; phase 5 has scoped candidate evidence and an unchanged production
 pin. Phase 4 remains incomplete.
 
@@ -27,8 +27,8 @@ pin. Phase 4 remains incomplete.
 | Linux x86_64, GNOME/Xwayland | [Five guarded default accelerated runs](linux-default-rendering.md), including Settings keyboard/native close, lifecycle/restart, attached/detached observers and silent Orca | Only this live desktop/renderer; other desktops need readiness observers; native Wayland unsupported |
 | Windows x86_64 | [26 native shutdown runs](windows-shutdown.md), UIA controls/text, keyboard, Settings, restart and observer ordering | Recorded host scope; broader spoken-reader usability unqualified |
 | Intel macOS, actual 1x | [Native AX flow, shutdown matrix and actual active-I/O checkpoint shutdown](linux-macos-replay.md) | Does not qualify arm64 or Retina |
-| macOS arm64 | Awaiting external native qualification feedback | Pending; compilation and Intel runs cannot close it |
-| Actual Retina 2x and display transitions | Awaiting real-display screenshots, geometry and interaction evidence | Pending; transform tests cannot close it |
+| macOS arm64 | [Returned baseline partially passes; event-loop fix and rerun kit](macos-ax-latency.md) | Updated graph and complete shutdown/Settings pointer replay pending |
+| Actual Retina 2x and display transitions | Baseline main-window real 2x click passed; Settings click requires rerun | 2x/1x transitions pending without 1x display |
 | Broader spoken-reader usability | Native protocol evidence only | Unqualified; additional spoken testing deferred |
 
 The older Linux GPU/default-presentation failure and Windows observer-detach
