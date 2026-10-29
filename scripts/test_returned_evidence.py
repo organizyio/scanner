@@ -352,6 +352,43 @@ class ReturnedEvidenceTests(unittest.TestCase):
             self.write()["coverage"]["retina_pointer/Scanner"], "consistent"
         )
 
+    def test_operator_declarations_do_not_weaken_aggregate_acceptance(self):
+        cases = self.docs["evidence/operator-report.json"]["cases"]
+        cases["display-transitions"] = {"status": "pending", "notes": "No hardware", "evidence": []}
+        cases["privacy"] = {"status": "passed", "notes": "PRIVATE NOTE", "evidence": []}
+        cases["failed-case"] = {"status": "failed", "notes": "Failed", "evidence": ["logs/check.log"]}
+        cases["not-run"] = {"status": "not_run", "notes": "Not run", "evidence": []}
+        r = self.write()
+        self.assertEqual(r["status"], "needs_review")
+        self.assertEqual(r["coverage"]["operator_review"], "missing_or_inconsistent")
+        self.assertIn("operator_review", r["unresolved_checks"])
+        self.assertEqual(r["operator_observations"]["display-transitions"]["review_state"], "declared_pending")
+        self.assertEqual(r["operator_observations"]["privacy"]["review_state"], "unreferenced_observation")
+        self.assertEqual(r["operator_observations"]["failed-case"]["review_state"], "declared_failed")
+        self.assertEqual(r["operator_observations"]["not-run"]["review_state"], "declared_not_run")
+        self.assertNotIn("PRIVATE NOTE", json.dumps(r))
+        self.assertFalse(r["formal_platform_qualification_complete"])
+
+    def test_operator_summary_hides_arbitrary_names_and_invalid_refs(self):
+        cases = {"private@example.test": {"status": "blocked", "notes": "private path", "evidence": []},
+                 "bad-ref": {"status": "passed", "notes": "note", "evidence": ["missing"]}}
+        result = v.operator_case_states(cases, {"root/log.txt": "hash"}, "root/")
+        self.assertNotIn("private@example.test", json.dumps(result))
+        self.assertEqual(result["unrecognized_case_1"]["review_state"], "declared_blocked")
+        self.assertEqual(result["bad-ref"]["reference_state"], "invalid")
+
+    def test_operator_missing_notes_and_identifier_collisions_are_preserved(self):
+        cases = {
+            "unrecognized_case_3": {"status": "pending"},
+            "unrecognized_case_3_3": {"status": "blocked"},
+            "private@example.test": {"status": "passed", "evidence": ["log.txt"]},
+        }
+        result = v.operator_case_states(cases, {"root/log.txt": "hash"}, "root/")
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result["unrecognized_case_3_4"]["review_state"], "missing_notes")
+        self.assertEqual(result["unrecognized_case_3_4"]["reference_state"], "resolved")
+        self.assertFalse(result["unrecognized_case_3_4"]["notes_present"])
+
     def test_trusted_profile_requires_exact_local_authority(self):
         profile = Path(self.tmp.name) / "profile.json"
         valid = {"revision": v.REVISION, "kit": v.KIT}

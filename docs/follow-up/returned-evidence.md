@@ -61,3 +61,18 @@ The rerun adds serial AX latency diagnostics, followed by unchanged full GUI,
 captures cannot satisfy visual-flow, shutdown screenshot or manual gates.
 Missing 1× hardware leaves display transitions pending. Release acceptance
 and runtime convergence remain excluded.
+
+## Operator declarations and evidence bookkeeping
+
+The report adds `operator_observations` with a declaration status, notes-presence
+flag, reference count and reference state for each safe case identifier. Pending,
+failed, blocked and not-run declarations remain distinct from a passed
+observation without references. Notes, raw paths and arbitrary case names are
+not copied into this normalized output. `unresolved_checks` lists the aggregate
+checks still requiring review.
+
+These fields do not relax `operator_review`, change archive validation, grant
+hardware acceptance or turn missing display evidence into a pass. Existing
+coverage values, exit codes and all acceptance flags retain their meaning.
+Reviewed scoped passes can coexist with a `needs_review` aggregate result; the
+original operator report is retained unchanged.

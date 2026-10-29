@@ -1,0 +1,334 @@
+{
+  "reviewed_at": "2026-10-30",
+  "scanner_baseline": "0ddb02e67c2aae3780f83f22d083a5e4383e3040",
+  "review_before": "2026-11-24",
+  "registry": {
+    "accesskit_windows": {
+      "name": "accesskit_windows",
+      "version": "0.35.2",
+      "rust_version": "1.87",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "checksum": "498668b90da9995302a0055aaecad4756932333da2ddef6baee1c00844c430fc",
+      "registry_sha256": "66e8469eeab87f1d29512c790c2c25ac3b6e1a818ce48695585ca1b2074d9e46",
+      "source": "https://crates.io/api/v1/crates/accesskit_windows",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "accesskit",
+          "req": "^0.25.2",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "accesskit_consumer",
+          "req": "^0.39.2",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "accesskit_unix": {
+      "name": "accesskit_unix",
+      "version": "0.24.1",
+      "rust_version": "1.87",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "checksum": "30d5192871228c54f1b0fb4a85cef000e11a3804f25d2165f14afa0daa67f3f6",
+      "registry_sha256": "f26916d841f65bf7f814e481022c9bdc2b24723560ae4f76d03a34136931f6f8",
+      "source": "https://crates.io/api/v1/crates/accesskit_unix",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "accesskit",
+          "req": "^0.25.2",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "accesskit_atspi_common",
+          "req": "^0.21.1",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "zbus",
+          "req": "^5.19",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "accesskit_atspi_common": {
+      "name": "accesskit_atspi_common",
+      "version": "0.21.1",
+      "rust_version": "1.87",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "checksum": "24f5baf62e34a4a6c30e3d697e4782f821a7337049c44c3b40576a27dfbb580d",
+      "registry_sha256": "f6ec111984a4add696a8d58c9ab81954278d01e073105d095bbdb1787e06c0f3",
+      "source": "https://crates.io/api/v1/crates/accesskit_atspi_common",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "accesskit",
+          "req": "^0.25.2",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "accesskit_consumer",
+          "req": "^0.39.2",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "zvariant",
+          "req": "^5.15",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "accesskit_macos": {
+      "name": "accesskit_macos",
+      "version": "0.27.2",
+      "rust_version": "1.87",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "checksum": "123828ceeec755b05255e3976cb0852993202de98a0626c97dd8d34246991f84",
+      "registry_sha256": "85032e154a1f961130c1a43301ba36daf8691f880ce5b0f71d22badd4fb7f812",
+      "source": "https://crates.io/api/v1/crates/accesskit_macos",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "accesskit",
+          "req": "^0.25.2",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "accesskit_consumer",
+          "req": "^0.39.2",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "objc2",
+          "req": "^0.5.1",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "objc2-app-kit",
+          "req": "^0.2.0",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "objc2-foundation",
+          "req": "^0.2.0",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "zvariant_derive": {
+      "name": "zvariant_derive",
+      "version": "5.15.1",
+      "rust_version": "1.87",
+      "license": "MIT",
+      "yanked": false,
+      "checksum": "ef2672456ba1cb54b5eaec136e63135b3c7495fb938e53b28a62e633496d486d",
+      "registry_sha256": "5ca27b76b2809218dcf63a40a64c841f2d771881ea0301ee284c38b8e9ca0376",
+      "source": "https://crates.io/api/v1/crates/zvariant_derive",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "zvariant_utils",
+          "req": "^4.2.0",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "zbus_names": {
+      "name": "zbus_names",
+      "version": "4.3.5",
+      "rust_version": "1.87",
+      "license": "MIT",
+      "yanked": false,
+      "checksum": "812a12be4ead7a59e18ea8f047d08add0066b73bc62fc1467066a2472ae088dd",
+      "registry_sha256": "a91b714db142a87c403209908a5c772cedb7c3194187a8e006ed9c5cdaff3572",
+      "source": "https://crates.io/api/v1/crates/zbus_names",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "zvariant",
+          "req": "^5.15.0",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "zbus": {
+      "name": "zbus",
+      "version": "6.2.0",
+      "rust_version": "1.89",
+      "license": "MIT",
+      "yanked": false,
+      "checksum": "3666b126b788c05de810dd9e4e8dc84b21f87f7ad70a29a09b9db093f0102891",
+      "registry_sha256": "a506435aa27173d329f1962d0550d22e9f371edb2388191b646e7791c292795b",
+      "source": "https://crates.io/api/v1/crates/zbus",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "zbus_macros",
+          "req": "^6.2.0",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "zbus_utils",
+          "req": "^6.1.0",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "zvariant": {
+      "name": "zvariant",
+      "version": "5.15.1",
+      "rust_version": "1.87",
+      "license": "MIT",
+      "yanked": false,
+      "checksum": "80bf6d6cd6a4b601acb64cfb8284cdc643fcfa75ef26ae3c46ec8aa4e8a1fbb7",
+      "registry_sha256": "d11fef9acfff9bb4c004c700b1193c8a5e9a70a27c16cebac4e86ac71c09a02e",
+      "source": "https://crates.io/api/v1/crates/zvariant",
+      "reviewed_dependency_edges": [
+        {
+          "crate_id": "zvariant_derive",
+          "req": "^5.15.0",
+          "kind": "normal",
+          "target": null
+        },
+        {
+          "crate_id": "zvariant_utils",
+          "req": "^4.2.0",
+          "kind": "normal",
+          "target": null
+        }
+      ]
+    },
+    "png": {
+      "name": "png",
+      "version": "0.18.1",
+      "rust_version": "1.73",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "checksum": "60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61",
+      "registry_sha256": "e339e939a1f10b7285bc72a84233b32181238e35f2e277b1d71e4ef55aaeab0d",
+      "source": "https://crates.io/api/v1/crates/png",
+      "reviewed_dependency_edges": []
+    },
+    "inout": {
+      "name": "inout",
+      "version": "0.2.5",
+      "rust_version": "1.85",
+      "license": "MIT OR Apache-2.0",
+      "yanked": false,
+      "checksum": "3b5cf4372d022092674a83b8febf5865f7a573cc0c5baec5e49c879b6a20978f",
+      "registry_sha256": "c6ae5e5473b192f2e988bfa9fcb302183ab033577ad306ef0040653db90dabd5",
+      "source": "https://crates.io/api/v1/crates/inout",
+      "reviewed_dependency_edges": []
+    }
+  },
+  "fyne": {
+    "latest_reviewed_release": "v2.8.2",
+    "source": "https://github.com/fyne-io/fyne/releases/tag/v2.8.2",
+    "go_sum": "h1:gYNJj+ZEPd2wF3M8SlF5iL6febpZkZ1csheRFkuEfHU=",
+    "go_mod_sum": "h1:eXHJ/D9Y58UcDw7SkguadCRI64M4flXyjoMn827Q5SI=",
+    "source_commit": "77c1fa8e0a50b6cbd04cd6c4454289e55a307a2d",
+    "shutdown_proposal": {
+      "url": "https://github.com/fyne-io/fyne/pull/6442",
+      "state": "closed",
+      "merged": false
+    }
+  },
+  "decisions": {
+    "zbus": "No compatible published AccessKit migration to zbus 6. accesskit_unix 0.24.1 requires ^5.19 and atspi_common 0.21.1 requires zvariant ^5.15. zbus 6.2.0 needs Rust 1.89, above pinned 1.88. Do not force transitive upgrades.",
+    "macos_patch": "0.27.2 changes SubclassingAdapter KVO attachment/drop behavior and adds integration tests. Requires separate source/attach-lifecycle and native qualification; retain tested 0.27.1.",
+    "windows_patch": "0.35.2 changes password-input detection to the consumer helper. No shutdown-path change in the reviewed source delta; not evidence for fixing historical STA timeout. Retain tested 0.35.1 pending separate adapter qualification.",
+    "fyne": "Retain shutdown and Cocoa event-wait adaptations; latest release does not establish equivalence. No toolkit adoption in this review.",
+    "root_png_inout": "Reviewed latest versions equal the already-qualified root versions."
+  },
+  "source_review": {
+    "accesskit_macos": {
+      "archive_sha256": "123828ceeec755b05255e3976cb0852993202de98a0626c97dd8d34246991f84",
+      "rust_delta_sha256": "59b49587e1244064ded833c967ef523e61a2aba7666bf3d56944e4d5e0485b53",
+      "crate_vcs_commit": "f3026222559c7f5f46d8f25cb7404de68eb149f0",
+      "packaged_license_text_files": [],
+      "upstream_license_evidence": {
+        "LICENSE-MIT": {
+          "source": "https://raw.githubusercontent.com/AccessKit/accesskit/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "matches_retained_notice": true
+        },
+        "LICENSE-APACHE": {
+          "source": "https://raw.githubusercontent.com/AccessKit/accesskit/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "matches_retained_notice": true
+        }
+      }
+    },
+    "accesskit_windows": {
+      "archive_sha256": "498668b90da9995302a0055aaecad4756932333da2ddef6baee1c00844c430fc",
+      "rust_delta_sha256": "379c0963f56116c52ca06253821f2fc7b13bd75f77375eee01d895ce42a7faba",
+      "crate_vcs_commit": "f3026222559c7f5f46d8f25cb7404de68eb149f0",
+      "packaged_license_text_files": [],
+      "upstream_license_evidence": {
+        "LICENSE-MIT": {
+          "source": "https://raw.githubusercontent.com/AccessKit/accesskit/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+          "matches_retained_notice": true
+        },
+        "LICENSE-APACHE": {
+          "source": "https://raw.githubusercontent.com/AccessKit/accesskit/f3026222559c7f5f46d8f25cb7404de68eb149f0/LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+          "matches_retained_notice": true
+        }
+      }
+    }
+  },
+  "advisories": [
+    {
+      "id": "RUSTSEC-2026-0370",
+      "url": "https://raw.githubusercontent.com/RustSec/advisory-db/main/crates/zvariant/RUSTSEC-2026-0370.md",
+      "sha256": "55991b6a4484c3541c8091cb16cf7446c8610de09ac642ab3ff88c332e394bf0"
+    },
+    {
+      "id": "RUSTSEC-2026-0371",
+      "url": "https://raw.githubusercontent.com/RustSec/advisory-db/main/crates/zbus_names/RUSTSEC-2026-0371.md",
+      "sha256": "3e618914dab3ef0d6d2434f42ac8aa1947cb1738fd156b4f0092d6c7ad53b394"
+    },
+    {
+      "id": "RUSTSEC-2026-0372",
+      "url": "https://raw.githubusercontent.com/RustSec/advisory-db/main/crates/zvariant_derive/RUSTSEC-2026-0372.md",
+      "sha256": "e03677b3351db11984e2fd3bd839b6368cfc3a93aca08c4401980264b228635d"
+    }
+  ],
+  "dependency_changes": false,
+  "policy_exceptions_added": false,
+  "exception_deadline_extended": false,
+  "production_consumer_pin_adoption": false,
+  "runtime_convergence": false,
+  "release_acceptance": false,
+  "migration_follow_up": "https://github.com/organizyio/scanner/issues/26",
+  "zbus_6_msrv_review": [
+    {
+      "version": "6.2.0",
+      "rust_version": "1.89"
+    },
+    {
+      "version": "6.1.0",
+      "rust_version": "1.89"
+    },
+    {
+      "version": "6.0.0",
+      "rust_version": "1.89"
+    }
+  ]
+}

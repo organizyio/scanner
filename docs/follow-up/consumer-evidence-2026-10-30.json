@@ -1,0 +1,30 @@
+{
+  "reviewed_at": "2026-10-30",
+  "qualified_candidate": "fcb049522e3043ad71c7f8e5d0a3669beadbaa39",
+  "unchanged_through": "0ddb02e67c2aae3780f83f22d083a5e4383e3040",
+  "qualification_record": "https://github.com/organizyio/scanner/pull/22#issuecomment-6410248823",
+  "candidate_ci": "https://github.com/organizyio/organizy-scan/actions/runs/40281692984",
+  "ci_jobs_passed": 3,
+  "matching_git_objects": {
+    "Cargo.toml": "9a8645b45bee35553593c62a54669948b9960916",
+    "Cargo.lock": "6cf6de3cafab808c8f981727e051830971b0f13c",
+    "scanner": "d4017a9b35ab7ca3fa3d0f711ac896d4b9951c5f",
+    "crates": "1899b1486cba792b1e27bcc48866265f0ec9087b",
+    "scanfs": "eaa3529caa7bab3c046669aa9359be0a3025f80a",
+    "compat/scan-engine": "d54c51997424b8258531dd1b6314bce2f5746dd4",
+    "compat/scan-fs": "c7d32812a4fe66b997f32a1fa6cc6df8fa93d484"
+  },
+  "qualification_scope": [
+    "preferred and real embedded-engine integration",
+    "fixture enrollment to actual scanfs to inventory: two local/two inventory files, matched, zero pending batches",
+    "isolated published Organizy: all eight Scanner package origins, worker tests/build, PNG and six document/EXIF controls",
+    "three required native managed tests",
+    "unchanged-pin rollback with restored manifests/locks/tests/embedded bytes and modes"
+  ],
+  "explicit_exclusion": "Unrelated interactive system-vault test remains skipped; GUI and live-provider claims are separate.",
+  "rerun_decision": "No consumer implementation/dependency graph delta in the verified paths; reuse the completed exact-candidate evidence rather than label it a new run.",
+  "private_source_refs_published": false,
+  "production_pin_adoption": false,
+  "runtime_convergence": false,
+  "release_acceptance": false
+}

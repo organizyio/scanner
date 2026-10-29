@@ -298,6 +298,39 @@ def finite_ms(value):
     return type(value) in (int, float) and math.isfinite(value) and 0 <= value < 8000
 
 
+def operator_case_states(operator, hashes, prefix):
+    """Describe declarations separately from evidence; never grant acceptance."""
+    result = {}
+    if not isinstance(operator, dict):
+        return result
+    for index, (name, value) in enumerate(operator.items(), 1):
+        key = name if isinstance(name, str) and re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,79}", name) else f"unrecognized_case_{index}"
+        base = key
+        suffix = index
+        while key in result:
+            key = base + "_" + str(suffix)
+            suffix += 1
+        # Never copy notes, raw paths, or arbitrary case names into the report.
+        value = value if isinstance(value, dict) else {}
+        status = value.get("status")
+        status = status if status in ("passed", "failed", "pending", "blocked", "not_run") else "invalid"
+        refs = value.get("evidence")
+        count = len(refs) if isinstance(refs, list) else 0
+        resolved = isinstance(refs, list) and bool(refs) and all(
+            isinstance(ref, str) and any(
+                n == prefix + ref or n.startswith(prefix + ref.rstrip("/") + "/")
+                for n in hashes
+            ) for ref in refs
+        )
+        reference_state = "resolved" if resolved else "not_provided" if isinstance(refs, list) and not refs else "invalid"
+        notes = isinstance(value.get("notes"), str) and bool(value["notes"].strip())
+        state = ("missing_notes" if not notes else "referenced_observation" if resolved else "unreferenced_observation") if status == "passed" else "declared_" + status
+        result[key] = {"declared_status": status, "review_state": state,
+                       "notes_present": notes, "reference_count": count,
+                       "reference_state": reference_state}
+    return result
+
+
 def trusted_profile(path):
     # Authority comes from an explicitly supplied LOCAL profile prepared by us,
     # never a profile read from the returned archive.
@@ -663,6 +696,8 @@ def verify(path, archive_sha256=None, profile=None):
         "members_hashed": len(hashes),
         "png_files": len(pictures),
         "coverage": coverage,
+        "operator_observations": operator_case_states(operator, hashes, prefix),
+        "unresolved_checks": [name for name, state in coverage.items() if state != "consistent"],
         "status": "ready_for_human_review"
         if all(v == "consistent" for v in coverage.values())
         else "needs_review",
