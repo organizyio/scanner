@@ -24,7 +24,9 @@ not establish Apple Silicon performance or a particular 30 Hz mechanism.
 `qualify-macos-ax-latency.py` requires main and Settings coverage, serial-read
 median below 10 ms, snapshots below 5 seconds, native exit and no forced
 cleanup. It explicitly produces AX-only diagnostics, not visual acceptance.
-The full helper retains the existing action budgets and captures. Returned
+The full helper retains the existing action budgets and captures. Scan state
+assertions observe completion inside the same 20-second action budget, without
+repeating input: the old slow snapshots had masked asynchronous scan completion. Returned
 verification rejects AX-only substitutions for visual evidence. Ready queue,
 frame and shutdown selection has separate regression coverage.
 

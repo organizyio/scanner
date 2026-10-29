@@ -15,6 +15,12 @@ guard CommandLine.arguments.count >= 3,
 let output = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
 try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 let application = AXUIElementCreateApplication(pid)
+let actionDeadline = ProcessInfo.processInfo.systemUptime + 19
+let options = Array(CommandLine.arguments.dropFirst(5))
+guard options.allSatisfy({ $0 == "--ax-only" || $0.hasPrefix("--expect:") }),
+      options.filter({ $0.hasPrefix("--expect:") }).count <= 1 else { fail("unsupported observation option") }
+let expected = options.first(where: { $0.hasPrefix("--expect:") }).map { String($0.dropFirst(9)) }
+
 var stages: [[String: Any]] = []
 func mark(_ name: String) {
     stages.append(["stage": name, "monotonic_seconds": ProcessInfo.processInfo.systemUptime])
@@ -32,6 +38,9 @@ func value(_ element: AXUIElement, _ attribute: String) -> CFTypeRef? {
     let start = ProcessInfo.processInfo.systemUptime
     let status = AXUIElementCopyAttributeValue(element, attribute as CFString, &result)
     attributeMilliseconds.append((ProcessInfo.processInfo.systemUptime - start) * 1000)
+    if attribute == kAXWindowsAttribute && status != .success {
+        FileHandle.standardError.write(Data(("AXWindows request failed: \(status.rawValue)\n").utf8))
+    }
     return status == .success ? result : nil
 }
 func inspect(_ element: AXUIElement, _ depth: Int = 0) -> [String: Any] {
@@ -191,14 +200,25 @@ if CommandLine.arguments.count > 3 {
         fail("owned native quit did not terminate the app within eight seconds")
     }
 }
-try JSONSerialization.data(withJSONObject: inspectWindows(), options: [.prettyPrinted, .sortedKeys])
+func containsText(_ record: [String: Any], _ text: String) -> Bool {
+    if record.values.contains(where: { ($0 as? String)?.contains(text) == true }) { return true }
+    return (record["children"] as? [[String: Any]] ?? []).contains(where: { containsText($0, text) })
+}
+var after = inspectWindows()
+var observations = 0
+while let expected = expected, !containsText(after, expected) {
+    try JSONSerialization.data(withJSONObject: after, options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("observation-\(observations).json"))
+    guard ProcessInfo.processInfo.systemUptime < actionDeadline else { fail("expected state missing within original action budget") }
+    RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+    after = inspectWindows()
+    observations += 1
+}
+try JSONSerialization.data(withJSONObject: after, options: [.prettyPrinted, .sortedKeys])
     .write(to: output.appendingPathComponent("accessibility-after.json"))
 // Explicit diagnostic mode: AX/lifecycle evidence is separate from screenshots.
 // Full qualification and Retina helpers never request this mode.
-if CommandLine.arguments.count > 5 {
-    guard CommandLine.arguments.count == 6 && CommandLine.arguments[5] == "--ax-only" else {
-        fail("unsupported capture mode")
-    }
+if options.contains("--ax-only") {
     try JSONSerialization.data(withJSONObject: ["screenshots": "not_requested", "visual_qualification": false], options: [.prettyPrinted, .sortedKeys])
         .write(to: output.appendingPathComponent("ax-only.json"))
     exit(0)

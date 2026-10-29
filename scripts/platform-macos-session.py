@@ -39,10 +39,12 @@ p = subprocess.Popen(
 )
 
 
-def call(name, actions="", title=None):
+def call(name, actions="", title=None, expected=None):
     cmd = [str(helper), str(p.pid), str(f / name), actions]
-    if title:
-        cmd.append(title)
+    if title or expected:
+        cmd.append(title or "Scanner")
+    if expected:
+        cmd.append("--expect:" + expected)
     subprocess.run(
         cmd,
         check=True,
@@ -72,7 +74,7 @@ try:
     v = call("initial", "tab")
     require(v, "Start")
     require(v, "Settings")
-    v = call("start", "cmd+s")
+    v = call("start", "cmd+s", expected="finished | files=")
     require(v, "finished | files=")
     v = call("folder", "cmd+o")
     require(v, title)
@@ -117,17 +119,17 @@ try:
     fifo = f / "scan-root/0-controlled-read"
     os.mkfifo(fifo)
     holder = os.open(fifo, os.O_RDWR | os.O_NONBLOCK)
-    v = call("pause", "cmd+s,cmd+p")
+    v = call("pause", "cmd+s,cmd+p", expected="paused | files=")
     require(v, "paused | files=")
-    v = call("resume", "cmd+r")
+    v = call("resume", "cmd+r", expected="running | files=")
     require(v, "running | files=")
-    v = call("cancel", "cmd+k")
+    v = call("cancel", "cmd+k", expected="canceling | files=")
     require(v, "canceling | files=")
     os.close(holder)
     holder = None
     fifo.unlink()
     fifo = None
-    v = call("canceled")
+    v = call("canceled", expected="canceled | files=")
     require(v, "canceled | files=")
     saved = settings.read_bytes()
     # Native exit, not forced termination, before restarting settings/checkpoint.
@@ -145,7 +147,7 @@ try:
     )
     time.sleep(3)
     assert settings.read_bytes() == saved
-    v = call("restarted", "cmd+shift+s")
+    v = call("restarted", "cmd+shift+s", expected="finished | files=")
     require(v, "finished | files=")
     require(v, "Resumed partial inventory (inclusive checkpoint cursor)")
     start = time.monotonic()

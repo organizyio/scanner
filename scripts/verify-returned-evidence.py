@@ -457,6 +457,19 @@ def verify(path, archive_sha256=None, profile=None):
     good = []
     for name in accepted:
         base = name.removeprefix(prefix).removesuffix("accepted.json")
+        if profile is not None:
+            latency = doc(base + "ax-latency/report.json")
+            samples = latency.get("samples", [])
+            check("serial_ax_latency/" + PurePosixPath(base).name,
+                  latency.get("passed") is True and latency.get("source") == revision
+                  and latency.get("binary_sha256") == build.get("binaries", {}).get("scan-gui", {}).get("sha256")
+                  and latency.get("forced_cleanup") is False
+                  and isinstance(samples, list) and bool(samples)
+                  and all(isinstance(x, dict) and type(x.get("median_ms")) in (int, float)
+                          and 0 <= x["median_ms"] < 10
+                          and type(x.get("snapshot_ms")) in (int, float) and 0 <= x["snapshot_ms"] < 5000
+                          and x.get("attribute_calls", 0) >= 20 for x in samples)
+                  and any(isinstance(x, dict) and x.get("window_count", 0) >= 2 for x in samples))
         a, f, m = (
             doc(base + "accepted.json"),
             doc(base + "flow/report.json"),
