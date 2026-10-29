@@ -65,7 +65,7 @@ func newDirectoryPicker(parentCtx context.Context, parent fyne.Window, initial s
 	path := widget.NewEntry()
 	path.SetPlaceHolder("Folder path: type a path, then Enter or Go")
 	status := widget.NewLabel("Choose a folder")
-	status.Wrapping = fyne.TextWrapWord
+	status.Wrapping = fyne.TextWrapOff
 	directories := container.NewVBox()
 	scroll := container.NewVScroll(directories)
 	scroll.SetMinSize(fyne.NewSize(620, 300))
@@ -149,7 +149,7 @@ func newDirectoryPicker(parentCtx context.Context, parent fyne.Window, initial s
 	path.OnSubmitted = navigate
 	cancelButton := widget.NewButton("Cancel", func() { picker.Hide() })
 	navigation := container.NewBorder(nil, nil, up, goButton, path)
-	content := container.NewBorder(container.NewVBox(widget.NewLabel("Folder path"), navigation, status), container.NewHBox(selectFolder, cancelButton), nil, nil, scroll)
+	content := container.NewBorder(container.NewVBox(widget.NewLabel("Folder path"), navigation, container.NewHScroll(status)), container.NewHBox(selectFolder, cancelButton), nil, nil, scroll)
 	picker = dialog.NewCustomWithoutButtons("Choose Folder", content, parent)
 	picker.SetOnClosed(cancel)
 	picker.Resize(fyne.NewSize(720, 480))

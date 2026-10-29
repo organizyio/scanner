@@ -88,11 +88,11 @@ func Run(a fyne.App, ctrl *controller.Controller) {
 	)
 
 	details := widget.NewLabel("Select a folder")
-	details.Wrapping = fyne.TextWrapWord
+	details.Wrapping = fyne.TextWrapOff
 
 	tree := NewFolderTree(ctx, ctrl, details)
 	treePanel := container.NewBorder(widget.NewLabel("Folders: arrows navigate; Space selects"), nil, nil, nil, tree)
-	split := container.NewHSplit(treePanel, container.NewVScroll(details))
+	split := container.NewHSplit(treePanel, container.NewScroll(details))
 	split.Offset = 0.42
 
 	status := NewProgressPanel(ctx, ctrl)

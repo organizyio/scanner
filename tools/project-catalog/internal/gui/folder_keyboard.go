@@ -15,8 +15,9 @@ import (
 // Navigation uses only public Tree APIs, never the private renderer focus state.
 type FolderTree struct {
 	*widget.Tree
-	selected string
-	focused  bool
+	selected      string
+	focused       bool
+	semanticLabel func(string) string
 }
 
 func newFolderTree(tree *widget.Tree) *FolderTree {
