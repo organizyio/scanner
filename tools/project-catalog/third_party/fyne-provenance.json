@@ -2791,7 +2791,7 @@
     "internal/driver/glfw/glfw_wasm.go": "9810591b8fae2ced6615f80a5f425d3d6831940895a432b8a545fe642844a00f",
     "internal/driver/glfw/key.go": "fa82803e69bfdef90e739cb37ed92ee76d41d160cb7626acac10f5c4d0cfe92a",
     "internal/driver/glfw/keyboard.go": "c7b7143531c1b0bd82e4f207f3f1d423be8d7ee32595f5403b29a21cdefd86db",
-    "internal/driver/glfw/loop.go": "ea9f7ad873401ab31ed173efa4a9f353e6ba1fa99c9df1f75251d0af1fe57eb6",
+    "internal/driver/glfw/loop.go": "49218bbd84cbaf0bd327cc14ce6ab235f426f036ff0023f120586d6033a96a62",
     "internal/driver/glfw/loop_desktop.go": "1b59c1a65d0291bea57c56e65fddf5e873c5b302339defc298cf52edae430d51",
     "internal/driver/glfw/loop_test.go": "2bd8ceea2897f5ace7df84b347a7e6f8cdd4045001bcc200a2ca9472d7a08971",
     "internal/driver/glfw/loop_wasm.go": "f69b0da6125b0abe9ef82536e3a4e863fc170596c818aa8b9e6c2cb4dd4a818a",
@@ -4021,7 +4021,8 @@
     "window.go": "25733c8e21477ade8e7b54109ccecbe43bb59be008d83a969ce25f6d1666355f",
     "internal/driver/glfw/mainloop_darwin.go": "c745c65d816adea45f458a50816f6090f1075f2281cc828ec6801cf8eb3ad253",
     "internal/driver/glfw/mainloop_other.go": "7280a1bad5d425960d65a0a22655cab5534c52d810d32dd1c48b279c2a4cc8c4",
-    "internal/driver/glfw/mainloop_test.go": "2974a816d26212abd04c8abf48bf1acd805d1f1b7e324200ea39ef1c472a1268"
+    "internal/driver/glfw/mainloop_test.go": "2974a816d26212abd04c8abf48bf1acd805d1f1b7e324200ea39ef1c472a1268",
+    "internal/driver/glfw/mainloop.go": "e68ec39eedfd648fad0a89654d02e25d40d49f90cad668c8bca6fa1a93049834"
   },
   "modified_files": {
     "internal/driver/glfw/loop.go": {
@@ -4034,6 +4035,7 @@
     "internal/async/shutdown_queue_test.go": "207cf347ac8ba672f6a2f30f217049655a367a51d2a13ad2f26a1d921d2592a9",
     "internal/driver/glfw/mainloop_darwin.go": "c745c65d816adea45f458a50816f6090f1075f2281cc828ec6801cf8eb3ad253",
     "internal/driver/glfw/mainloop_other.go": "7280a1bad5d425960d65a0a22655cab5534c52d810d32dd1c48b279c2a4cc8c4",
-    "internal/driver/glfw/mainloop_test.go": "2974a816d26212abd04c8abf48bf1acd805d1f1b7e324200ea39ef1c472a1268"
+    "internal/driver/glfw/mainloop_test.go": "2974a816d26212abd04c8abf48bf1acd805d1f1b7e324200ea39ef1c472a1268",
+    "internal/driver/glfw/mainloop.go": "e68ec39eedfd648fad0a89654d02e25d40d49f90cad668c8bca6fa1a93049834"
   }
 }

@@ -14,19 +14,6 @@ import (
 	"fyne.io/fyne/v2/internal/scale"
 )
 
-type mainEvent uint8
-
-const (
-	mainStop mainEvent = iota
-	mainFunction
-	mainFrame
-)
-
-type funcData struct {
-	f    func()
-	done chan struct{} // Zero allocation signalling channel
-}
-
 // channel for queuing functions on the main thread
 var (
 	funcQueue        = async.NewShutdownQueue[funcData]()
