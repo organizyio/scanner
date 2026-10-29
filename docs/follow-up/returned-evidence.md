@@ -38,3 +38,26 @@ Private output includes only normalized coverage, not copied operator notes,
 command lines or screenshot pixels. Inspect raw returns privately; integrity verification is not privacy approval. Test fixtures
 are synthetic and never establish Apple Silicon/Retina operation. Original
 handoff files and qualification evidence remain unchanged.
+
+## Reviewed rerun kits
+
+Keep the original default verifier profile unchanged. A new kit is generated
+from tracked templates at a full merged `origin/main` revision:
+
+```sh
+python3 scripts/prepare-macos-rerun-kit.py --revision FULL_MERGED_SHA \
+  --output /private/new-rerun-kit
+```
+
+Send the generated guide, ZIP and checksum together. Keep its
+`trusted-profile.json` locally as review authority. On return, explicitly pass
+that **locally generated** profile with `--trusted-profile`; never substitute a
+profile from the returned archive or an unreviewed sender. The profile pins
+source and exact helper hashes; it does not grant acceptance. The original
+failed return and its trusted profile remain valid historical evidence.
+
+The rerun adds serial AX latency diagnostics, followed by unchanged full GUI,
+16-case shutdown and real main/Settings pointer gates. AX-only diagnostic
+captures cannot satisfy visual-flow, shutdown screenshot or manual gates.
+Missing 1× hardware leaves display transitions pending. Release acceptance
+and runtime convergence remain excluded.

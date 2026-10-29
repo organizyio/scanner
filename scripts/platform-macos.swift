@@ -26,9 +26,13 @@ let owned = windows.filter { $0[kCGWindowOwnerPID as String] as? Int32 == pid &&
 let targetTitle = CommandLine.arguments.count > 4 ? CommandLine.arguments[4] : "Scanner"
 guard ["Scanner", "Settings"].contains(targetTitle) else { fail("unsupported synthetic window title") }
 let targetWindows = owned.filter { $0[kCGWindowName as String] as? String == targetTitle }
+var attributeMilliseconds: [Double] = []
 func value(_ element: AXUIElement, _ attribute: String) -> CFTypeRef? {
     var result: CFTypeRef?
-    return AXUIElementCopyAttributeValue(element, attribute as CFString, &result) == .success ? result : nil
+    let start = ProcessInfo.processInfo.systemUptime
+    let status = AXUIElementCopyAttributeValue(element, attribute as CFString, &result)
+    attributeMilliseconds.append((ProcessInfo.processInfo.systemUptime - start) * 1000)
+    return status == .success ? result : nil
 }
 func inspect(_ element: AXUIElement, _ depth: Int = 0) -> [String: Any] {
     var record: [String: Any] = [:]
@@ -45,7 +49,21 @@ func inspect(_ element: AXUIElement, _ depth: Int = 0) -> [String: Any] {
 guard AXIsProcessTrusted() else { fail("Accessibility permission unavailable; qualification pending") }
 func inspectWindows() -> [String: Any] {
     let appWindows = value(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
-    return ["AXRole": "AXApplication", "children": appWindows.map { inspect($0) }]
+    attributeMilliseconds = []
+    let start = ProcessInfo.processInfo.systemUptime
+    let result: [String: Any] = ["AXRole": "AXApplication", "children": appWindows.map { inspect($0) }]
+    let samples = attributeMilliseconds.sorted()
+    guard !samples.isEmpty else { fail("no native accessibility attribute samples") }
+    let record: [String: Any] = [
+        "pid": pid, "attribute_calls": samples.count,
+        "median_ms": samples[samples.count / 2],
+        "p95_ms": samples[min(samples.count - 1, Int(Double(samples.count) * 0.95))],
+        "snapshot_ms": (ProcessInfo.processInfo.systemUptime - start) * 1000,
+        "window_count": appWindows.count,
+    ]
+    try? JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("accessibility-latency-\(stages.count).json"), options: .atomic)
+    return result
 }
 let quitOnly = CommandLine.arguments.count > 3 && ["cmd+q", "axpress:Quit"].contains(CommandLine.arguments[3])
 if !quitOnly {
@@ -175,6 +193,16 @@ if CommandLine.arguments.count > 3 {
 }
 try JSONSerialization.data(withJSONObject: inspectWindows(), options: [.prettyPrinted, .sortedKeys])
     .write(to: output.appendingPathComponent("accessibility-after.json"))
+// Explicit diagnostic mode: AX/lifecycle evidence is separate from screenshots.
+// Full qualification and Retina helpers never request this mode.
+if CommandLine.arguments.count > 5 {
+    guard CommandLine.arguments.count == 6 && CommandLine.arguments[5] == "--ax-only" else {
+        fail("unsupported capture mode")
+    }
+    try JSONSerialization.data(withJSONObject: ["screenshots": "not_requested", "visual_qualification": false], options: [.prettyPrinted, .sortedKeys])
+        .write(to: output.appendingPathComponent("ax-only.json"))
+    exit(0)
+}
 // Wait for this owned app's Stage Manager transition; never capture a thumbnail.
 var currentWindows: [[String: Any]] = []
 var visible = false

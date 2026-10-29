@@ -14,6 +14,14 @@ import (
 	"fyne.io/fyne/v2/internal/scale"
 )
 
+type mainEvent uint8
+
+const (
+	mainStop mainEvent = iota
+	mainFunction
+	mainFrame
+)
+
 type funcData struct {
 	f    func()
 	done chan struct{} // Zero allocation signalling channel
@@ -131,8 +139,8 @@ func (d *gLDriver) runGL() {
 
 	eventTick := time.NewTicker(time.Second / 60)
 	for {
-		select {
-		case <-d.done:
+		switch event, f := nextMainEvent(d.done, funcQueue.Out(), eventTick.C); event {
+		case mainStop:
 			eventTick.Stop()
 			d.Terminate()
 			l := fyne.CurrentApp().Lifecycle().(*app.Lifecycle)
@@ -150,12 +158,12 @@ func (d *gLDriver) runGL() {
 				}
 			})
 			return
-		case f := <-funcQueue.Out():
+		case mainFunction:
 			f.f()
 			if f.done != nil {
 				f.done <- struct{}{}
 			}
-		case <-eventTick.C:
+		case mainFrame:
 			d.pollEvents()
 			for i := 0; i < len(d.windows); i++ {
 				w := d.windows[i].(*window)
