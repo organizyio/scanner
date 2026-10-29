@@ -27,10 +27,12 @@ func NewFolderTree(ctx context.Context, ctrl *controller.Controller, details *wi
 			return len(treeChildren(ctrl, uid)) > 0
 		},
 		func(branch bool) fyne.CanvasObject {
-			return widget.NewLabel("")
+			label := widget.NewLabel("")
+			label.Truncation = fyne.TextTruncateEllipsis
+			return label
 		},
 		func(uid widget.TreeNodeID, branch bool, obj fyne.CanvasObject) {
-			obj.(*widget.Label).SetText(nodeLabel(ctrl, uid))
+			obj.(*widget.Label).SetText(visualNodeLabel(ctrl, uid))
 		},
 	)
 
@@ -45,7 +47,9 @@ func NewFolderTree(ctx context.Context, ctrl *controller.Controller, details *wi
 
 	startUIPoller(ctx, 2*time.Second, fyne.Do, tree.Refresh)
 
-	return newFolderTree(tree)
+	folderTree := newFolderTree(tree)
+	folderTree.semanticLabel = func(uid string) string { return nodeLabel(ctrl, uid) }
+	return folderTree
 }
 
 func treeChildren(ctrl *controller.Controller, uid string) []string {
@@ -78,6 +82,16 @@ func treeChildren(ctrl *controller.Controller, uid string) []string {
 
 	sort.Strings(kids)
 	return kids
+}
+
+// Keep distinguishing leaf names visible before a long common parent path.
+// Stable IDs and native names retain the complete original path.
+func visualNodeLabel(ctrl *controller.Controller, uid string) string {
+	label := nodeLabel(ctrl, uid)
+	if strings.HasPrefix(label, uid) {
+		return filepath.Base(uid) + strings.TrimPrefix(label, uid) + " — " + filepath.Dir(uid)
+	}
+	return label
 }
 
 func nodeLabel(ctrl *controller.Controller, uid string) string {

@@ -97,12 +97,12 @@
     },
     "tools/project-catalog/internal/catalog/filesystem.go": {
       "phase": 2,
-      "reason": "Context-aware discovery recognizes validated worktree/submodule gitdir files while retaining read-only behavior and existing entrypoints.",
+      "reason": "Explicit catalog roots must not be suppressed by project markers above the selected boundary. Descendant traversal and marker union retain existing behavior; no schema or managed traversal changes.",
       "tests": [
-        "CGO_ENABLED=0 go test -mod=readonly ./...",
-        "CGO_ENABLED=0 go vet -mod=readonly ./..."
+        "negative-control regression fails before correction for package.json and unrelated.py ancestor markers",
+        "catalog regression, CLI characterization and native host checks"
       ],
-      "current_sha256": "85c022a92c0c4d0756b3ebe3546dd5653bb93826b1e2f31be0b8688eb413ea0c"
+      "current_sha256": "13d91a7b118ce7386a8bc1e4bc952efdc3394986ba95f6c19e4bacb5762e6d0c"
     },
     "tools/project-catalog/internal/catalog/logger.go": {
       "phase": 2,
@@ -144,13 +144,13 @@
     },
     "tools/project-catalog/internal/gui/folder_tree.go": {
       "phase": 4,
-      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
+      "reason": "Reviewed layout correction: leaf-first visual folder labels with full native path names, scrollable unwrapped path details/status, and outer Settings padding; stable IDs, controls, settings and data contracts retained.",
       "tests": [
-        "native GUI/controller race regressions",
-        "headless Go characterization and vet",
-        "native platform qualification recorded separately"
+        "native GUI path/semantic/padding regressions",
+        "Go vet and GUI race tests",
+        "available-host native replay; historical M1/static-2x evidence retains its exact revision; display transitions pending"
       ],
-      "current_sha256": "9a8a6ddf3eb59664d31ff8c8089b94a0fb5609f877ad947477be85512a83b3f5"
+      "current_sha256": "920a7bacba45811086738a8718b5e86b68f9c2ef1abaae18fd8b24e12a6ab86f"
     },
     "tools/project-catalog/internal/gui/progress_panel.go": {
       "phase": 4,
@@ -175,13 +175,13 @@
     },
     "tools/project-catalog/internal/gui/window.go": {
       "phase": 4,
-      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved. Earlier correction retained: Dispatch coalesced widget refreshes through fyne.Do with actual window/app lifecycle cancellation; show start failures and persistent partial-result warnings.",
+      "reason": "Reviewed layout correction: leaf-first visual folder labels with full native path names, scrollable unwrapped path details/status, and outer Settings padding; stable IDs, controls, settings and data contracts retained.",
       "tests": [
-        "native GUI/controller race regressions",
-        "headless Go characterization and vet",
-        "native platform qualification recorded separately"
+        "native GUI path/semantic/padding regressions",
+        "Go vet and GUI race tests",
+        "available-host native replay; historical M1/static-2x evidence retains its exact revision; display transitions pending"
       ],
-      "current_sha256": "69bbbf5f5e0b759d9d90a01d738296ee9d8d0fd9f998269154c083d2198be47b"
+      "current_sha256": "253988840cc0c14bce9108eab56857f2dbbdeb5099091058db65ed05f6a37954"
     },
     "tools/project-catalog/internal/markers/deep.go": {
       "phase": 2,
@@ -353,13 +353,13 @@
     },
     "tools/project-catalog/internal/gui/config_editor.go": {
       "phase": 4,
-      "reason": "Reviewed native GUI accessibility, keyboard, truthful lifecycle and live-setting corrections; existing records, module identity, profile/checkpoint formats and production pins preserved.",
+      "reason": "Reviewed layout correction: leaf-first visual folder labels with full native path names, scrollable unwrapped path details/status, and outer Settings padding; stable IDs, controls, settings and data contracts retained.",
       "tests": [
-        "native GUI/controller race regressions",
-        "headless Go characterization and vet",
-        "native platform qualification recorded separately"
+        "native GUI path/semantic/padding regressions",
+        "Go vet and GUI race tests",
+        "available-host native replay; historical M1/static-2x evidence retains its exact revision; display transitions pending"
       ],
-      "current_sha256": "1d00dee8b4cc1f6921757de2134897451bf0561590bc9fbe3d548d6f2a1a52d8"
+      "current_sha256": "1a5179c400bdefb9a76ca0a052d635bea132ab64dba0bbe39eda202790c8877a"
     },
     "tools/project-catalog/internal/pipeline/deep.go": {
       "phase": 4,
@@ -519,6 +519,36 @@
         "three-platform native build/lifecycle CI"
       ],
       "current_sha256": "746cc505aecc8d57fa1528dd842ece095668f1563a6c368077f473411ca61127"
+    },
+    "tools/project-catalog/internal/gui/accessibility.go": {
+      "phase": 4,
+      "reason": "Reviewed layout correction: leaf-first visual folder labels with full native path names, scrollable unwrapped path details/status, and outer Settings padding; stable IDs, controls, settings and data contracts retained.",
+      "tests": [
+        "native GUI path/semantic/padding regressions",
+        "Go vet and GUI race tests",
+        "available-host native replay; historical M1/static-2x evidence retains its exact revision; display transitions pending"
+      ],
+      "current_sha256": "586de95ca4e06f31a5a3a0fde1f3e9a323bb9389b756268da10872c86b7d02f8"
+    },
+    "tools/project-catalog/internal/gui/folder_keyboard.go": {
+      "phase": 4,
+      "reason": "Reviewed layout correction: leaf-first visual folder labels with full native path names, scrollable unwrapped path details/status, and outer Settings padding; stable IDs, controls, settings and data contracts retained.",
+      "tests": [
+        "native GUI path/semantic/padding regressions",
+        "Go vet and GUI race tests",
+        "available-host native replay; historical M1/static-2x evidence retains its exact revision; display transitions pending"
+      ],
+      "current_sha256": "4804e7b173e8d879463aa7d65aae4224bb74b7607909e39b42c3f9cc8c84e81b"
+    },
+    "tools/project-catalog/internal/gui/folder_picker.go": {
+      "phase": 4,
+      "reason": "Reviewed layout correction: leaf-first visual folder labels with full native path names, scrollable unwrapped path details/status, and outer Settings padding; stable IDs, controls, settings and data contracts retained.",
+      "tests": [
+        "native GUI path/semantic/padding regressions",
+        "Go vet and GUI race tests",
+        "available-host native replay; historical M1/static-2x evidence retains its exact revision; display transitions pending"
+      ],
+      "current_sha256": "e4af9ce4fb0a3de72a1bc34c9bbe2944dfdb17b4863c39d5ce524c753c67766a"
     }
   }
 }

@@ -310,6 +310,9 @@ func (s *semanticWindow) visitTree(t *widget.Tree, parent uint64, focusObject fy
 				label = l.Text
 			}
 		}
+		if folders, ok := focusObject.(*FolderTree); ok && folders.semanticLabel != nil {
+			label = folders.semanticLabel(uid)
+		}
 		node := nativea11y.Node{ID: id, Parent: p, Role: "treeitem", Name: label, Bounds: bounds, Expanded: branch && t.IsBranchOpen(uid), Selected: binding.selected == uid, Actions: []string{"focus", "select", "click"}}
 		if branch {
 			node.Actions = append(node.Actions, "expand", "collapse")

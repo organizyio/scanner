@@ -200,7 +200,7 @@ func showConfigEditor(parentCtx context.Context, parent fyne.Window, ctrl *contr
 		validateBtn,
 		saveStatus,
 	))
-	w.SetContent(content)
+	w.SetContent(container.NewPadded(content))
 	w.Show()
 	cleanupAccessibility = attachWindowAccessibility(ctx, w)
 }

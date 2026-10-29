@@ -1,0 +1,114 @@
+{
+  "reviewed_at": "2026-10-30",
+  "implementation_source": "a96410b3d45517a01688e265cf8664f613933bfd",
+  "source_trees": {
+    "tools/project-catalog/internal/gui": "89deeb10c4d9a4ff31788121ecf623deb5c9da6d",
+    "tools/project-catalog/internal/catalog": "588c9fd94e702d2c69ecd652382a536f0fcc5380",
+    "tools/project-catalog/native-a11y": "e7dcf67b1b17ad83e5ce636cc30edbe2509dc758",
+    "tools/project-catalog/third_party/fyne": "c98648a9683b3d7445cd0323857e35d64f9b9517"
+  },
+  "public_source_archive_sha256": "96d179ecd2a3ed03e0afbff8e3da4533804c22eb9cf2caa62112863c33203984",
+  "linux": {
+    "binary_sha256": "e4b49dd888ac1e83a4904b43d7928f413f19a3cedff9c1bb25046af69cc1d925",
+    "native_source_checks": "pinned Rust 1.88 formatting, clippy, tests, documentation and release build passed; native source unchanged across the root correction",
+    "go_checks": "vet and complete race suite passed after root-boundary correction; original failure retained",
+    "gui_replays": [
+      {
+        "case": "attached-v2",
+        "report_sha256": "b2762ff6f1f8baaef152a1241a9f17462a603219ad2af8721c0cbd9ec023b4fc",
+        "passed": true,
+        "observer_mode": "attached",
+        "native_quit": {
+          "action": "AT-SPI Quit",
+          "exit_code": 0,
+          "forced": false,
+          "total_ms": 406.147799,
+          "limit_ms": 8000
+        },
+        "native_cache_wire": true,
+        "host_state_unchanged": true
+      },
+      {
+        "case": "detached-v2",
+        "report_sha256": "c9cc2a7b0e1d0249c6d3acece45c0921868f6a7bb56a00696a0a19aa6601c550",
+        "passed": true,
+        "observer_mode": "detach-before-quit",
+        "native_quit": {
+          "action": "AT-SPI Quit",
+          "exit_code": 0,
+          "forced": false,
+          "total_ms": 414.3501,
+          "limit_ms": 8000
+        },
+        "native_cache_wire": true,
+        "host_state_unchanged": true
+      }
+    ],
+    "visual_review": "20 own-window screenshots reviewed at contact-sheet scale; Settings also reviewed full-size",
+    "release_acceptance": false,
+    "completion_record": "https://github.com/organizyio/scanner/pull/28"
+  },
+  "windows": {
+    "status": "native interactive flow passed; own-window screenshot review recorded",
+    "client": "MTA; same registration/removal thread guard passed",
+    "binary_sha256": "b94b418609935dd6d7fbcddadcd510edcb57df675f3d4db5c1ddea0ce96643cd",
+    "report_sha256": "d36fe76ef773a109e59b6c6445d207ab636f6f5ae342985e1aced5e46f1ab6ce",
+    "gui_features": [
+      "announcements",
+      "keyboard",
+      "lifecycle",
+      "picker",
+      "processrestart",
+      "profile",
+      "quit",
+      "textselection"
+    ],
+    "native_quit": {
+      "exit_code": 0,
+      "elapsed_ms": 212.8943,
+      "invoke_ms": 35.9728,
+      "forced": false,
+      "native_action": "quit",
+      "observer_mode": "attached",
+      "invoke_error": null
+    },
+    "go_checks": "native build, vet and complete race suite passed",
+    "client_thread_regressions": "real PowerShell MTA/STA and deadline/process-owner/readiness regressions passed",
+    "visual_review": "11 own-window captures reviewed at overview scale; Settings also reviewed full-size",
+    "additional_shutdown_matrix": "Completion and per-case evidence are recorded with PR #28 before merge; this snapshot asserts only the successful flow above",
+    "completion_record": "https://github.com/organizyio/scanner/pull/28",
+    "release_acceptance": false
+  },
+  "local_macos": {
+    "status": "pending: local screen locked; helper stopped before input",
+    "earlier_attempts": "Preserved; unavailable accessibility/foreground, no accepted GUI replay",
+    "native_build": "Intel native adapter and GUI build, Go vet/race and layout regressions passed locally",
+    "m1_retina_historical_source": "92100f46ce0bd1c93a0145df080874e62866b634",
+    "m1_retina_scope": "Historical native arm64/static-2x passes retained; no physical claim for this later layout"
+  },
+  "catalog_boundary": {
+    "negative_control": "Two ancestor-marker regressions failed before correction and passed afterward",
+    "schemas_changed": false,
+    "read_only_git": true
+  },
+  "consumer_source_equality": {
+    "candidate": "fcb049522e3043ad71c7f8e5d0a3669beadbaa39",
+    "through_source": "a96410b3d45517a01688e265cf8664f613933bfd",
+    "verified_paths": [
+      "Cargo.toml",
+      "Cargo.lock",
+      "scanner",
+      "crates",
+      "scanfs",
+      "compat/scan-engine",
+      "compat/scan-fs"
+    ],
+    "fresh_consumer_run": false,
+    "production_pins_changed": false
+  },
+  "display_transitions": "pending: physical 1x display unavailable",
+  "legacy_sta_client": "unqualified; issue #23 remains open",
+  "private_history_included": false,
+  "runtime_convergence": false,
+  "release_acceptance": false
+}
