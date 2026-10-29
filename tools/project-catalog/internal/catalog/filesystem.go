@@ -93,7 +93,9 @@ func FindProjectsContext(ctx context.Context, root string, excludeMap map[string
 			isInsideProject := false
 			checkPath := filepath.Dir(path)
 			rootClean := filepath.Clean(root)
-			for {
+			// An explicitly selected root is its own discovery boundary. Inspect
+			// ancestors only for descendants, never above the selected root.
+			for filepath.Clean(path) != rootClean {
 				checkPathClean := filepath.Clean(checkPath)
 				if checkPathClean == rootClean {
 					break

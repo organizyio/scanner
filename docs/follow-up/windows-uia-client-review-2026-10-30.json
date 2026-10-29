@@ -1,0 +1,173 @@
+{
+  "reviewed_at": "2026-10-30",
+  "issue": "https://github.com/organizyio/scanner/issues/23",
+  "scanner_binary_source": "37edefaf2d6d0cc8201ea14aeb94c21324853d84",
+  "scanner_binary_sha256": "6b482972c264f10388ae9251dccfc1c322011d3aba98380c918b6f873701c81f",
+  "production_client_source": "0ddb02e67c2aae3780f83f22d083a5e4383e3040",
+  "diagnostic_client": "Private copies only; STA diagnostic replaces apartment assertions and report labeling without changing action deadlines; original legacy client retained byte-for-byte",
+  "legacy_helper_hashes": {
+    "platform-windows.ps1": "cda2274167a41362d6d927c44f5285af6faa17c89746798c761ec43a43081698",
+    "platform-qualification.py": "78044b6944b69a2b0f81ff121ec2015db404b46df15d683f92390ca653be5cb5",
+    "windows-qualification-stages.ps1": "5baf64bb50cc191518e975cb5fb20c84d7b561766b009f4fbd72a9ff7b824a59"
+  },
+  "cases": [
+    {
+      "case": "mta-attached",
+      "client_apartment": "MTA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "51dba8d7c3db54e4b7df16784095515187c667230a4177193efcb655de62cad9",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 201.3183,
+        "invoke_ms": 33.1846,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "attached",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "mta-detach-before-quit",
+      "client_apartment": "MTA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "59b89a056a8f5df09523f47d7c07965e038cedcea27633ba4c8990de8c1b1ee5",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 215.8801,
+        "invoke_ms": 25.2306,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "detach-before-quit",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "mta-none",
+      "client_apartment": "MTA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "541a25427762c1bb3ce42422c4ba3ff91aa2cae44f2203e2528b5a5e118d8114",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 235.7891,
+        "invoke_ms": 57.7232,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "none",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "sta-diagnostic-attached",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "0a703d85e88983ec565b997e94c8453187a7d502443c0d6ffb5883fe0d07f63b",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 210.1401,
+        "invoke_ms": 37.8995,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "attached",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "sta-diagnostic-detach-before-quit",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "f5d2ee98f9b587b2179d9a4d98978bbe0156a7c1b127e62f13c0eb7ea6da85f4",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 235.6189,
+        "invoke_ms": 24.8348,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "detach-before-quit",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "sta-diagnostic-none",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "0568c1fd9340bbc520d1f50737c69462da47ac248c174c7d48eacff2e08b00e0",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 237.8863,
+        "invoke_ms": 75.0532,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "none",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "legacy-original-1",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "07ef019942cf172d77cb92db09398cd89f6c3bfe877989544d8eb7d089d2b084",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 178.7605,
+        "invoke_ms": 24.6487,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "detach-before-quit",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "legacy-original-2",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "fc4d7c6e54e2ef8cfd3669e799ac75203ed61836a1e8edb9dc8bf766ae9d27af",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 220.3283,
+        "invoke_ms": 41.2182,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "detach-before-quit",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "legacy-original-3",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "56bb63003124f0427bb51da4072517551258de91ba651bd544b6cfc59f96ea50",
+      "outcome": "exit_zero_without_invocation_error",
+      "quit": {
+        "exit_code": 0,
+        "elapsed_ms": 227.1178,
+        "invoke_ms": 41.6361,
+        "forced": false,
+        "native_action": "quit",
+        "observer_mode": "detach-before-quit",
+        "invoke_error": null
+      }
+    },
+    {
+      "case": "legacy-failure",
+      "client_apartment": "STA",
+      "qualification": "diagnostic only; no broader-client acceptance",
+      "report_sha256": "192acff7c8bfac06611f5a1dfd69fa5c159b22cc1ee90f0c31efe6577a7982d7",
+      "outcome": "invocation_error_before_recorded_quit",
+      "quit": null
+    }
+  ],
+  "historical_quit_timeout": "Retained unchanged; not reproduced by this review; no provider deadlock or fix established",
+  "qualified_client_contract": "MTA invocation and event subscription/removal on the registration thread; legacy STA and arbitrary UIA clients remain unqualified",
+  "issue_23_status": "Open diagnostic follow-up; not a claimed runtime fix",
+  "private_history_included": false,
+  "release_acceptance": false,
+  "runtime_convergence": false
+}

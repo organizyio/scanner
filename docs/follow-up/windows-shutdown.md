@@ -67,3 +67,9 @@ the unchanged application/toolkit tree on those hosts. That scoped evidence does
 not close unavailable macOS hardware or release gates. The later
 [live Linux follow-up](linux-default-rendering.md) supplies guarded default-mode
 evidence for its recorded host.
+
+## Later native client boundary
+
+The [October 30 UIA client review](windows-uia-client-review-2026-10-30.md)
+records paired MTA/diagnostic-STA and unchanged legacy-client results. It retains
+the historical failure and issue #23; it does not broaden client qualification.
