@@ -14,6 +14,10 @@ Owner-approved implementation specification, 2026-10-15. Sole owner: @ArmanAvane
 
 Phase 1 merged before phase 2 behavioral changes. Merge focused phase PRs only after exact-head checks pass. Missing native evidence keeps qualification pending rather than converting compilation into acceptance. Runtime convergence and publishing/releases are excluded.
 
+<a id="current-qualification"></a>
+<a id="current-qualification--2026-10-26"></a>
+<a id="current-qualification--2026-10-29"></a>
+
 ## Current qualification — 2026-10-30
 
 [The current register](current-qualification.json) identifies superseding evidence

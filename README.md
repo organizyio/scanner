@@ -127,7 +127,7 @@ reviewed metadata upgrade and its qualification boundaries.
 
 ## Implementation qualification
 
-[Current qualification and remaining gates](docs/follow-up/README.md#current-qualification--2026-10-26)
+[Current qualification and remaining gates](docs/follow-up/README.md#current-qualification)
 separate recorded native/consumer evidence from unavailable hardware, production
 adoption, runtime convergence and release acceptance. Historical source evidence
 and failed runs remain retained.
